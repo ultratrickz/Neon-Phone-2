@@ -1292,9 +1292,12 @@ async function sendPhotoMsg(dataUrl){
 }
 
 // ════ BATTERY ════  
-// ════ BATTERY ════
 async function initBattery(){
-  if(!('getBattery' in navigator))return;
+  if(!('getBattery' in navigator)){
+    document.querySelectorAll('[id^="bat-pct"]').forEach(el=>{if(el)el.style.display='none';});
+    document.querySelectorAll('[id^="bat-icon"]').forEach(el=>{if(el)el.style.display='none';});
+    return;
+  }
   try{
     const bat=await navigator.getBattery();
     const update=()=>{
