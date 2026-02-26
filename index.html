@@ -179,7 +179,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 #cs{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;transition:transform 0.3s ease;}
 #cs.open{display:flex;animation:si 0.32s cubic-bezier(0.22,1,0.36,1) forwards;}
 #cs.closing{animation:so 0.28s cubic-bezier(0.6,0,0.8,0) forwards;}
-#cs.kbd-up{transform:translateY(var(--kbd-offset, 0px));}
+#cs.kbd-up{/* padding-bottom set dynamically via JS */}
 .chdr{display:flex;align-items:center;gap:12px;padding:clamp(44px,7vh,64px) clamp(12px,2vw,20px) 12px;background:rgba(4,2,12,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:2;}
 .cav2{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:#fff;border:2px solid var(--cyan);box-shadow:0 0 8px rgba(0,255,238,0.35);flex-shrink:0;}
 .cav2.group{border-color:var(--accent);font-size:11px;}
@@ -209,10 +209,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .reply-preview .rp-name{color:var(--accent);font-size:10px;letter-spacing:1px;margin-bottom:2px;}
 
 /* Reaction picker */
-.rx-picker{position:absolute;z-index:200;background:rgba(16,10,30,0.97);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:8px 12px;display:flex;gap:6px;box-shadow:0 8px 40px rgba(0,0,0,0.7);transform:translateY(-4px);animation:rxpop 0.2s cubic-bezier(0.22,1,0.36,1) forwards;}
-@keyframes rxpop{from{opacity:0;transform:scale(0.8) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.rx-opt{font-size:22px;cursor:pointer;padding:4px;border-radius:10px;transition:transform 0.15s,background 0.1s;}
-.rx-opt:hover{transform:scale(1.25);background:rgba(255,255,255,0.1);}
+.rx-picker{position:absolute;z-index:200;background:linear-gradient(135deg,rgba(16,8,32,0.98),rgba(8,4,20,0.98));backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(170,0,255,0.25);border-radius:24px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 50px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.05),0 0 30px rgba(170,0,255,0.1);animation:rxpop 0.22s cubic-bezier(0.22,1,0.36,1) forwards;min-width:260px;}
+@keyframes rxpop{from{opacity:0;transform:scale(0.75) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.rx-emoji-row{display:flex;gap:4px;justify-content:space-between;}
+.rx-opt{font-size:24px;cursor:pointer;padding:6px;border-radius:12px;transition:transform 0.12s,background 0.1s;flex:1;text-align:center;line-height:1;}
+.rx-opt:hover,.rx-opt:active{transform:scale(1.3);background:rgba(170,0,255,0.15);}
+.rx-actions{display:flex;gap:6px;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;}
+.rx-action-btn{flex:1;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--text);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.15s;}
+.rx-action-btn:active{background:rgba(170,0,255,0.2);}
+.rx-action-btn.reply{border-color:rgba(0,255,238,0.2);color:var(--cyan);}
+.rx-action-btn.copy-btn{border-color:rgba(255,255,255,0.1);}
+.rx-action-btn.delete-btn{border-color:rgba(255,40,70,0.2);color:#ff6680;}
 
 /* Reply bar */
 #reply-bar{display:none;padding:8px 16px;background:rgba(255,255,255,0.04);border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
@@ -228,7 +235,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 @keyframes tdot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
 
 /* ═══ COMPOSE BAR ══ */
+/* ═══ COMPOSE BAR ══ */
 .comp{padding:10px clamp(12px,2vw,20px) clamp(14px,3vh,26px);background:rgba(4,2,12,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);flex-shrink:0;position:relative;z-index:2;}
+.photo-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.15s,background 0.15s;}
+.photo-btn:active{transform:scale(0.9);background:rgba(0,255,238,0.15);}
+.msg-img{max-width:220px;max-height:260px;border-radius:16px;object-fit:cover;cursor:pointer;display:block;}
+.msg-img:active{opacity:0.85;}
+.photo-preview-bar{display:none;padding:8px 16px;background:rgba(255,255,255,0.03);border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
+.photo-preview-bar.vis{display:flex;align-items:center;gap:10px;}
+.photo-thumb{width:54px;height:54px;border-radius:10px;object-fit:cover;border:2px solid rgba(170,0,255,0.4);}
+.photo-src-picker{position:absolute;bottom:calc(100% + 8px);left:clamp(12px,2vw,20px);z-index:100;background:rgba(16,10,30,0.97);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;display:none;min-width:180px;box-shadow:0 10px 40px rgba(0,0,0,0.6);}
+.photo-src-picker.open{display:block;animation:dd 0.2s cubic-bezier(0.22,1,0.36,1) forwards;}
 .cr{display:flex;align-items:flex-end;gap:6px;}
 .ci{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:10px 16px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;outline:none;resize:none;max-height:120px;overflow-y:auto;line-height:1.4;transition:border-color 0.3s,box-shadow 0.3s;}
 .ci:focus{border-color:rgba(170,0,255,0.5);box-shadow:0 0 0 2px rgba(170,0,255,0.1);}
@@ -250,18 +267,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .fx-icon{font-size:20px;width:28px;text-align:center;}
 
 /* ═══ NEON KEYBOARD (mobile only) ══ */
-#nkbd{position:fixed;left:0;right:0;bottom:0;z-index:500;background:rgba(8,4,18,0.97);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(170,0,255,0.2);padding:6px 4px 10px;display:none;flex-direction:column;gap:4px;box-shadow:0 -10px 40px rgba(0,0,0,0.6);}
+#nkbd{position:fixed;left:0;right:0;bottom:0;z-index:500;background:linear-gradient(180deg,rgba(8,3,20,0.98),rgba(4,1,12,0.99));backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-top:1px solid rgba(170,0,255,0.35);padding:8px 6px 16px;display:none;flex-direction:column;gap:5px;box-shadow:0 -14px 50px rgba(0,0,0,0.8),0 -1px 0 rgba(170,0,255,0.2);}
 #nkbd.vis{display:flex;}
-.krow{display:flex;gap:3px;justify-content:center;}
-.kkey{flex:1;max-width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:background 0.1s,transform 0.1s;position:relative;}
-.kkey:active{background:rgba(255,255,255,0.18);transform:scale(0.93);}
-.kkey.wide{flex:1.6;max-width:68px;}
-.kkey.xwide{flex:3.5;max-width:160px;font-size:13px;letter-spacing:1px;}
-.kkey.space{flex:4.5;max-width:200px;background:rgba(255,255,255,0.05);font-size:12px;letter-spacing:2px;color:rgba(255,255,255,0.4);}
-.kkey.accent{background:linear-gradient(135deg,rgba(170,0,255,0.25),rgba(0,136,255,0.15));border-color:rgba(170,0,255,0.35);}
-.kkey.del{background:rgba(255,40,70,0.1);border-color:rgba(255,40,70,0.2);}
-.kkey.send-k{background:linear-gradient(135deg,rgba(170,0,255,0.4),rgba(0,136,255,0.3));border-color:rgba(170,0,255,0.5);}
-.kkey-sub{position:absolute;top:3px;right:4px;font-size:7px;color:rgba(255,255,255,0.3);font-family:'Orbitron',monospace;}
+.kbd-glow-bar{height:2px;background:linear-gradient(90deg,transparent,rgba(170,0,255,0.6),rgba(0,136,255,0.6),rgba(0,255,238,0.4),transparent);border-radius:1px;margin-bottom:4px;animation:kglow 3s ease-in-out infinite;}
+@keyframes kglow{0%,100%{opacity:0.5;transform:scaleX(0.8)}50%{opacity:1;transform:scaleX(1)}}
+.krow{display:flex;gap:4px;justify-content:center;}
+.kkey{flex:1;max-width:40px;height:44px;border-radius:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.09);color:#fff;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:background 0.08s,transform 0.08s,box-shadow 0.08s;position:relative;letter-spacing:0;box-shadow:0 2px 4px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);}
+.kkey:active{background:rgba(255,255,255,0.2);transform:scale(0.9);box-shadow:0 0 12px rgba(170,0,255,0.4);}
+.kkey.wide{flex:1.7;max-width:70px;font-size:13px;}
+.kkey.space{flex:5;max-width:220px;background:rgba(255,255,255,0.05);font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.35);border-color:rgba(255,255,255,0.07);}
+.kkey.accent{background:linear-gradient(135deg,rgba(170,0,255,0.22),rgba(0,136,255,0.12));border-color:rgba(170,0,255,0.4);color:rgba(200,150,255,0.9);}
+.kkey.accent:active{background:linear-gradient(135deg,rgba(170,0,255,0.4),rgba(0,136,255,0.25));}
+.kkey.del{background:rgba(255,40,70,0.1);border-color:rgba(255,40,70,0.25);color:rgba(255,120,120,0.9);}
+.kkey.del:active{background:rgba(255,40,70,0.25);}
+.kkey.send-k{background:linear-gradient(135deg,rgba(170,0,255,0.5),rgba(0,136,255,0.4));border-color:rgba(170,0,255,0.6);box-shadow:0 0 12px rgba(170,0,255,0.3);}
+.kkey.send-k:active{box-shadow:0 0 20px rgba(170,0,255,0.6);}
+.kkey.emoji-k{background:rgba(255,200,0,0.08);border-color:rgba(255,200,0,0.15);}
+.kkey-sub{position:absolute;top:3px;right:4px;font-size:7px;color:rgba(255,255,255,0.25);font-family:'Orbitron',monospace;}
+.kkey.shift-on{background:linear-gradient(135deg,rgba(170,0,255,0.45),rgba(0,136,255,0.3));border-color:rgba(170,0,255,0.6);box-shadow:0 0 10px rgba(170,0,255,0.25);}
 
 /* ═══ 3-DOT DROPDOWN ══ */
 #cdd{position:absolute;top:clamp(98px,12vh,128px);right:clamp(12px,2vw,24px);z-index:100;background:rgba(16,10,30,0.97);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.12);border-radius:14px;overflow:hidden;display:none;min-width:160px;box-shadow:0 10px 40px rgba(0,0,0,0.6);}
@@ -373,6 +396,24 @@ body.night{filter:sepia(0.25) brightness(0.82);}
 
 /* Group members list in conv header */
 .group-members-line{font-size:10px;color:rgba(0,255,238,0.6);letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;}
+
+/* ═══ NEONSTORE ══ */
+.ns-cat{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:7px 14px;font-size:12px;white-space:nowrap;cursor:pointer;transition:all 0.2s;color:rgba(255,255,255,0.7);font-family:'Rajdhani',sans-serif;font-weight:600;}
+.ns-cat.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 12px var(--accent);}
+.ns-app-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;}
+.ns-app-card:active{transform:scale(0.96);box-shadow:0 0 20px rgba(170,0,255,0.3);}
+.ns-app-icon{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;}
+.ns-app-info{padding:8px 10px 10px;}
+.ns-app-name{font-size:13px;font-weight:600;color:var(--text);}
+.ns-app-cat{font-size:10px;color:var(--text2);margin-top:2px;letter-spacing:1px;}
+.ns-app-badge{font-size:9px;font-family:'Orbitron',monospace;letter-spacing:1px;color:rgba(255,200,0,0.8);margin-top:3px;}
+.ns-list-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.ns-list-row:last-child{border-bottom:none;}
+.ns-list-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.ns-get-btn{background:rgba(170,0,255,0.15);border:1px solid rgba(170,0,255,0.35);border-radius:14px;padding:6px 14px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;color:#cc88ff;cursor:pointer;white-space:nowrap;transition:background 0.15s;}
+.ns-get-btn:active{background:rgba(170,0,255,0.35);}
+.ns-soon-card{background:#000;border:1px solid rgba(255,255,255,0.06);border-radius:18px;overflow:hidden;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px;cursor:default;}
+.ns-soon-label{font-size:11px;color:rgba(255,255,255,0.4);text-align:center;letter-spacing:1px;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -460,7 +501,8 @@ body.night{filter:sepia(0.25) brightness(0.82);}
     <div class="stime" id="hclk">12:00 AM</div>
     <div class="sicons">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="1" y="5" width="2.5" height="7" fill="white" opacity="0.4"/><rect x="5.5" y="3" width="2.5" height="9" fill="white" opacity="0.6"/><rect x="10" y="1" width="2.5" height="11" fill="white" opacity="0.85"/><rect x="14.5" y="0" width="2.5" height="12" fill="white"/></svg>
-      <svg width="15" height="12" viewBox="0 0 15 12" fill="none"><rect x="0.5" y="2.5" width="12" height="8" rx="2" stroke="white" stroke-width="1.5"/><rect x="2" y="4" width="8" height="5" rx="1" fill="white"/><rect x="13" y="4.5" width="1.5" height="3" rx="0.75" fill="white" opacity="0.5"/></svg>
+      <span id="bat-pct" style="font-family:'Orbitron',monospace;font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:1px;"></span>
+      <svg id="bat-icon" width="22" height="12" viewBox="0 0 22 12" fill="none"><rect x="0.5" y="1.5" width="18" height="9" rx="2" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"/><rect id="bat-fill" x="2" y="3" width="14" height="6" rx="1" fill="white"/><rect x="19" y="4" width="2" height="4" rx="1" fill="rgba(255,255,255,0.4)"/></svg>
     </div>
   </div>
   <div class="agrid">
@@ -472,8 +514,13 @@ body.night{filter:sepia(0.25) brightness(0.82);}
       <div class="ai pulse"><svg viewBox="0 0 32 32" fill="none"><path d="M4 6h24a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H10l-6 4V8a2 2 0 0 1 2-2z" stroke="rgba(0,255,238,0.9)" stroke-width="2" fill="none"/><circle cx="10" cy="14" r="1.5" fill="rgba(0,255,238,0.9)"/><circle cx="16" cy="14" r="1.5" fill="rgba(0,255,238,0.9)"/><circle cx="22" cy="14" r="1.5" fill="rgba(0,255,238,0.9)"/></svg></div>
       <div class="al">Messages</div>
     </div>
+    <div class="aico" onclick="openApp('ns')">
+      <div class="ai" style="background:linear-gradient(135deg,rgba(0,255,238,0.12),rgba(170,0,255,0.12));border-color:rgba(0,255,238,0.25);">
+        <svg viewBox="0 0 32 32" fill="none"><path d="M8 4h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4z" stroke="rgba(0,255,238,0.8)" stroke-width="1.5"/><path d="M11 20c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="rgba(170,0,255,0.9)" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="11" r="2.5" stroke="rgba(0,255,238,0.8)" stroke-width="1.5"/><path d="M9 27v-1a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1" stroke="rgba(0,255,238,0.5)" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="al">NeonStore</div>
+    </div>
   </div>
-</div>
 
 <!-- ═══ SETTINGS APP ══ -->
 <div id="sa" class="aps">
@@ -601,6 +648,76 @@ body.night{filter:sepia(0.25) brightness(0.82);}
   </div>
 </div>
 
+  <!-- ═══ NEONSTORE APP ══ -->
+<div id="ns" class="aps">
+  <div class="sbar"><div class="stime" id="nsclk">12:00 AM</div><div class="sicons"><svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="1" y="5" width="2.5" height="7" fill="white" opacity="0.4"/><rect x="5.5" y="3" width="2.5" height="9" fill="white" opacity="0.6"/><rect x="10" y="1" width="2.5" height="11" fill="white" opacity="0.85"/><rect x="14.5" y="0" width="2.5" height="12" fill="white"/></svg></div></div>
+  <div class="anav between">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="bb" onclick="closeApp('ns')"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="ntitle" style="background:linear-gradient(90deg,#00ffee,#aa00ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">NeonStore</div>
+    </div>
+    <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--cyan);opacity:0.7;">v1.0</div>
+  </div>
+
+  <!-- Search bar -->
+  <div style="padding:10px 16px 0;">
+    <div style="position:relative;">
+      <input type="text" class="ni" placeholder="Search apps & games..." style="font-size:14px;padding:10px 16px 10px 40px;" oninput="nsSearch(this.value)" id="ns-search">
+      <svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:0.4;" width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="white" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+
+  <div class="abody" id="ns-body">
+    <!-- Banner -->
+    <div style="margin:16px 16px 0;border-radius:20px;overflow:hidden;background:linear-gradient(135deg,rgba(170,0,255,0.25),rgba(0,136,255,0.2),rgba(0,255,238,0.1));border:1px solid rgba(170,0,255,0.3);padding:20px 20px;display:flex;align-items:center;gap:16px;">
+      <div style="width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#aa00ff,#0088ff);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(170,0,255,0.5);flex-shrink:0;">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><path d="M16 4l10 6v12l-10 6L6 22V10z" stroke="white" stroke-width="2"/><circle cx="16" cy="16" r="3" fill="white"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--cyan);margin-bottom:3px;">FEATURED</div>
+        <div style="font-size:15px;font-weight:700;">Welcome to NeonStore</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">Your hub for Neon OS apps</div>
+      </div>
+    </div>
+
+    <!-- Category pills -->
+    <div style="display:flex;gap:8px;padding:14px 16px 6px;overflow-x:auto;scrollbar-width:none;" id="ns-cats">
+      <div class="ns-cat on" onclick="nsFilter('all',this)">All</div>
+      <div class="ns-cat" onclick="nsFilter('games',this)">🎮 Games</div>
+      <div class="ns-cat" onclick="nsFilter('social',this)">💬 Social</div>
+      <div class="ns-cat" onclick="nsFilter('tools',this)">🔧 Tools</div>
+      <div class="ns-cat" onclick="nsFilter('media',this)">🎵 Media</div>
+      <div class="ns-cat" onclick="nsFilter('productivity',this)">📋 Productivity</div>
+    </div>
+
+    <!-- Top Charts section -->
+    <div class="ssec" style="padding-top:12px;" id="ns-charts-sec">
+      <div class="seclbl">TOP CHARTS</div>
+      <div class="sg" id="ns-top-list">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- Games section -->
+    <div style="padding:16px 16px 8px 16px;" id="ns-games-sec">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:4px;color:var(--accent);">GAMES</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;" id="ns-games-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- Coming Soon -->
+    <div style="padding:0 16px 24px;">
+      <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:4px;color:var(--accent);margin-bottom:12px;">COMING SOON</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;" id="ns-soon-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ CONVERSATION SCREEN ══ -->
 <div id="cs">
   <canvas style="position:absolute;inset:0;z-index:0;opacity:0.15;" id="cvw"></canvas>
@@ -638,9 +755,31 @@ body.night{filter:sepia(0.25) brightness(0.82);}
   </div>
 
   <!-- Compose -->
+  <!-- Photo preview bar -->
+  <div class="photo-preview-bar" id="photo-preview-bar">
+    <img class="photo-thumb" id="photo-thumb-img" src="" alt="">
+    <div style="flex:1;font-size:12px;color:rgba(255,255,255,0.5);">Photo ready to send</div>
+    <div class="bb" onclick="cancelPhoto()" style="width:28px;height:28px;font-size:16px;">✕</div>
+  </div>
+
+  <!-- Hidden file input -->
+  <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="onPhotoChosen(event)">
+  <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="onPhotoChosen(event)">
+
+  <!-- Compose -->
   <div class="comp" style="position:relative;z-index:2;" id="comp-bar">
+    <!-- Photo source picker -->
+    <div class="photo-src-picker" id="photo-src-picker">
+      <div class="fx-item" onclick="openPhotoGallery()">🖼️ Choose from Gallery</div>
+      <div class="fx-item" onclick="openCamera()">📷 Take Photo</div>
+    </div>
     <div class="cr">
+      <!-- Photo button (mobile only) -->
+      <button class="photo-btn" id="photo-btn-el" onclick="togglePhotoSrc(event)" style="${IS_MOBILE?'':'display:none;'}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="15" rx="3" stroke="rgba(0,255,238,0.8)" stroke-width="1.8"/><circle cx="12" cy="13.5" r="3.5" stroke="rgba(0,255,238,0.8)" stroke-width="1.8"/><path d="M8 6l1.5-2.5h5L16 6" stroke="rgba(0,255,238,0.8)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <textarea class="ci" id="ci" placeholder="Message..." rows="1" oninput="cuUpdate(this)" onkeydown="cuKey(event)" onfocus="onCiFocus()" onblur="onCiBlur()"></textarea>
+  
       <!-- Effect button -->
       <button class="fx-btn" id="fx-btn-el" onclick="toggleFxPicker(event)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -689,23 +828,137 @@ body.night{filter:sepia(0.25) brightness(0.82);}
 
 <!-- ═══ NEON KEYBOARD ══ -->
 <div id="nkbd">
-  <div class="krow">
-    <div class="kkey" onclick="ktype('q')">q</div><div class="kkey" onclick="ktype('w')">w</div><div class="kkey" onclick="ktype('e')">e</div><div class="kkey" onclick="ktype('r')">r</div><div class="kkey" onclick="ktype('t')">t</div><div class="kkey" onclick="ktype('y')">y</div><div class="kkey" onclick="ktype('u')">u</div><div class="kkey" onclick="ktype('i')">i</div><div class="kkey" onclick="ktype('o')">o</div><div class="kkey" onclick="ktype('p')">p</div>
+  <div class="kbd-glow-bar"></div>
+  <!-- Letters layout -->
+  <div id="kbd-letters">
+    <div class="krow">
+      <div class="kkey" onclick="ktype('q')">q<span class="kkey-sub">1</span></div>
+      <div class="kkey" onclick="ktype('w')">w<span class="kkey-sub">2</span></div>
+      <div class="kkey" onclick="ktype('e')">e<span class="kkey-sub">3</span></div>
+      <div class="kkey" onclick="ktype('r')">r<span class="kkey-sub">4</span></div>
+      <div class="kkey" onclick="ktype('t')">t<span class="kkey-sub">5</span></div>
+      <div class="kkey" onclick="ktype('y')">y<span class="kkey-sub">6</span></div>
+      <div class="kkey" onclick="ktype('u')">u<span class="kkey-sub">7</span></div>
+      <div class="kkey" onclick="ktype('i')">i<span class="kkey-sub">8</span></div>
+      <div class="kkey" onclick="ktype('o')">o<span class="kkey-sub">9</span></div>
+      <div class="kkey" onclick="ktype('p')">p<span class="kkey-sub">0</span></div>
+    </div>
+    <div class="krow">
+      <div class="kkey" onclick="ktype('a')">a</div>
+      <div class="kkey" onclick="ktype('s')">s</div>
+      <div class="kkey" onclick="ktype('d')">d</div>
+      <div class="kkey" onclick="ktype('f')">f</div>
+      <div class="kkey" onclick="ktype('g')">g</div>
+      <div class="kkey" onclick="ktype('h')">h</div>
+      <div class="kkey" onclick="ktype('j')">j</div>
+      <div class="kkey" onclick="ktype('k')">k</div>
+      <div class="kkey" onclick="ktype('l')">l</div>
+    </div>
+    <div class="krow">
+      <div class="kkey wide accent" id="kshift" onclick="toggleKbdShift()">⇧</div>
+      <div class="kkey" onclick="ktype('z')">z</div>
+      <div class="kkey" onclick="ktype('x')">x</div>
+      <div class="kkey" onclick="ktype('c')">c</div>
+      <div class="kkey" onclick="ktype('v')">v</div>
+      <div class="kkey" onclick="ktype('b')">b</div>
+      <div class="kkey" onclick="ktype('n')">n</div>
+      <div class="kkey" onclick="ktype('m')">m</div>
+      <div class="kkey wide del" onclick="kdelete()">⌫</div>
+    </div>
+    <div class="krow">
+      <div class="kkey wide accent" id="knum" onclick="toggleKbdNum()">123</div>
+      <div class="kkey emoji-k wide" onclick="openKbdEmoji()">😊</div>
+      <div class="kkey space" onclick="ktype(' ')">SPACE</div>
+      <div class="kkey wide accent" onclick="ktype('.')">.</div>
+      <div class="kkey send-k wide" onclick="kSend()">↑</div>
+    </div>
   </div>
-  <div class="krow">
-    <div class="kkey" onclick="ktype('a')">a</div><div class="kkey" onclick="ktype('s')">s</div><div class="kkey" onclick="ktype('d')">d</div><div class="kkey" onclick="ktype('f')">f</div><div class="kkey" onclick="ktype('g')">g</div><div class="kkey" onclick="ktype('h')">h</div><div class="kkey" onclick="ktype('j')">j</div><div class="kkey" onclick="ktype('k')">k</div><div class="kkey" onclick="ktype('l')">l</div>
+  <!-- Numbers/Symbols layout -->
+  <div id="kbd-nums" style="display:none;">
+    <div class="krow">
+      <div class="kkey" onclick="ktype('1')">1</div>
+      <div class="kkey" onclick="ktype('2')">2</div>
+      <div class="kkey" onclick="ktype('3')">3</div>
+      <div class="kkey" onclick="ktype('4')">4</div>
+      <div class="kkey" onclick="ktype('5')">5</div>
+      <div class="kkey" onclick="ktype('6')">6</div>
+      <div class="kkey" onclick="ktype('7')">7</div>
+      <div class="kkey" onclick="ktype('8')">8</div>
+      <div class="kkey" onclick="ktype('9')">9</div>
+      <div class="kkey" onclick="ktype('0')">0</div>
+    </div>
+    <div class="krow">
+      <div class="kkey" onclick="ktype('-')">-</div>
+      <div class="kkey" onclick="ktype('/')">/ </div>
+      <div class="kkey" onclick="ktype(':')">:</div>
+      <div class="kkey" onclick="ktype(';')">;</div>
+      <div class="kkey" onclick="ktype('(')"> (</div>
+      <div class="kkey" onclick="ktype(')')">)</div>
+      <div class="kkey" onclick="ktype('$')">$</div>
+      <div class="kkey" onclick="ktype('&')">&amp;</div>
+      <div class="kkey" onclick="ktype('@')">@</div>
+    </div>
+    <div class="krow">
+      <div class="kkey wide accent" id="ksym" onclick="toggleKbdSym()">#+=</div>
+      <div class="kkey" onclick="ktype('.')">.</div>
+      <div class="kkey" onclick="ktype(','">,</div>
+      <div class="kkey" onclick="ktype('?')">?</div>
+      <div class="kkey" onclick="ktype('!')">!</div>
+      <div class="kkey" onclick="ktype('\'')">&#39;</div>
+      <div class="kkey" onclick="ktype('\"')">"</div>
+      <div class="kkey wide del" onclick="kdelete()">⌫</div>
+    </div>
+    <div class="krow">
+      <div class="kkey wide accent" onclick="toggleKbdNum()">ABC</div>
+      <div class="kkey space" onclick="ktype(' ')">SPACE</div>
+      <div class="kkey wide accent" onclick="ktype('\n')">↵</div>
+      <div class="kkey send-k wide" onclick="kSend()">↑</div>
+    </div>
   </div>
-  <div class="krow">
-    <div class="kkey wide accent" onclick="toggleKbdShift()" id="kshift">⇧</div>
-    <div class="kkey" onclick="ktype('z')">z</div><div class="kkey" onclick="ktype('x')">x</div><div class="kkey" onclick="ktype('c')">c</div><div class="kkey" onclick="ktype('v')">v</div><div class="kkey" onclick="ktype('b')">b</div><div class="kkey" onclick="ktype('n')">n</div><div class="kkey" onclick="ktype('m')">m</div>
-    <div class="kkey wide del" onclick="kdelete()">⌫</div>
+  <!-- Symbols layout -->
+  <div id="kbd-syms" style="display:none;">
+    <div class="krow">
+      <div class="kkey" onclick="ktype('[')">[ </div>
+      <div class="kkey" onclick="ktype(']')">]</div>
+      <div class="kkey" onclick="ktype('{')">{ </div>
+      <div class="kkey" onclick="ktype('}')">}</div>
+      <div class="kkey" onclick="ktype('#')">#</div>
+      <div class="kkey" onclick="ktype('%')">%</div>
+      <div class="kkey" onclick="ktype('^')">^</div>
+      <div class="kkey" onclick="ktype('*')">*</div>
+      <div class="kkey" onclick="ktype('+')">+</div>
+      <div class="kkey" onclick="ktype('='">=</div>
+    </div>
+    <div class="krow">
+      <div class="kkey" onclick="ktype('_')">_</div>
+      <div class="kkey" onclick="ktype('\\')">\ </div>
+      <div class="kkey" onclick="ktype('|')">|</div>
+      <div class="kkey" onclick="ktype('~')">~</div>
+      <div class="kkey" onclick="ktype('<')">&lt;</div>
+      <div class="kkey" onclick="ktype('>')">&gt;</div>
+      <div class="kkey" onclick="ktype('€')">€</div>
+      <div class="kkey" onclick="ktype('£')">£</div>
+      <div class="kkey" onclick="ktype('¥')">¥</div>
+    </div>
+    <div class="krow">
+      <div class="kkey wide accent" id="ksym2" onclick="toggleKbdSym()">123</div>
+      <div class="kkey" onclick="ktype('.')">.</div>
+      <div class="kkey" onclick="ktype(','">,</div>
+      <div class="kkey" onclick="ktype('?')">?</div>
+      <div class="kkey" onclick="ktype('!')">!</div>
+      <div class="kkey" onclick="ktype('`')">`</div>
+      <div class="kkey" onclick="ktype('…')">…</div>
+      <div class="kkey wide del" onclick="kdelete()">⌫</div>
+    </div>
+    <div class="krow">
+      <div class="kkey wide accent" onclick="toggleKbdNum()">ABC</div>
+      <div class="kkey space" onclick="ktype(' ')">SPACE</div>
+      <div class="kkey wide accent" onclick="ktype('\n')">↵</div>
+      <div class="kkey send-k wide" onclick="kSend()">↑</div>
+    </div>
   </div>
-  <div class="krow">
-    <div class="kkey wide accent" onclick="toggleKbdNum()" id="knum">123</div>
-    <div class="kkey space" onclick="ktype(' ')">SPACE</div>
-    <div class="kkey wide accent" onclick="ktype('.')">.</div>
-    <div class="kkey send-k" onclick="kSend()">↑</div>
-  </div>
+  <!-- Emoji picker -->
+  <div id="kbd-emoji" style="display:none;flex-wrap:wrap;gap:4px;padding:4px;max-height:160px;overflow-y:auto;justify-content:center;"></div>
 </div>
 
 <!-- ═══ CALL OVERLAY ══ -->
@@ -902,7 +1155,35 @@ async function processPad(){
   else if(padState==='enter'){if(padIn===window.USER.passcode){failCount=0;unlock();}else{failCount++;shakeGlass();padIn='';renderDots();document.getElementById('ptitle').textContent=failCount>5?`WRONG — ${10-failCount} LEFT`:'WRONG PASSCODE';}}
 }
 function shakeGlass(){const g=document.getElementById('glass');g.style.animation='shake 0.4s ease';g.addEventListener('animationend',()=>{g.style.animation='';},{once:true});}
-function unlock(){const ls=document.getElementById('lock'),hs=document.getElementById('home');ls.style.transition='opacity 0.4s,transform 0.4s';ls.style.opacity='0';ls.style.transform='scale(1.04)';setTimeout(()=>{ls.classList.remove('active');ls.style.transform='';padVis=false;document.getElementById('lpad').classList.remove('vis');hs.classList.add('active');hs.style.opacity='0';const hw=document.getElementById('hw');hw.width=window.innerWidth;hw.height=window.innerHeight;drawWall(hw);setTimeout(()=>{hs.style.transition='opacity 0.4s';hs.style.opacity='1';},10);fillProfile();startChatListener();startCallSignalListener();requestSystemNotif();},400);}
+function requestFullscreen(){
+  const el=document.documentElement;
+  try{
+    if(el.requestFullscreen)el.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+    else if(el.mozRequestFullScreen)el.mozRequestFullScreen();
+  }catch(e){}
+  // iOS doesn't support fullscreen API but we can hide bars
+  if(IS_MOBILE&&window.navigator.standalone===false){
+    window.scrollTo(0,1);
+  }
+}
+
+function unlock(){
+  const ls=document.getElementById('lock'),hs=document.getElementById('home');
+  ls.style.transition='opacity 0.4s,transform 0.4s';
+  ls.style.opacity='0';
+  ls.style.transform='scale(1.04)';
+  setTimeout(()=>{
+    ls.classList.remove('active');ls.style.transform='';
+    padVis=false;document.getElementById('lpad').classList.remove('vis');
+    hs.classList.add('active');hs.style.opacity='0';
+    const hw=document.getElementById('hw');hw.width=window.innerWidth;hw.height=window.innerHeight;
+    drawWall(hw);
+    setTimeout(()=>{hs.style.transition='opacity 0.4s';hs.style.opacity='1';},10);
+    fillProfile();startChatListener();startCallSignalListener();requestSystemNotif();
+    requestFullscreen();
+  },400);
+}
 
 // ════════════════════════════════════════════
 // APP NAV
@@ -934,6 +1215,103 @@ function doErase(){if(!confirm('ERASE ALL? This removes your account and all dat
 function loadPrefs(){try{const a=localStorage.getItem('neos_accent');if(a)document.documentElement.style.setProperty('--accent',a);const g=localStorage.getItem('neos_glow');if(g)document.documentElement.style.setProperty('--glow',g/100);const n=localStorage.getItem('neos_night');if(n==='1'){document.body.classList.add('night');const t=document.getElementById('night-tog');if(t)t.checked=true;}const b=localStorage.getItem('neos_bright');if(b)document.body.style.filter=`brightness(${b/100})`;const ts=localStorage.getItem('neos_textsize');if(ts){const sizes=[0.82,0.92,1,1.12,1.28];document.documentElement.style.setProperty('--font-scale',sizes[ts-1]||1);}const v=localStorage.getItem('neos_vol');if(v)window._vol=v/100;}catch(e){}}
 loadPrefs();
 
+// ════ PHOTO SENDING ════
+let _pendingPhotoDataUrl=null;
+
+function togglePhotoSrc(e){
+  e.stopPropagation();
+  const p=document.getElementById('photo-src-picker');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')){
+    const close=()=>{p.classList.remove('open');document.removeEventListener('click',close);};
+    setTimeout(()=>document.addEventListener('click',close),10);
+  }
+}
+function openPhotoGallery(){
+  document.getElementById('photo-src-picker').classList.remove('open');
+  document.getElementById('photo-file-input').click();
+}
+function openCamera(){
+  document.getElementById('photo-src-picker').classList.remove('open');
+  document.getElementById('photo-camera-input').click();
+}
+function onPhotoChosen(e){
+  const file=e.target.files[0];e.target.value='';
+  if(!file)return;
+  if(file.size>10*1024*1024){alert('Image too large (max 10MB)');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    _pendingPhotoDataUrl=ev.target.result;
+    document.getElementById('photo-thumb-img').src=_pendingPhotoDataUrl;
+    document.getElementById('photo-preview-bar').classList.add('vis');
+    document.getElementById('sndbtn').classList.add('ok');
+  };
+  reader.readAsDataURL(file);
+}
+function cancelPhoto(){
+  _pendingPhotoDataUrl=null;
+  document.getElementById('photo-preview-bar').classList.remove('vis');
+  document.getElementById('photo-thumb-img').src='';
+  const ci=document.getElementById('ci');
+  document.getElementById('sndbtn').classList.toggle('ok',ci.value.trim().length>0);
+}
+
+// Patch sendMsg to support photos
+const _origSendMsg=window.sendMsg;
+window.sendMsg=async function(){
+  if(_pendingPhotoDataUrl){
+    await sendPhotoMsg(_pendingPhotoDataUrl);
+    cancelPhoto();
+    return;
+  }
+  await _origSendMsg();
+};
+
+async function sendPhotoMsg(dataUrl){
+  if(!currentRoomId)return;
+  const now=Date.now();
+  // Store image in Firebase as base64 (fine for demo; in prod use Storage)
+  const msg={type:'image',imageData:dataUrl,senderDid:DID,senderPhone:myPhone(),senderName:myName(),timestamp:now};
+  if(_replyTo){msg.replyTo={msgId:_replyTo.msgId,text:_replyTo.text,senderName:_replyTo.senderName};}
+  cancelReply();
+  const preview='📷 Photo';
+  const chat=getCurrentChat();
+  try{
+    await PUSH(REF(DB,`rooms/${currentRoomId}/messages`),msg);
+    await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastMessage`),preview);
+    await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastTimestamp`),now);
+    if(chat&&chat.isGroup){await updateGroupLastMsg(chat,preview,now);}
+    else if(chat&&chat.theirDid){
+      let u=1;try{const us=await GET(CHILD(REF(DB),`users/${chat.theirDid}/chats/${currentRoomId}/unread`));u=(us.exists()?(us.val()||0):0)+1;}catch(e){}
+      await SET(REF(DB,`users/${chat.theirDid}/chats/${currentRoomId}/lastMessage`),preview);
+      await SET(REF(DB,`users/${chat.theirDid}/chats/${currentRoomId}/lastTimestamp`),now);
+      await SET(REF(DB,`users/${chat.theirDid}/chats/${currentRoomId}/unread`),u);
+    }
+  }catch(e){console.error('Photo send error:',e);}
+  if(IS_MOBILE)hideNKbd();
+}
+
+// ════ BATTERY ════  
+// ════ BATTERY ════
+async function initBattery(){
+  if(!('getBattery' in navigator))return;
+  try{
+    const bat=await navigator.getBattery();
+    const update=()=>{
+      const pct=Math.round(bat.level*100);
+      const color=pct<=20?'#ff4444':pct<=50?'#ffaa00':'#ffffff';
+      const fillW=Math.max(1,Math.round(14*(pct/100)));
+      document.querySelectorAll('#bat-pct,#bat-pct2').forEach(el=>{if(el)el.textContent=pct+'%';});
+      document.querySelectorAll('#bat-fill,#bat-fill2').forEach(el=>{if(el){el.setAttribute('width',fillW);el.setAttribute('fill',color);}});
+      document.querySelectorAll('#bat-icon,#bat-icon2').forEach(el=>{if(el)el.style.filter=pct<=20?'drop-shadow(0 0 3px #ff4444)':'none';});
+    };
+    update();
+    bat.addEventListener('levelchange',update);
+    bat.addEventListener('chargingchange',update);
+  }catch(e){}
+}
+initBattery();
+
 // ════════════════════════════════════════════
 // SYSTEM NOTIFS
 // ════════════════════════════════════════════
@@ -943,58 +1321,157 @@ function sendSystemNotif(title,body,icon_letter){if(!('Notification' in window)|
 // ════════════════════════════════════════════
 // NEON KEYBOARD
 // ════════════════════════════════════════════
-let kbdShift=false,kbdNum=false,_kbdTarget=null;
-const numKeys=[['1','2','3','4','5','6','7','8','9','0'],['!','@','#','$','%','^','&','*','(',')'],['_','-','+','=','[',']','{','}','|','/']];
+let kbdShift=false,kbdNumMode=false,kbdSymMode=false,kbdEmojiMode=false,_kbdTarget=null;
+const EMOJI_LIST=['😀','😂','😍','🥰','😎','🤩','😢','😭','🤔','😱','🥳','😴','🤯','😡','🥺','😇','👍','👎','👏','🙌','🔥','💯','❤️','💜','💙','✨','🌟','⚡','🎉','🎊','🙏','💪','👀','💀','🤣','😏','🫡','🫶','💅','👾','🤖','👻','🎮','🏆','💎','🚀','🌈','🍕','🍔','🎵','🎶'];
+
 function onCiFocus(){
   _kbdTarget=document.getElementById('ci');
-  if(IS_MOBILE){showNKbd();}
+  if(IS_MOBILE){
+    // prevent native keyboard
+    document.getElementById('ci').setAttribute('readonly','readonly');
+    setTimeout(()=>{
+      document.getElementById('ci').removeAttribute('readonly');
+      showNKbd();
+    },10);
+  }
 }
-function onCiBlur(){
-  // small delay so keyboard clicks register
-  setTimeout(()=>{
-    if(document.activeElement!==document.getElementById('ci')&&document.activeElement!==document.getElementById('nkbd')){
-      // don't hide if user tapped keyboard key
-    }
-  },200);
-}
+function onCiBlur(){}
+
 function showNKbd(){
   if(!IS_MOBILE)return;
   const kbd=document.getElementById('nkbd');
   kbd.classList.add('vis');
-  const kbdH=kbd.offsetHeight||260;
-  document.getElementById('cs').style.setProperty('--kbd-offset','-'+kbdH+'px');
-  document.getElementById('cs').classList.add('kbd-up');
-  setTimeout(()=>{const area=document.getElementById('msg-area');area.scrollTop=area.scrollHeight;},100);
+  // Wait for keyboard to render then measure
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const kbdH=kbd.getBoundingClientRect().height||280;
+      const cs=document.getElementById('cs');
+      cs.style.paddingBottom=kbdH+'px';
+      setTimeout(()=>{
+        const area=document.getElementById('msg-area');
+        area.scrollTop=area.scrollHeight;
+      },80);
+    });
+  });
 }
+
 function hideNKbd(){
+  if(!IS_MOBILE)return;
   document.getElementById('nkbd').classList.remove('vis');
-  document.getElementById('cs').classList.remove('kbd-up');
+  document.getElementById('cs').style.paddingBottom='';
+  kbdEmojiMode=false;
+  document.getElementById('kbd-emoji').style.display='none';
 }
+
 function ktype(ch){
   const inp=document.getElementById('ci');
   const c=kbdShift?ch.toUpperCase():ch;
-  const start=inp.selectionStart,end=inp.selectionEnd;
+  const start=inp.selectionStart||inp.value.length,end=inp.selectionEnd||inp.value.length;
   inp.value=inp.value.slice(0,start)+c+inp.value.slice(end);
-  inp.selectionStart=inp.selectionEnd=start+1;
+  inp.selectionStart=inp.selectionEnd=start+c.length;
   cuUpdate(inp);
-  if(kbdShift&&ch!=='⇧'){kbdShift=false;updateKbdCase();}
+  inp.focus();
+  if(kbdShift){kbdShift=false;updateKbdCase();}
+  playUIClick();
 }
-function kdelete(){const inp=document.getElementById('ci');if(inp.selectionStart>0){inp.value=inp.value.slice(0,inp.selectionStart-1)+inp.value.slice(inp.selectionStart);cuUpdate(inp);}}
-function kSend(){sendMsg();hideNKbd();}
-function toggleKbdShift(){kbdShift=!kbdShift;updateKbdCase();}
+
+function kdelete(){
+  const inp=document.getElementById('ci');
+  const start=inp.selectionStart||inp.value.length;
+  if(start>0){
+    inp.value=inp.value.slice(0,start-1)+inp.value.slice(start);
+    inp.selectionStart=inp.selectionEnd=start-1;
+    cuUpdate(inp);
+  }
+  inp.focus();
+  playUIClick();
+}
+
+function kSend(){sendMsg();}
+
+function toggleKbdShift(){
+  kbdShift=!kbdShift;
+  updateKbdCase();
+  playUIClick();
+}
+
 function updateKbdCase(){
-  const rows=document.querySelectorAll('#nkbd .krow');
   const letters=['qwertyuiop','asdfghjkl','zxcvbnm'];
   const shift=document.getElementById('kshift');
-  if(shift){shift.style.background=kbdShift?'rgba(170,0,255,0.4)':'';shift.style.color=kbdShift?'#fff':'rgba(255,255,255,0.8)';}
-  rows.forEach((row,ri)=>{if(ri>=3)return;const keys=row.querySelectorAll('.kkey:not(.wide):not(.xwide):not(.space):not(.send-k)');const str=letters[ri]||'';keys.forEach((k,ki)=>{if(str[ki])k.textContent=kbdShift?str[ki].toUpperCase():str[ki];});});
+  if(shift){
+    shift.classList.toggle('shift-on',kbdShift);
+    shift.textContent=kbdShift?'⇪':'⇧';
+  }
+  const rows=document.querySelectorAll('#kbd-letters .krow');
+  rows.forEach((row,ri)=>{
+    if(ri>=3)return;
+    const keys=row.querySelectorAll('.kkey:not(.wide):not(.space):not(.send-k):not(.emoji-k)');
+    const str=letters[ri]||'';
+    keys.forEach((k,ki)=>{
+      if(str[ki]){
+        // preserve sub-label
+        const sub=k.querySelector('.kkey-sub');
+        k.textContent=kbdShift?str[ki].toUpperCase():str[ki];
+        if(sub)k.appendChild(sub);
+      }
+    });
+  });
 }
-function toggleKbdNum(){kbdNum=!kbdNum;document.getElementById('knum').textContent=kbdNum?'ABC':'123';}
-// Close keyboard when tapping outside
-document.addEventListener('click',e=>{
-  const kbd=document.getElementById('nkbd');const ci=document.getElementById('ci');
-  if(kbd.classList.contains('vis')&&!kbd.contains(e.target)&&e.target!==ci){hideNKbd();}
-});
+
+function toggleKbdNum(){
+  kbdNumMode=!kbdNumMode;
+  kbdSymMode=false;
+  kbdEmojiMode=false;
+  document.getElementById('kbd-letters').style.display=kbdNumMode?'none':'block';
+  document.getElementById('kbd-nums').style.display=kbdNumMode?'block':'none';
+  document.getElementById('kbd-syms').style.display='none';
+  document.getElementById('kbd-emoji').style.display='none';
+  if(!kbdNumMode)document.getElementById('knum').textContent='123';
+  playUIClick();
+}
+
+function toggleKbdSym(){
+  kbdSymMode=!kbdSymMode;
+  document.getElementById('kbd-nums').style.display=kbdSymMode?'none':'block';
+  document.getElementById('kbd-syms').style.display=kbdSymMode?'block':'none';
+  playUIClick();
+}
+
+function openKbdEmoji(){
+  kbdEmojiMode=!kbdEmojiMode;
+  const box=document.getElementById('kbd-emoji');
+  if(kbdEmojiMode){
+    box.innerHTML='';
+    EMOJI_LIST.forEach(em=>{
+      const btn=document.createElement('div');
+      btn.style.cssText='font-size:26px;padding:4px;cursor:pointer;border-radius:8px;transition:transform 0.1s;';
+      btn.textContent=em;
+      btn.addEventListener('touchstart',()=>{btn.style.transform='scale(1.3)';},{passive:true});
+      btn.addEventListener('touchend',()=>{btn.style.transform='';ktype(em);},{passive:true});
+      btn.onclick=()=>ktype(em);
+      box.appendChild(btn);
+    });
+    box.style.display='flex';
+    document.getElementById('kbd-letters').style.display='none';
+    document.getElementById('kbd-nums').style.display='none';
+    document.getElementById('kbd-syms').style.display='none';
+  }else{
+    box.style.display='none';
+    document.getElementById('kbd-letters').style.display='block';
+    kbdNumMode=false;kbdSymMode=false;
+  }
+  playUIClick();
+}
+
+// Close keyboard when tapping outside compose area
+document.addEventListener('touchstart',e=>{
+  const kbd=document.getElementById('nkbd');
+  const ci=document.getElementById('ci');
+  const comp=document.getElementById('comp-bar');
+  if(kbd.classList.contains('vis')&&!kbd.contains(e.target)&&!comp.contains(e.target)){
+    hideNKbd();
+  }
+},{passive:true});
 
 // ════════════════════════════════════════════
 // MESSAGE EFFECTS
@@ -1193,6 +1670,15 @@ function renderMsgs(msgs){
       callDiv.innerHTML=(isMissed?'📵 Missed call':`📞 Call ${m.duration?formatDur(m.duration):''}`);
       wrap.appendChild(callDiv);area.appendChild(wrap);return;
     }
+    if(m.type==='image'){
+      const wrap=document.createElement('div');wrap.className=`bw ${isMe?'o':'i'}`;
+      if(chat&&chat.isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||m.senderPhone||'?';wrap.appendChild(sn);}
+      const img=document.createElement('img');img.className='msg-img';img.src=m.imageData;img.loading='lazy';
+      img.onclick=()=>{window.open(m.imageData,'_blank');};
+      wrap.appendChild(img);
+      const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);wrap.appendChild(t);
+      area.appendChild(wrap);return;
+    }
     const wrap=document.createElement('div');wrap.className=`bw ${isMe?'o':'i'}`;
     // Group: show sender name for incoming
     if(chat&&chat.isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||m.senderPhone||'?';wrap.appendChild(sn);}
@@ -1207,17 +1693,40 @@ function renderMsgs(msgs){
     let pressTimer=null;
     const showRxPicker=(msgEl)=>{
       closeAllRxPickers();
+      playUIClick();
       const picker=document.createElement('div');picker.className='rx-picker';
-      ['❤️','😂','😮','😢','👍','🔥'].forEach(em=>{
+      // Emoji row
+      const emojiRow=document.createElement('div');emojiRow.className='rx-emoji-row';
+      ['❤️','😂','😮','😢','👍','🔥','🫡','💜'].forEach(em=>{
         const opt=document.createElement('div');opt.className='rx-opt';opt.textContent=em;
+        opt.addEventListener('touchend',(e)=>{e.stopPropagation();addReaction(m._id,em);picker.remove();},{passive:true});
         opt.onclick=(e)=>{e.stopPropagation();addReaction(m._id,em);picker.remove();};
-        picker.appendChild(opt);
+        emojiRow.appendChild(opt);
       });
-      // Reply option
-      const replyOpt=document.createElement('div');replyOpt.style.cssText='font-size:13px;cursor:pointer;padding:4px 8px;border-radius:8px;color:var(--cyan);border-left:1px solid rgba(255,255,255,0.1);';replyOpt.textContent='↩ Reply';
-      replyOpt.onclick=(e)=>{e.stopPropagation();setReply(m);picker.remove();};picker.appendChild(replyOpt);
+      picker.appendChild(emojiRow);
+      // Action row
+      const actRow=document.createElement('div');actRow.className='rx-actions';
+      // Reply
+      const replyBtn=document.createElement('div');replyBtn.className='rx-action-btn reply';
+      replyBtn.innerHTML='↩ <span>Reply</span>';
+      replyBtn.onclick=(e)=>{e.stopPropagation();setReply(m);picker.remove();};
+      actRow.appendChild(replyBtn);
+      // Copy
+      const copyBtn=document.createElement('div');copyBtn.className='rx-action-btn copy-btn';
+      copyBtn.innerHTML='⎘ <span>Copy</span>';
+      copyBtn.onclick=(e)=>{e.stopPropagation();try{navigator.clipboard.writeText(m.text);}catch(er){}picker.remove();showToastMsg('Copied!');};
+      actRow.appendChild(copyBtn);
+      // Delete (own messages only)
+      if(m.senderDid===DID){
+        const delBtn=document.createElement('div');delBtn.className='rx-action-btn delete-btn';
+        delBtn.innerHTML='🗑 <span>Delete</span>';
+        delBtn.onclick=(e)=>{e.stopPropagation();deleteMsg(m._id);picker.remove();};
+        actRow.appendChild(delBtn);
+      }
+      picker.appendChild(actRow);
       wrap.appendChild(picker);
       picker.addEventListener('click',e=>e.stopPropagation());
+      picker.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
     };
     b.addEventListener('touchstart',()=>{pressTimer=setTimeout(()=>showRxPicker(b),500);},{passive:true});
     b.addEventListener('touchend',()=>clearTimeout(pressTimer));
@@ -1246,8 +1755,7 @@ function renderMsgs(msgs){
   if(wasAtBottom)setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);
 }
 
-function closeAllRxPickers(){document.querySelectorAll('.rx-picker').forEach(p=>p.remove());}
-document.addEventListener('click',()=>closeAllRxPickers());
+async function saveNick(){const n=document.getElementById('nick-inp').value.trim();if(currentChatId){try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}/nickname`),n||null);}catch(e){}const chat=getCurrentChat()||{};document.getElementById('cname').textContent=n||chat.groupName||chat.name||'Unknown';}closeModal('nick-modal');}
 
 async function addReaction(msgId,emoji){
   if(!currentRoomId||!msgId)return;
@@ -1450,8 +1958,37 @@ async function addMemberToExisting(){
 }
 
 function toggleDD(){const d=document.getElementById('cdd');d.classList.toggle('open');if(d.classList.contains('open')){const close=()=>{d.classList.remove('open');document.removeEventListener('click',close);};setTimeout(()=>document.addEventListener('click',close),10);}}
-function openNickModal(){document.getElementById('cdd').classList.remove('open');const chat=getCurrentChat()||{};document.getElementById('nick-inp').value=chat.nickname||chat.groupName||chat.name||'';document.getElementById('nick-modal').classList.add('open');}
-async function saveNick(){const n=document.getElementById('nick-inp').value.trim();if(currentChatId){try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}/nickname`),n||null);}catch(e){}const chat=getCurrentChat()||{};document.getElementById('cname').textContent=n||chat.groupName||chat.name||'Unknown';}closeModal('nick-modal');}
+function openNickModal(){
+  document.getElementById('cdd').classList.remove('open');
+  const chat=getCurrentChat()||{};
+  const isGroup=chat.isGroup;
+  document.querySelector('#nick-modal .mtitle').textContent=isGroup?'RENAME GROUP (PUBLIC)':'RENAME CONTACT';
+  document.getElementById('nick-inp').value=chat.nickname||chat.groupName||chat.name||'';
+  document.getElementById('nick-modal').classList.add('open');
+}
+async function saveNick(){
+  const n=document.getElementById('nick-inp').value.trim();
+  if(!currentChatId){closeModal('nick-modal');return;}
+  const chat=getCurrentChat()||{};
+  if(chat.isGroup){
+    // Group name: update for ALL members publicly
+    try{
+      await SET(REF(DB,`users/${DID}/chats/${currentChatId}/groupName`),n||chat.groupName||'Group');
+      const members=chat.members||[];
+      for(const m of members){
+        if(m.did&&m.did!==DID){
+          try{await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/groupName`),n||chat.groupName||'Group');}catch(e){}
+        }
+      }
+      chat.groupName=n;
+    }catch(e){}
+    document.getElementById('cname').textContent=n||chat.groupName||'Group';
+  }else{
+    try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}/nickname`),n||null);}catch(e){}
+    document.getElementById('cname').textContent=n||chat.name||'Unknown';
+  }
+  closeModal('nick-modal');
+}
 async function deleteChat(){document.getElementById('cdd').classList.remove('open');if(!confirm('Delete this conversation?'))return;try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}`),null);}catch(e){}closeConv();}
 
 // ════════════════════════════════════════════
@@ -1675,6 +2212,95 @@ function hideCallScreen(){document.getElementById('cov').classList.remove('open'
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('click',e=>{document.querySelectorAll('.mov.open').forEach(m=>{if(e.target===m)m.classList.remove('open');});});
 
+  // ════════════════════════════════════════════
+// NEONSTORE
+// ════════════════════════════════════════════
+const NS_APPS=[
+  {id:'nchat',name:'NeonChat Pro',cat:'social',icon:'💬',color:'linear-gradient(135deg,#aa00ff,#0088ff)',desc:'Enhanced messaging',rating:'4.9',size:'2.1 MB'},
+  {id:'nmusic',name:'NeonBeats',cat:'media',icon:'🎵',color:'linear-gradient(135deg,#ff00aa,#aa00ff)',desc:'Music & radio streaming',rating:'4.7',size:'8.4 MB'},
+  {id:'ncalc',name:'HyperCalc',cat:'tools',icon:'🔢',color:'linear-gradient(135deg,#0088ff,#00ffee)',desc:'Advanced calculator',rating:'4.8',size:'1.2 MB'},
+  {id:'nweather',name:'StormView',cat:'tools',icon:'🌩️',color:'linear-gradient(135deg,#0055ff,#00ccff)',desc:'Neon weather forecasts',rating:'4.6',size:'3.7 MB'},
+  {id:'nnotes',name:'GlowNotes',cat:'productivity',icon:'📝',color:'linear-gradient(135deg,#ffee00,#ff6600)',desc:'Notes with neon flair',rating:'4.5',size:'1.8 MB'},
+  {id:'nphoto',name:'NeonLens',cat:'tools',icon:'📷',color:'linear-gradient(135deg,#00ffee,#0088ff)',desc:'Camera & photo editor',rating:'4.7',size:'12 MB'},
+  {id:'ngame1',name:'CyberRacer',cat:'games',icon:'🏎️',color:'linear-gradient(135deg,#ff2244,#ff6600)',desc:'Neon racing game',rating:'4.4',size:'45 MB'},
+  {id:'ngame2',name:'HexBlaster',cat:'games',icon:'🔮',color:'linear-gradient(135deg,#aa00ff,#ff00aa)',desc:'Puzzle blaster',rating:'4.3',size:'28 MB'},
+];
+const NS_SOON=[
+  {id:'multimes',name:'Multimes Pets',bg:'#000'},
+  {id:'nmap',name:'NeonMaps',bg:'#000'},
+  {id:'nwallet',name:'NeonPay',bg:'#000'},
+  {id:'ngpt',name:'NeonMind AI',bg:'#000'},
+];
+
+let _nsFilter='all';
+
+function nsRender(){
+  // Top charts - hidden
+  const topList=document.getElementById('ns-top-list');
+  if(topList) topList.innerHTML='';
+  document.getElementById('ns-charts-sec').style.display='none';
+
+  // Games grid - hidden
+  document.getElementById('ns-games-sec').style.display='none';
+
+  // Coming soon - single app
+  const sGrid=document.getElementById('ns-soon-grid');
+  if(sGrid){
+    sGrid.innerHTML='';
+    const card=document.createElement('div');
+    card.style.cssText='position:relative;background:#000;border:1px solid rgba(255,255,255,0.06);border-radius:18px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:default;';
+    card.innerHTML=`
+      <div style="font-size:36px;">🐾</div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(-25deg);">
+        <div style="background:rgba(255,180,0,0.92);color:#000;font-family:'Orbitron',monospace;font-size:9px;font-weight:900;letter-spacing:2px;padding:6px 40px;white-space:nowrap;box-shadow:0 0 20px rgba(255,180,0,0.4);">W I P</div>
+      </div>`;
+    sGrid.appendChild(card);
+    const label=document.createElement('div');
+    label.style.cssText='text-align:center;margin-top:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);';
+    label.textContent='MultiMes Pets';
+    sGrid.appendChild(label);
+  }
+}
+
+function nsFilter(cat,el){
+  _nsFilter=cat;
+  document.querySelectorAll('.ns-cat').forEach(c=>c.classList.remove('on'));
+  if(el)el.classList.add('on');
+  nsRender();
+}
+
+function nsSearch(q){
+  if(!q){_nsFilter='all';nsRender();return;}
+  const found=NS_APPS.filter(a=>a.name.toLowerCase().includes(q.toLowerCase())||a.cat.toLowerCase().includes(q.toLowerCase()));
+  const topList=document.getElementById('ns-top-list');
+  if(topList){
+    topList.innerHTML='';
+    found.forEach((a,i)=>{
+      const row=document.createElement('div');row.className='ns-list-row';
+      row.innerHTML=`<div class="ns-list-icon" style="background:${a.color};">${a.icon}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">${a.name}</div><div style="font-size:11px;color:var(--text2);">${a.cat} · ⭐ ${a.rating} · ${a.size}</div></div>
+      <div class="ns-get-btn" onclick="nsGet('${a.id}')">GET</div>`;
+      topList.appendChild(row);
+    });
+    if(!found.length)topList.innerHTML='<div style="padding:20px;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.2);">NO RESULTS</div>';
+  }
+  document.getElementById('ns-games-sec').style.display='none';
+}
+
+function nsGet(id){
+  showToast('NeonStore','Coming soon!',null,'msg');
+}
+
+// Init NS when opened
+const _origOpenApp=window.openApp;
+window.openApp=function(id){
+  _origOpenApp(id);
+  if(id==='ns'){setTimeout(nsRender,100);}
+};
+
+// ════════════════════════════════════════════
+// AUTO-LOCK
+// ════════════════════════════════════════════
 // ════════════════════════════════════════════
 // AUTO-LOCK
 // ════════════════════════════════════════════
