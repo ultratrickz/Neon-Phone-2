@@ -1716,75 +1716,31 @@ function stopCallListeners() {
 }
 
 // ── CALLER: create offer ──────────────────────────────
-async function startWebRTCCaller() {
-  const ad = _activeCallData;
-  const chat = chats.find(c => c.id === (ad.roomId || currentChatId)) || {};
-  showCallScreen(ad.name, avSolidColor(ad.name), 'CONNECTING...', chat.isGroup);
-  try {
-    const stream = await getLocalStream();
-    _pc = makePC();
-    stream.getTracks().forEach(t => _pc.addTrack(t, stream));
-    _pc.ontrack = e => { attachRemoteAudio(e.streams[0]); onCallConnected(); };
-
-    // Send our ICE candidates to  calls/sdp/<callId>/ice_a
-    _pc.onicecandidate = e => {
-      if (e.candidate && _activeCallId) {
-        PUSH(REF(DB, `calls/sdp/${_activeCallId}/ice_a`), e.candidate.toJSON()).catch(() => {});
-      }
-    };
-
-    const offer = await _pc.createOffer({ offerToReceiveAudio: true });
-    await _pc.setLocalDescription(offer);
-
-    // Write offer to shared SDP node
-    await SET(callSdpRef(_activeCallId), { offer: { type: offer.type, sdp: offer.sdp }, ts: Date.now() });
-
-    // Tell receiver to start their side
-    await ctrlWrite(ad.theirDid, { type: 'offer_ready', callId: _activeCallId, callerDid: DID });
-
-    // Listen for answer
-    _sdpUnsub = ONVAL(callSdpRef(_activeCallId), async snap2 => {
-      if (!snap2.exists() || !_pc) return;
-      const data = snap2.val();
-      if (data.answer && !_pc.currentRemoteDescription) {
-        try {
-          await _pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-          console.log('[NeonCall] Caller: remote description set (answer)');
-        } catch (err) { console.error('[NeonCall] setRemoteDescription error:', err); }
-      }
-    });
-
-    // Listen for ICE from receiver (ice_b)
-    _iceUnsubB = ONCHILD(REF(DB, `calls/sdp/${_activeCallId}/ice_b`), snap3 => {
-      const c = snap3.val();
-      if (c && _pc) _pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-    });
-
-  } catch (e) {
-    console.error('[NeonCall] Caller WebRTC error:', e);
-    handleCallFailed(e.name === 'NotAllowedError' ? 'MIC DENIED' : 'CONNECTION ERROR');
-  }
-}
-
-// ── RECEIVER: read offer, create answer ───────────────
 async function startWebRTCReceiver(callerDid) {
   const ad = _activeCallData;
   const chat = chats.find(c => c.id === (ad.roomId || currentChatId)) || {};
   showCallScreen(ad.name, avSolidColor(ad.name), 'CONNECTING...', chat.isGroup);
   try {
-    const stream = await getLocalStream();
     _pc = makePC();
-    stream.getTracks().forEach(t => _pc.addTrack(t, stream));
-    _pc.ontrack = e => { attachRemoteAudio(e.streams[0]); onCallConnected(); };
 
-    // Send our ICE candidates to  calls/sdp/<callId>/ice_b
+    // Set ontrack BEFORE everything else
+    _pc.ontrack = e => {
+      console.log('[NeonCall] Receiver got remote track', e.streams);
+      if (e.streams && e.streams[0]) attachRemoteAudio(e.streams[0]);
+      onCallConnected();
+    };
+
+    const stream = await getLocalStream();
+    stream.getTracks().forEach(t => _pc.addTrack(t, stream));
+
     _pc.onicecandidate = e => {
       if (e.candidate && _activeCallId) {
+        console.log('[NeonCall] Receiver sending ICE candidate');
         PUSH(REF(DB, `calls/sdp/${_activeCallId}/ice_b`), e.candidate.toJSON()).catch(() => {});
       }
     };
 
-    // Poll for offer (retry up to 20 times × 500ms = 10s)
+    // Poll for offer
     let offerData = null;
     for (let i = 0; i < 20; i++) {
       const snap = await GET(CHILD(REF(DB), `calls/sdp/${_activeCallId}`));
@@ -1797,13 +1753,70 @@ async function startWebRTCReceiver(callerDid) {
     const answer = await _pc.createAnswer();
     await _pc.setLocalDescription(answer);
 
-    // Write answer to SDP node
     await SET(REF(DB, `calls/sdp/${_activeCallId}/answer`), { type: answer.type, sdp: answer.sdp });
+    console.log('[NeonCall] Receiver: answer written');
 
     // Listen for ICE from caller (ice_a)
     _iceUnsubA = ONCHILD(REF(DB, `calls/sdp/${_activeCallId}/ice_a`), snap4 => {
       const c = snap4.val();
-      if (c && _pc) _pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+      if (c && _pc && _pc.remoteDescription) {
+        _pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn('[NeonCall] ICE add error (receiver):', e));
+      }
+    });
+
+  } catch (e) {
+    console.error('[NeonCall] Receiver WebRTC error:', e);
+    handleCallFailed(e.name === 'NotAllowedError' ? 'MIC DENIED' : 'CONNECTION ERROR');
+  }
+}
+
+// ── RECEIVER: read offer, create answer ───────────────
+async function startWebRTCReceiver(callerDid) {
+  const ad = _activeCallData;
+  const chat = chats.find(c => c.id === (ad.roomId || currentChatId)) || {};
+  showCallScreen(ad.name, avSolidColor(ad.name), 'CONNECTING...', chat.isGroup);
+  try {
+    _pc = makePC();
+
+    // Set ontrack BEFORE everything else
+    _pc.ontrack = e => {
+      console.log('[NeonCall] Receiver got remote track', e.streams);
+      if (e.streams && e.streams[0]) attachRemoteAudio(e.streams[0]);
+      onCallConnected();
+    };
+
+    const stream = await getLocalStream();
+    stream.getTracks().forEach(t => _pc.addTrack(t, stream));
+
+    _pc.onicecandidate = e => {
+      if (e.candidate && _activeCallId) {
+        console.log('[NeonCall] Receiver sending ICE candidate');
+        PUSH(REF(DB, `calls/sdp/${_activeCallId}/ice_b`), e.candidate.toJSON()).catch(() => {});
+      }
+    };
+
+    // Poll for offer
+    let offerData = null;
+    for (let i = 0; i < 20; i++) {
+      const snap = await GET(CHILD(REF(DB), `calls/sdp/${_activeCallId}`));
+      if (snap.exists() && snap.val().offer) { offerData = snap.val().offer; break; }
+      await new Promise(r => setTimeout(r, 500));
+    }
+    if (!offerData) { handleCallFailed('NO OFFER RECEIVED'); return; }
+
+    await _pc.setRemoteDescription(new RTCSessionDescription(offerData));
+    const answer = await _pc.createAnswer();
+    await _pc.setLocalDescription(answer);
+
+    await SET(REF(DB, `calls/sdp/${_activeCallId}/answer`), { type: answer.type, sdp: answer.sdp });
+    console.log('[NeonCall] Receiver: answer written');
+
+    // Listen for ICE from caller (ice_a)
+    _iceUnsubA = ONCHILD(REF(DB, `calls/sdp/${_activeCallId}/ice_a`), snap4 => {
+      const c = snap4.val();
+      if (c && _pc && _pc.remoteDescription) {
+        _pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn('[NeonCall] ICE add error (receiver):', e));
+      }
     });
 
   } catch (e) {
