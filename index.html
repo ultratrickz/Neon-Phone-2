@@ -2041,9 +2041,11 @@ async function joinAgoraChannel(channelName,role){
     if(_agoraClient){try{_agoraClient.off('user-left');await _agoraClient.leave();}catch(e){}; _agoraClient=null;}
     if(_localAudioTrack){try{_localAudioTrack.close();}catch(e){}; _localAudioTrack=null;}
 
+// Resume AudioContext (required on desktop after user gesture)
+    try{getAC();}catch(e){}
     // Request mic permission explicitly first so it doesn't fail silently
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
       stream.getTracks().forEach(t=>t.stop());
     }catch(e){
       console.error('[Mic permission denied]',e);
@@ -2083,8 +2085,9 @@ async function joinAgoraChannel(channelName,role){
       if(_callTimer)handleRemoteEnd();
     });
 
-    // Join channel then create+publish track
-    await _agoraClient.join(AGORA_APP_ID,channelName,null,DID);
+   // Agora requires numeric UID — hash DID to a safe integer
+const numUID=Math.abs(DID.split('').reduce((a,c)=>Math.imul(31,a)+c.charCodeAt(0)|0,0))%999999+1;
+await _agoraClient.join(AGORA_APP_ID,channelName,null,numUID);
 
     _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack({
       AEC:true,
@@ -2097,19 +2100,40 @@ async function joinAgoraChannel(channelName,role){
 
     // On desktop, if no remote user publishes within 20s of both sides joining,
     // attempt to re-subscribe to anyone already in channel
-    setTimeout(async()=>{
-      if(_agoraClient&&!_callTimer){
-        const remoteUsers=_agoraClient.remoteUsers;
-        for(const u of remoteUsers){
-          if(u.hasAudio){
-            try{
-              await _agoraClient.subscribe(u,'audio');
+    // Poll for remote users already in channel (handles race where user-published fired before listener attached)
+    const pollRemote=async()=>{
+      if(!_agoraClient||_callTimer)return;
+      const remoteUsers=_agoraClient.remoteUsers;
+      for(const u of remoteUsers){
+        if(u.hasAudio){
+          try{
+            await _agoraClient.subscribe(u,'audio');
+            if(u.audioTrack){
               u.audioTrack.play();
-            }catch(e){}
-          }
+              playCallConnectSound();
+              startWave();
+              const statLbl=document.getElementById('call-stat-lbl');
+              statLbl.style.display='block';
+              statLbl.textContent='CONNECTED · 0:00';
+              if(_activeCallData&&_activeCallData.isGroup&&document.getElementById('gcall-stat-lbl'))
+                document.getElementById('gcall-stat-lbl').textContent='CONNECTED · 0:00';
+              if(!_callTimer){
+                _callSeconds=0;
+                _callTimer=setInterval(()=>{
+                  _callSeconds++;
+                  const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');
+                  document.getElementById('call-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;
+                  if(document.getElementById('gcall-stat-lbl'))
+                    document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;
+                },1000);
+              }
+            }
+          }catch(e){}
         }
       }
-    },3000);
+      if(!_callTimer)setTimeout(pollRemote,1500);
+    };
+    setTimeout(pollRemote,1500);
 
   }catch(e){console.error('[Agora]',e);handleCallFailed('CONNECTION FAILED');}
 }
