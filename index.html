@@ -1681,14 +1681,11 @@ function startCallSignalListener() {
       }
     }
     else if (d.type === 'offer_ready') {
-      clearMyCtrl();
-      if (_activeCallId && d.callId === _activeCallId && _activeCallData?.myRole === 'receiver') {
-        // Call screen might already be open (accepted), start WebRTC receiver side
-        if (document.getElementById('cov').classList.contains('open')) {
-          await startWebRTCReceiver(d.callerDid);
-        }
-      }
-    }
+  clearMyCtrl();
+  if (_activeCallId && d.callId === _activeCallId && _activeCallData?.myRole === 'receiver') {
+    await startWebRTCReceiver(d.callerDid);
+  }
+}
     else if (d.type === 'ended') {
       clearMyCtrl();
       if (_activeCallId && d.callId === _activeCallId) handleRemoteEnd();
@@ -1888,12 +1885,13 @@ async function acceptCall() {
   document.getElementById('inc-call').classList.remove('open');
   if (!_activeCallData || !_activeCallData.callerDid) { resetCallState(); startCallSignalListener(); return; }
   // Tell caller we accepted — they will build the WebRTC offer
-  try { await ctrlWrite(_activeCallData.callerDid, { type: 'accepted', callId: _activeCallId, receiverDid: DID }); }
-  catch (e) { handleCallFailed('SIGNAL ERROR'); return; }
-  clearMyCtrl();
-  // Show connecting screen and wait for 'offer_ready' signal via ctrl listener
-  const chat = chats.find(c => c.id === (_activeCallData.roomId || currentChatId)) || {};
-  showCallScreen(_activeCallData.name, avSolidColor(_activeCallData.name), 'WAITING FOR OFFER...', chat.isGroup);
+// Show call screen FIRST so the ctrl listener can fire startWebRTCReceiver
+const chat = chats.find(c => c.id === (_activeCallData.roomId || currentChatId)) || {};
+showCallScreen(_activeCallData.name, avSolidColor(_activeCallData.name), 'CONNECTING...', chat.isGroup);
+clearMyCtrl();
+// Tell caller we accepted — they will build the WebRTC offer
+try { await ctrlWrite(_activeCallData.callerDid, { type: 'accepted', callId: _activeCallId, receiverDid: DID }); }
+catch (e) { handleCallFailed('SIGNAL ERROR'); return; }
   // The ctrl listener (startCallSignalListener) will fire offer_ready and call startWebRTCReceiver
 }
 
