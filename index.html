@@ -2063,7 +2063,10 @@ async function joinAgoraChannel(channelName,role){
   }
 }
     });
-    _agoraClient.on('user-left',()=>handleRemoteEnd());
+ _agoraClient.on('user-left',(user)=>{
+      // Only end call if we were already connected (wave is running), not during setup
+      if(_callTimer)handleRemoteEnd();
+    });
     await _agoraClient.join(AGORA_APP_ID,channelName,null,DID);
    _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack({
   AEC: true,
@@ -2075,7 +2078,10 @@ async function joinAgoraChannel(channelName,role){
   }catch(e){console.error('[Agora]',e);handleCallFailed('CONNECTION FAILED');}
 }
 
-async function leaveAgoraChannel(){try{if(_localAudioTrack){_localAudioTrack.close();_localAudioTrack=null;}if(_agoraClient){await _agoraClient.leave();_agoraClient=null;}}catch(e){}}
+async function leaveAgoraChannel(){
+  try{if(_localAudioTrack){_localAudioTrack.setMuted(true);_localAudioTrack.close();_localAudioTrack=null;}}catch(e){}
+  try{if(_agoraClient){_agoraClient.off('user-left');await _agoraClient.leave();_agoraClient=null;}}catch(e){}
+}
 
 function startCallSignalListener(){
   stopCallListeners();
