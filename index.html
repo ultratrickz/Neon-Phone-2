@@ -1449,9 +1449,16 @@ function openKbdEmoji(){
       const btn=document.createElement('div');
       btn.style.cssText='font-size:26px;padding:4px;cursor:pointer;border-radius:8px;transition:transform 0.1s;';
       btn.textContent=em;
-      btn.addEventListener('touchstart',()=>{btn.style.transform='scale(1.3)';},{passive:true});
-      btn.addEventListener('touchend',()=>{btn.style.transform='';ktype(em);},{passive:true});
-      btn.onclick=()=>ktype(em);
+      btn.addEventListener('touchstart',(e)=>{e.preventDefault();btn.style.transform='scale(1.3)';},{passive:false});
+      btn.addEventListener('touchend',(e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        btn.style.transform='';
+        ktype(em);
+        // After typing emoji, stay in emoji mode but keep keyboard visible
+        const kbd=document.getElementById('nkbd');
+        if(!kbd.classList.contains('vis'))kbd.classList.add('vis');
+      },{passive:false});
       box.appendChild(btn);
     });
     box.style.display='flex';
