@@ -2040,17 +2040,18 @@ async function joinAgoraChannel(channelName,role){
   try{
     if(_agoraClient){try{await _agoraClient.leave();}catch(e){}; _agoraClient=null;}
     if(_localAudioTrack){try{_localAudioTrack.close();}catch(e){}; _localAudioTrack=null;}
-    _agoraClient=AgoraRTC.createClient({mode:'rtc',codec:'vp8'});
+    _agoraClient=AgoraRTC.createClient({mode:'rtc',codec:'opus'});
+AgoraRTC.setParameter('AUDIO_VOLUME_INDICATION_INTERVAL', 200);
     _agoraClient.on('user-published',async(user,mediaType)=>{
       await _agoraClient.subscribe(user,mediaType);
-      if(mediaType==='audio'){user.audioTrack.play();playCallConnectSound();startWave();if(!_callTimer){_callSeconds=0;_callTimer=setInterval(()=>{_callSeconds++;const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');document.getElementById('call-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;if(document.getElementById('gcall-stat-lbl'))document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;},1000);}
+      if(mediaType==='audio'){user.audioTrack.play();user.audioTrack.setVolume(200);playCallConnectSound();startWave();if(!_callTimer){_callSeconds=0;_callTimer=setInterval(()=>{_callSeconds++;const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');document.getElementById('call-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;if(document.getElementById('gcall-stat-lbl'))document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;},1000);}
         document.getElementById('call-stat-lbl').textContent='CONNECTED · 0:00';
         if(_activeCallData&&_activeCallData.isGroup){document.getElementById('gcall-stat-lbl').textContent='CONNECTED · 0:00';}
       }
     });
     _agoraClient.on('user-left',()=>handleRemoteEnd());
     await _agoraClient.join(AGORA_APP_ID,channelName,null,DID);
-    _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack();
+   _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack({encoderConfig:'speech_standard',AEC:true,ANS:true,AGC:true});
     await _agoraClient.publish(_localAudioTrack);
   }catch(e){console.error('[Agora]',e);handleCallFailed('CONNECTION FAILED');}
 }
@@ -2204,7 +2205,6 @@ function showCallScreen(name,color,status,isGroup=false,groupMembers=[]){
       av.innerHTML=`<div class="gcall-circle" style="background:radial-gradient(circle at 40% 35%,${col}aa,${col}44);">${(m.name||m.phone||'?')[0].toUpperCase()}</div><div class="gcall-name">${m.name||m.phone||'?'}</div>`;
       grid.appendChild(av);
     });
-    // Add self
     const selfAv=document.createElement('div');selfAv.className='gcall-av';selfAv.innerHTML=`<div class="gcall-circle speaking" style="background:radial-gradient(circle at 40% 35%,#aa00ffaa,#aa00ff44);">${(myName()||'?')[0].toUpperCase()}</div><div class="gcall-name">You</div>`;
     grid.appendChild(selfAv);
   }else{
@@ -2213,7 +2213,7 @@ function showCallScreen(name,color,status,isGroup=false,groupMembers=[]){
     document.getElementById('call-av-inner').textContent=name[0].toUpperCase();
     document.getElementById('call-av-inner').style.background=`radial-gradient(circle at 40% 35%,${color}cc,${color}55)`;
     document.getElementById('call-name-lbl').textContent=name;
-    document.getElementById('call-stat-lbl').textContent=status;
+    document.getElementById('call-stat-lbl').style.display='none';
   }
   document.getElementById('cov').classList.add('open');
 }
