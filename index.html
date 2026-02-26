@@ -1625,7 +1625,11 @@ function makePC() {
 function stopAllCallMedia() {
   if (_pc) { try { _pc.close(); } catch(e) {} _pc = null; }
   releaseLocalStream();
-  if (_remoteAudio) { _remoteAudio.srcObject = null; _remoteAudio = null; }
+  if (_remoteAudio) {
+    _remoteAudio.srcObject = null;
+    _remoteAudio.remove();
+    _remoteAudio = null;
+  }
   if (_sdpUnsub)  { _sdpUnsub();  _sdpUnsub  = null; }
   if (_iceUnsubA) { _iceUnsubA(); _iceUnsubA = null; }
   if (_iceUnsubB) { _iceUnsubB(); _iceUnsubB = null; }
@@ -1633,11 +1637,26 @@ function stopAllCallMedia() {
 
 // ── Remote audio helper ──────────────────────────────
 function attachRemoteAudio(stream) {
-  if (_remoteAudio) { _remoteAudio.srcObject = null; }
-  _remoteAudio = new Audio();
-  _remoteAudio.autoplay = true;
-  _remoteAudio.srcObject = stream;
-  _remoteAudio.play().catch(() => {});
+  // Remove any existing remote audio element
+  const existing = document.getElementById('remote-audio-el');
+  if (existing) existing.remove();
+
+  const audio = document.createElement('audio');
+  audio.id = 'remote-audio-el';
+  audio.autoplay = true;
+  audio.setAttribute('playsinline', '');   // critical for iOS
+  audio.style.display = 'none';
+  audio.srcObject = stream;
+  document.body.appendChild(audio);        // must be in DOM
+
+  audio.play().catch(e => {
+    console.warn('[NeonCall] Audio play blocked:', e);
+    // Retry on next user gesture
+    const retry = () => { audio.play().catch(() => {}); document.removeEventListener('click', retry); };
+    document.addEventListener('click', retry);
+  });
+
+  _remoteAudio = audio;
 }
 
 // ── Called when audio is flowing ─────────────────────
