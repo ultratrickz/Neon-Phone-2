@@ -2037,44 +2037,80 @@ async function resolveTheirDid(chat){if(chat.theirDid)return chat.theirDid;if(!c
 
 async function joinAgoraChannel(channelName,role){
   try{
-    if(_agoraClient){try{await _agoraClient.leave();}catch(e){}; _agoraClient=null;}
+    // Clean up any existing session
+    if(_agoraClient){try{_agoraClient.off('user-left');await _agoraClient.leave();}catch(e){}; _agoraClient=null;}
     if(_localAudioTrack){try{_localAudioTrack.close();}catch(e){}; _localAudioTrack=null;}
+
+    // Request mic permission explicitly first so it doesn't fail silently
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      stream.getTracks().forEach(t=>t.stop());
+    }catch(e){
+      console.error('[Mic permission denied]',e);
+      handleCallFailed('MIC BLOCKED');
+      return;
+    }
+
     _agoraClient=AgoraRTC.createClient({mode:'rtc',codec:'vp8'});
+
     _agoraClient.on('user-published',async(user,mediaType)=>{
-      await _agoraClient.subscribe(user,mediaType);
-   if(mediaType==='audio'){
-  user.audioTrack.play();
-  playCallConnectSound();
-  startWave();
-  const statLbl=document.getElementById('call-stat-lbl');
-  statLbl.style.display='block';
-  statLbl.textContent='CONNECTED · 0:00';
-  if(_activeCallData&&_activeCallData.isGroup&&document.getElementById('gcall-stat-lbl'))
-    document.getElementById('gcall-stat-lbl').textContent='CONNECTED · 0:00';
-  if(!_callTimer){
-    _callSeconds=0;
-    _callTimer=setInterval(()=>{
-      _callSeconds++;
-      const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');
-      statLbl.textContent=`CONNECTED · ${m}:${sec}`;
-      if(document.getElementById('gcall-stat-lbl'))
-        document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;
-    },1000);
-  }
-}
+      try{
+        await _agoraClient.subscribe(user,mediaType);
+        if(mediaType==='audio'){
+          user.audioTrack.play();
+          playCallConnectSound();
+          startWave();
+          const statLbl=document.getElementById('call-stat-lbl');
+          statLbl.style.display='block';
+          statLbl.textContent='CONNECTED · 0:00';
+          if(_activeCallData&&_activeCallData.isGroup&&document.getElementById('gcall-stat-lbl'))
+            document.getElementById('gcall-stat-lbl').textContent='CONNECTED · 0:00';
+          if(!_callTimer){
+            _callSeconds=0;
+            _callTimer=setInterval(()=>{
+              _callSeconds++;
+              const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');
+              statLbl.textContent=`CONNECTED · ${m}:${sec}`;
+              if(document.getElementById('gcall-stat-lbl'))
+                document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;
+            },1000);
+          }
+        }
+      }catch(e){console.error('[Agora subscribe error]',e);}
     });
- _agoraClient.on('user-left',(user)=>{
-      // Only end call if we were already connected (wave is running), not during setup
+
+    _agoraClient.on('user-left',(user)=>{
       if(_callTimer)handleRemoteEnd();
     });
+
+    // Join channel then create+publish track
     await _agoraClient.join(AGORA_APP_ID,channelName,null,DID);
-   _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack({
-  AEC: true,
-  AGC: true,
-  ANS: true,
-  encoderConfig: 'music_standard'
-});
+
+    _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack({
+      AEC:true,
+      AGC:true,
+      ANS:true,
+      encoderConfig:'music_standard'
+    });
+
     await _agoraClient.publish(_localAudioTrack);
+
+    // On desktop, if no remote user publishes within 20s of both sides joining,
+    // attempt to re-subscribe to anyone already in channel
+    setTimeout(async()=>{
+      if(_agoraClient&&!_callTimer){
+        const remoteUsers=_agoraClient.remoteUsers;
+        for(const u of remoteUsers){
+          if(u.hasAudio){
+            try{
+              await _agoraClient.subscribe(u,'audio');
+              u.audioTrack.play();
+            }catch(e){}
+          }
+        }
+      }
+    },3000);
+
   }catch(e){console.error('[Agora]',e);handleCallFailed('CONNECTION FAILED');}
 }
 
