@@ -2042,14 +2042,35 @@ async function joinAgoraChannel(channelName,role){
     _agoraClient=AgoraRTC.createClient({mode:'rtc',codec:'vp8'});
     _agoraClient.on('user-published',async(user,mediaType)=>{
       await _agoraClient.subscribe(user,mediaType);
-      if(mediaType==='audio'){user.audioTrack.play();playCallConnectSound();startWave();if(!_callTimer){_callSeconds=0;_callTimer=setInterval(()=>{_callSeconds++;const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');document.getElementById('call-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;if(document.getElementById('gcall-stat-lbl'))document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;},1000);}
-        document.getElementById('call-stat-lbl').textContent='CONNECTED · 0:00';
-        if(_activeCallData&&_activeCallData.isGroup){document.getElementById('gcall-stat-lbl').textContent='CONNECTED · 0:00';}
-      }
+   if(mediaType==='audio'){
+  user.audioTrack.play();
+  playCallConnectSound();
+  startWave();
+  const statLbl=document.getElementById('call-stat-lbl');
+  statLbl.style.display='block';
+  statLbl.textContent='CONNECTED · 0:00';
+  if(_activeCallData&&_activeCallData.isGroup&&document.getElementById('gcall-stat-lbl'))
+    document.getElementById('gcall-stat-lbl').textContent='CONNECTED · 0:00';
+  if(!_callTimer){
+    _callSeconds=0;
+    _callTimer=setInterval(()=>{
+      _callSeconds++;
+      const m=Math.floor(_callSeconds/60),sec=String(_callSeconds%60).padStart(2,'0');
+      statLbl.textContent=`CONNECTED · ${m}:${sec}`;
+      if(document.getElementById('gcall-stat-lbl'))
+        document.getElementById('gcall-stat-lbl').textContent=`CONNECTED · ${m}:${sec}`;
+    },1000);
+  }
+}
     });
     _agoraClient.on('user-left',()=>handleRemoteEnd());
     await _agoraClient.join(AGORA_APP_ID,channelName,null,DID);
-    _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack();
+   _localAudioTrack=await AgoraRTC.createMicrophoneAudioTrack({
+  AEC: true,
+  AGC: true,
+  ANS: true,
+  encoderConfig: 'music_standard'
+});
     await _agoraClient.publish(_localAudioTrack);
   }catch(e){console.error('[Agora]',e);handleCallFailed('CONNECTION FAILED');}
 }
@@ -2067,8 +2088,14 @@ function startCallSignalListener(){
       if(!_activeCallId)showIncomingCall(d);
       else ctrlWrite(d.callerDid,{type:'ended',callId:d.callId}).catch(()=>{});
     }else if(d.type==='accepted'){
-      if(_activeCallId&&d.callId===_activeCallId&&_activeCallData?.myRole==='caller'){clearTimeout(_callAutoCancel);stopRingtone();SET(callCtrlRef(DID),null).catch(()=>{});await doOffer();}
-      else SET(callCtrlRef(DID),null).catch(()=>{});
+      SET(callCtrlRef(DID),null).catch(()=>{});
+      if(_activeCallId&&d.callId===_activeCallId&&_activeCallData?.myRole==='caller'){
+        clearTimeout(_callAutoCancel);
+        stopRingtone();
+        const channelName=_activeCallId.replace(/[^a-zA-Z0-9_-]/g,'_');
+        showCallScreen(_activeCallData.name,avSolidColor(_activeCallData.name),'CONNECTING...',false,[]);
+        await joinAgoraChannel(channelName,'caller');
+      }
     }else if(d.type==='ended'){
       SET(callCtrlRef(DID),null).catch(()=>{});
       if(_activeCallId&&d.callId===_activeCallId)handleRemoteEnd();else clearMyNodes();
@@ -2076,15 +2103,11 @@ function startCallSignalListener(){
   });
 }
 
-async function doOffer(){
-  const channelName=_activeCallId.replace(/[^a-zA-Z0-9_-]/g,'_');
-  showCallScreen(_activeCallData.name,avSolidColor(_activeCallData.name),'CONNECTING...',_activeCallData.isGroup,_activeCallData.groupMembers);
-  await joinAgoraChannel(channelName,'caller');
-}
 async function doAnswer(channelName){
   showCallScreen(_activeCallData.name,avSolidColor(_activeCallData.name),'CONNECTING...',_activeCallData.isGroup,_activeCallData.groupMembers);
   await joinAgoraChannel(channelName,'receiver');
 }
+
 
 async function doCallFromConv(){
   document.getElementById('cdd').classList.remove('open');
@@ -2151,8 +2174,10 @@ async function acceptCall(){
   document.getElementById('inc-call').classList.remove('open');
   if(!_activeCallData||!_activeCallData.callerDid){resetCallState();startCallSignalListener();return;}
   const channelName=_activeCallId.replace(/[^a-zA-Z0-9_-]/g,'_');
-  try{await ctrlWrite(_activeCallData.callerDid,{type:'accepted',callId:_activeCallId,receiverDid:DID});}catch(e){handleCallFailed('SIGNAL ERROR');return;}
   SET(callCtrlRef(DID),null).catch(()=>{});
+  // Notify caller we accepted — they will join the channel on their side
+  try{await ctrlWrite(_activeCallData.callerDid,{type:'accepted',callId:_activeCallId,receiverDid:DID});}catch(e){handleCallFailed('SIGNAL ERROR');return;}
+  // Receiver joins channel immediately after signaling
   await doAnswer(channelName);
 }
 
@@ -2203,16 +2228,23 @@ function showCallScreen(name,color,status,isGroup=false,groupMembers=[]){
       av.innerHTML=`<div class="gcall-circle" style="background:radial-gradient(circle at 40% 35%,${col}aa,${col}44);">${(m.name||m.phone||'?')[0].toUpperCase()}</div><div class="gcall-name">${m.name||m.phone||'?'}</div>`;
       grid.appendChild(av);
     });
-    // Add self
     const selfAv=document.createElement('div');selfAv.className='gcall-av';selfAv.innerHTML=`<div class="gcall-circle speaking" style="background:radial-gradient(circle at 40% 35%,#aa00ffaa,#aa00ff44);">${(myName()||'?')[0].toUpperCase()}</div><div class="gcall-name">You</div>`;
     grid.appendChild(selfAv);
   }else{
     document.getElementById('group-call-ui').style.display='none';
-    document.getElementById('regular-call-ui').style.display='flex';
+    const rui=document.getElementById('regular-call-ui');
+    rui.style.display='flex';
+    rui.style.flexDirection='column';
+    rui.style.alignItems='center';
+    // Name above the circle
+    document.getElementById('call-name-lbl').textContent=name;
+    document.getElementById('call-name-lbl').style.marginBottom='24px';
+    document.getElementById('call-name-lbl').style.marginTop='0';
     document.getElementById('call-av-inner').textContent=name[0].toUpperCase();
     document.getElementById('call-av-inner').style.background=`radial-gradient(circle at 40% 35%,${color}cc,${color}55)`;
-    document.getElementById('call-name-lbl').textContent=name;
+    // Hide status label (only show wave when connected)
     document.getElementById('call-stat-lbl').textContent=status;
+    document.getElementById('call-stat-lbl').style.display='none';
   }
   document.getElementById('cov').classList.add('open');
 }
