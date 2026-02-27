@@ -789,7 +789,7 @@ body.night{filter:sepia(0.25) brightness(0.82);}
   </div>
 </div>
 
-<!-- No third-party call SDK needed — using native WebRTC built into every browser -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
 <!-- Firebase: use type="module" properly -->
 <script type="module">
@@ -1541,550 +1541,388 @@ function toastTap(){document.getElementById('toast').classList.remove('show');if
 
 
 // ═══════════════════════════════════════════════════
-// CALL SYSTEM — Native WebRTC + Firebase Signaling
-// No third-party SDK required. Works internationally.
-//
-// How it works:
-//   • RTCPeerConnection is built into every modern browser — no SDK needed.
-//   • Firebase Realtime DB (already used for chat) acts as the signaling
-//     channel: both sides exchange SDP offer/answer + ICE candidates.
-//   • STUN servers (Google, free) discover each peer's public IP.
-//   • TURN relay (OpenRelay, free) handles strict NAT / corporate firewalls.
-//
-// Call flow:
-//   1. Caller  → writes  calls/<theirDid>/ctrl  { type:'ringing' }
-//   2. Callee  → shows incoming UI, writes  ctrl { type:'accepted' }
-//   3. Caller  → creates RTCPeerConnection, creates SDP offer,
-//                writes  calls/sdp/<callId>/offer
-//                writes  calls/<theirDid>/ctrl  { type:'offer_ready' }
-//   4. Callee  → reads offer, creates answer,
-//                writes  calls/sdp/<callId>/answer,
-//                streams ICE candidates to  calls/sdp/<callId>/ice_b
-//   5. Caller  → reads answer, streams ICE to  calls/sdp/<callId>/ice_a
-//   6. Audio flows peer-to-peer (or via TURN if P2P blocked)
-//   7. End     → writes { type:'ended' } to other side's ctrl, cleans up
+// PEERJS CALL SYSTEM — 1-to-1 + Group
+// PeerJS handles all WebRTC. Firebase only rings people.
 // ═══════════════════════════════════════════════════
 
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'turn:a.relay.metered.ca:80',
-    username: 'YOUR_METERED_USERNAME',
-    credential: 'YOUR_METERED_CREDENTIAL' },
-  { urls: 'turn:a.relay.metered.ca:80?transport=tcp',
-    username: 'YOUR_METERED_USERNAME',
-    credential: 'YOUR_METERED_CREDENTIAL' },
-  { urls: 'turn:a.relay.metered.ca:443',
-    username: 'YOUR_METERED_USERNAME',
-    credential: 'YOUR_METERED_CREDENTIAL' },
-  { urls: 'turns:a.relay.metered.ca:443?transport=tcp',
-    username: 'YOUR_METERED_USERNAME',
-    credential: 'YOUR_METERED_CREDENTIAL' },
-];
+const PEERJS_CONFIG = {
+  debug: 0,
+  config: {
+    iceServers: [
+      { urls: ['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
+      { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turns:openrelay.metered.ca:443'],
+        username:'openrelayproject', credential:'openrelayproject' }
+    ]
+  }
+};
 
-// ── State ────────────────────────────────────────────
-let _pc = null;               // RTCPeerConnection
-let _localStream = null;      // getUserMedia stream
-let _remoteAudio = null;      // <audio> element for remote
-let _ctrlUnsub = null;        // Firebase listener: our ctrl inbox
-let _iceUnsubA = null;        // Firebase listener: incoming ICE (as caller)
-let _iceUnsubB = null;        // Firebase listener: incoming ICE (as receiver)
-let _sdpUnsub = null;         // Firebase listener: waiting for answer/offer
-let _activeCallId = null;
-let _activeCallData = null;
-let _callTimer = null;
-let _callSeconds = 0;
-let _isMuted = false;
-let _isSpeaker = false;
-let _callAutoCancel = null;
+let _peer=null, _peerId=null, _localStream=null, _remoteAudio=null;
+let _activeCall=null, _groupCalls=[], _pendingMediaCall=null;
+let _ctrlUnsub=null, _callTimer=null, _callSeconds=0;
+let _isMuted=false, _isSpeaker=false;
+let _activeCallId=null, _activeCallData=null, _callAutoCancel=null;
 
-// ── Firebase path helpers ────────────────────────────
-const callCtrlRef = did => REF(DB, `calls/${did}/ctrl`);
-const callSdpRef  = cid => REF(DB, `calls/sdp/${cid}`);
-function ctrlWrite(targetDid, data) { return SET(callCtrlRef(targetDid), { ...data, ts: Date.now() }); }
-function clearMyCtrl() { SET(callCtrlRef(DID), null).catch(() => {}); }
-function clearSdp(cid) { if (cid) SET(callSdpRef(cid), null).catch(() => {}); }
+function initPeer(){
+  return new Promise((resolve,reject)=>{
+    if(_peer&&!_peer.destroyed){resolve(_peer);return;}
+    const pid=DID.replace(/[^a-zA-Z0-9_-]/g,'_');
+    _peerId=pid;
+    _peer=new Peer(pid,PEERJS_CONFIG);
+    _peer.on('open',id=>{
+      console.log('[NeonCall] PeerJS ready:',id);
+      _peerId=id;
+      SET(REF(DB,`users/${DID}/peerId`),id).catch(()=>{});
+      resolve(_peer);
+    });
+    _peer.on('error',e=>{
+      console.warn('[NeonCall] PeerJS error:',e.type);
+      if(e.type==='unavailable-id'){
+        const pid2=DID.replace(/[^a-zA-Z0-9_-]/g,'_')+'_'+Date.now().toString(36);
+        _peer=new Peer(pid2,PEERJS_CONFIG);
+        _peer.on('open',id2=>{_peerId=id2;SET(REF(DB,`users/${DID}/peerId`),id2).catch(()=>{});resolve(_peer);});
+        _peer.on('error',e2=>reject(e2));
+      } else if(_activeCallId){handleCallFailed('NETWORK ERROR');}
+    });
+    _peer.on('disconnected',()=>{if(!_peer.destroyed)_peer.reconnect();});
+    _peer.on('call',incoming=>{
+      console.log('[NeonCall] Incoming PeerJS call');
+      if(_activeCallData&&_activeCallData.myRole==='receiver'){
+        answerPeerCall(incoming);
+      } else {
+        _pendingMediaCall=incoming;
+      }
+    });
+  });
+}
 
-// ── Mic ──────────────────────────────────────────────
-async function getLocalStream() {
-  if (_localStream && _localStream.active) return _localStream;
-  _localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+function answerPeerCall(mediaCall){
+  getLocalStream().then(stream=>{
+    mediaCall.answer(stream);
+    mediaCall.on('stream',remoteStream=>{
+      console.log('[NeonCall] Got remote stream (receiver)');
+      attachRemoteAudio(remoteStream);
+      onCallConnected();
+    });
+    mediaCall.on('close',()=>handleRemoteEnd());
+    mediaCall.on('error',e=>{console.error('[NeonCall] call error:',e);handleRemoteEnd();});
+    _activeCall=mediaCall;
+  }).catch(e=>handleCallFailed(e.name==='NotAllowedError'?'MIC DENIED':'MIC ERROR'));
+}
+
+async function getLocalStream(){
+  if(_localStream&&_localStream.active)return _localStream;
+  _localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
   return _localStream;
 }
-function releaseLocalStream() {
-  if (_localStream) { _localStream.getTracks().forEach(t => t.stop()); _localStream = null; }
+function releaseLocalStream(){
+  if(_localStream){_localStream.getTracks().forEach(t=>t.stop());_localStream=null;}
 }
 
-// ── RTCPeerConnection ────────────────────────────────
-function makePC() {
-  const pc = new RTCPeerConnection({ 
-    iceServers: ICE_SERVERS, 
-    iceCandidatePoolSize: 10,
-    iceTransportPolicy: 'all'  // try 'relay' to force TURN if still broken
+function attachRemoteAudio(stream){
+  const existing=document.getElementById('remote-audio-el');
+  if(existing)existing.remove();
+  const audio=document.createElement('audio');
+  audio.id='remote-audio-el';
+  audio.autoplay=true;
+  audio.setAttribute('playsinline','');
+  audio.style.display='none';
+  audio.srcObject=stream;
+  document.body.appendChild(audio);
+  audio.play().catch(()=>{
+    const retry=()=>{audio.play().catch(()=>{});document.removeEventListener('click',retry);};
+    document.addEventListener('click',retry);
   });
-  pc.oniceconnectionstatechange = () => {
-    console.log('[NeonCall] ICE state:', pc.iceConnectionState);
-    if (pc.iceConnectionState === 'failed') {
-      // Force ICE restart
-      if (_activeCallData?.myRole === 'caller' && _pc) {
-        _pc.restartIce();
-      } else {
-        handleCallFailed('ICE FAILED');
-      }
-    }
-    if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-      console.log('[NeonCall] ICE connected!');
-    }
-    if (pc.iceConnectionState === 'disconnected') {
-      setTimeout(() => { 
-        if (_pc && _pc.iceConnectionState === 'disconnected') handleRemoteEnd(); 
-      }, 4000);
-    }
-  };
-  pc.onconnectionstatechange = () => {
-    console.log('[NeonCall] Connection state:', pc.connectionState);
-    if (pc.connectionState === 'failed') handleCallFailed('CONNECTION FAILED');
-    if (pc.connectionState === 'connected') console.log('[NeonCall] Fully connected!');
-  };
-  return pc;
+  _remoteAudio=audio;
 }
 
-// ── Cleanup ──────────────────────────────────────────
-function stopAllCallMedia() {
-  if (_pc) { try { _pc.close(); } catch(e) {} _pc = null; }
+function stopAllCallMedia(){
+  if(_activeCall){try{_activeCall.close();}catch(e){}_activeCall=null;}
+  _groupCalls.forEach(c=>{try{c.close();}catch(e){}});
+  _groupCalls=[];
   releaseLocalStream();
-  if (_remoteAudio) {
-    _remoteAudio.srcObject = null;
-    _remoteAudio.remove();
-    _remoteAudio = null;
-  }
-  if (_sdpUnsub)  { _sdpUnsub();  _sdpUnsub  = null; }
-  if (_iceUnsubA) { _iceUnsubA(); _iceUnsubA = null; }
-  if (_iceUnsubB) { _iceUnsubB(); _iceUnsubB = null; }
+  const audioEl=document.getElementById('remote-audio-el');
+  if(audioEl)audioEl.remove();
+  _remoteAudio=null;
+  _pendingMediaCall=null;
 }
 
-// ── Remote audio helper ──────────────────────────────
-function attachRemoteAudio(stream) {
-  // Remove any existing remote audio element
-  const existing = document.getElementById('remote-audio-el');
-  if (existing) existing.remove();
+const callCtrlRef=did=>REF(DB,`calls/${did}/ctrl`);
+function ctrlWrite(targetDid,data){return SET(callCtrlRef(targetDid),{...data,ts:Date.now()});}
+function clearMyCtrl(){SET(callCtrlRef(DID),null).catch(()=>{});}
 
-  const audio = document.createElement('audio');
-  audio.id = 'remote-audio-el';
-  audio.autoplay = true;
-  audio.setAttribute('playsinline', '');   // critical for iOS
-  audio.style.display = 'none';
-  audio.srcObject = stream;
-  document.body.appendChild(audio);        // must be in DOM
-
-  audio.play().catch(e => {
-    console.warn('[NeonCall] Audio play blocked:', e);
-    // Retry on next user gesture
-    const retry = () => { audio.play().catch(() => {}); document.removeEventListener('click', retry); };
-    document.addEventListener('click', retry);
+function startCallSignalListener(){
+  stopCallListeners();
+  _ctrlUnsub=ONVAL(callCtrlRef(DID),async snap=>{
+    if(!snap.exists())return;
+    const d=snap.val();
+    if(!d||!d.type)return;
+    if(Date.now()-(d.ts||0)>90000){clearMyCtrl();return;}
+    console.log('[NeonCall] ctrl:',d.type);
+    if(d.type==='ringing'){
+      clearMyCtrl();
+      if(!_activeCallId)showIncomingCall(d);
+      else ctrlWrite(d.callerDid,{type:'ended',callId:d.callId,reason:'busy'}).catch(()=>{});
+    }
+    else if(d.type==='ended'){
+      clearMyCtrl();
+      if(_activeCallId&&d.callId===_activeCallId)handleRemoteEnd();
+    }
   });
-
-  _remoteAudio = audio;
 }
+function stopCallListeners(){if(_ctrlUnsub){_ctrlUnsub();_ctrlUnsub=null;}}
 
-// ── Called when audio is flowing ─────────────────────
-function onCallConnected() {
-  playCallConnectSound(); startWave();
-  document.getElementById('call-stat-lbl').textContent = 'CONNECTED · 0:00';
-  if (!_callTimer) {
-    _callSeconds = 0;
-    _callTimer = setInterval(() => {
+function onCallConnected(){
+  playCallConnectSound();startWave();
+  document.getElementById('call-stat-lbl').textContent='CONNECTED · 0:00';
+  if(!_callTimer){
+    _callSeconds=0;
+    _callTimer=setInterval(()=>{
       _callSeconds++;
-      const m = Math.floor(_callSeconds / 60), s = String(_callSeconds % 60).padStart(2, '0');
-      document.getElementById('call-stat-lbl').textContent = `CONNECTED · ${m}:${s}`;
-    }, 1000);
+      const m=Math.floor(_callSeconds/60),s=String(_callSeconds%60).padStart(2,'0');
+      document.getElementById('call-stat-lbl').textContent=`CONNECTED · ${m}:${s}`;
+    },1000);
   }
   updateGroupCallParticipants();
 }
 
-// ── Signal listener (our ctrl inbox) ─────────────────
-function startCallSignalListener() {
-  stopCallListeners();
-  console.log('[NeonCall] Signal listener ready');
-  _ctrlUnsub = ONVAL(callCtrlRef(DID), async snap => {
-    if (!snap.exists()) return;
-    const d = snap.val();
-    if (!d || !d.type) return;
-    if (Date.now() - (d.ts || 0) > 90000) { clearMyCtrl(); return; }
-    console.log('[NeonCall] ctrl →', d.type);
-
-    if (d.type === 'ringing') {
-      clearMyCtrl();
-      if (!_activeCallId) showIncomingCall(d);
-      else ctrlWrite(d.callerDid, { type: 'ended', callId: d.callId, reason: 'busy' }).catch(() => {});
-    }
-    else if (d.type === 'accepted') {
-      clearMyCtrl();
-      if (_activeCallId && d.callId === _activeCallId && _activeCallData?.myRole === 'caller') {
-        clearTimeout(_callAutoCancel);
-        stopRingtone();
-        _activeCallData.theirDid = d.receiverDid || _activeCallData.theirDid;
-        await startWebRTCCaller();
-      }
-    }
-    else if (d.type === 'offer_ready') {
-  clearMyCtrl();
-  if (_activeCallId && d.callId === _activeCallId && _activeCallData?.myRole === 'receiver') {
-    await startWebRTCReceiver(d.callerDid);
-  }
+async function resolveTheirPeerId(theirDid){
+  try{const snap=await GET(CHILD(REF(DB),`users/${theirDid}/peerId`));if(snap.exists())return snap.val();}catch(e){}
+  return null;
 }
-    else if (d.type === 'ended') {
-      clearMyCtrl();
-      if (_activeCallId && d.callId === _activeCallId) handleRemoteEnd();
-    }
-  });
-}
-function stopCallListeners() {
-  if (_ctrlUnsub) { _ctrlUnsub(); _ctrlUnsub = null; }
-}
-
-// ── CALLER: create offer ──────────────────────────────
-async function startWebRTCReceiver(callerDid) {
-  const ad = _activeCallData;
-  const chat = chats.find(c => c.id === (ad.roomId || currentChatId)) || {};
-  showCallScreen(ad.name, avSolidColor(ad.name), 'CONNECTING...', chat.isGroup);
-  try {
-    _pc = makePC();
-
-    // Set ontrack BEFORE everything else
-    _pc.ontrack = e => {
-      console.log('[NeonCall] Receiver got remote track', e.streams);
-      if (e.streams && e.streams[0]) attachRemoteAudio(e.streams[0]);
-      onCallConnected();
-    };
-
-    const stream = await getLocalStream();
-    stream.getTracks().forEach(t => _pc.addTrack(t, stream));
-
-    _pc.onicecandidate = e => {
-      if (e.candidate && _activeCallId) {
-        console.log('[NeonCall] Receiver sending ICE candidate');
-        PUSH(REF(DB, `calls/sdp/${_activeCallId}/ice_b`), e.candidate.toJSON()).catch(() => {});
-      }
-    };
-
-    // Poll for offer
-    let offerData = null;
-    for (let i = 0; i < 20; i++) {
-      const snap = await GET(CHILD(REF(DB), `calls/sdp/${_activeCallId}`));
-      if (snap.exists() && snap.val().offer) { offerData = snap.val().offer; break; }
-      await new Promise(r => setTimeout(r, 500));
-    }
-    if (!offerData) { handleCallFailed('NO OFFER RECEIVED'); return; }
-
-    await _pc.setRemoteDescription(new RTCSessionDescription(offerData));
-    const answer = await _pc.createAnswer();
-    await _pc.setLocalDescription(answer);
-
-    await SET(REF(DB, `calls/sdp/${_activeCallId}/answer`), { type: answer.type, sdp: answer.sdp });
-    console.log('[NeonCall] Receiver: answer written');
-
-    // Listen for ICE from caller (ice_a)
-    _iceUnsubA = ONCHILD(REF(DB, `calls/sdp/${_activeCallId}/ice_a`), snap4 => {
-      const c = snap4.val();
-      if (c && _pc && _pc.remoteDescription) {
-        _pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn('[NeonCall] ICE add error (receiver):', e));
-      }
-    });
-
-  } catch (e) {
-    console.error('[NeonCall] Receiver WebRTC error:', e);
-    handleCallFailed(e.name === 'NotAllowedError' ? 'MIC DENIED' : 'CONNECTION ERROR');
-  }
-}
-
-// ── RECEIVER: read offer, create answer ───────────────
-async function startWebRTCReceiver(callerDid) {
-  const ad = _activeCallData;
-  const chat = chats.find(c => c.id === (ad.roomId || currentChatId)) || {};
-  showCallScreen(ad.name, avSolidColor(ad.name), 'CONNECTING...', chat.isGroup);
-  try {
-    _pc = makePC();
-
-    // Set ontrack BEFORE everything else
-    _pc.ontrack = e => {
-      console.log('[NeonCall] Receiver got remote track', e.streams);
-      if (e.streams && e.streams[0]) attachRemoteAudio(e.streams[0]);
-      onCallConnected();
-    };
-
-    const stream = await getLocalStream();
-    stream.getTracks().forEach(t => _pc.addTrack(t, stream));
-
-    _pc.onicecandidate = e => {
-      if (e.candidate && _activeCallId) {
-        console.log('[NeonCall] Receiver sending ICE candidate');
-        PUSH(REF(DB, `calls/sdp/${_activeCallId}/ice_b`), e.candidate.toJSON()).catch(() => {});
-      }
-    };
-
-    // Poll for offer
-    let offerData = null;
-    for (let i = 0; i < 20; i++) {
-      const snap = await GET(CHILD(REF(DB), `calls/sdp/${_activeCallId}`));
-      if (snap.exists() && snap.val().offer) { offerData = snap.val().offer; break; }
-      await new Promise(r => setTimeout(r, 500));
-    }
-    if (!offerData) { handleCallFailed('NO OFFER RECEIVED'); return; }
-
-    await _pc.setRemoteDescription(new RTCSessionDescription(offerData));
-    const answer = await _pc.createAnswer();
-    await _pc.setLocalDescription(answer);
-
-    await SET(REF(DB, `calls/sdp/${_activeCallId}/answer`), { type: answer.type, sdp: answer.sdp });
-    console.log('[NeonCall] Receiver: answer written');
-
-    // Listen for ICE from caller (ice_a)
-    _iceUnsubA = ONCHILD(REF(DB, `calls/sdp/${_activeCallId}/ice_a`), snap4 => {
-      const c = snap4.val();
-      if (c && _pc && _pc.remoteDescription) {
-        _pc.addIceCandidate(new RTCIceCandidate(c)).catch(e => console.warn('[NeonCall] ICE add error (receiver):', e));
-      }
-    });
-
-  } catch (e) {
-    console.error('[NeonCall] Receiver WebRTC error:', e);
-    handleCallFailed(e.name === 'NotAllowedError' ? 'MIC DENIED' : 'CONNECTION ERROR');
-  }
-}
-
-// ── Resolve DID from phone ────────────────────────────
-async function resolveTheirDid(chat) {
-  if (chat.theirDid) return chat.theirDid;
-  if (!chat.phone) return null;
-  try {
-    const snap = await GET(CHILD(REF(DB), `phone_index/${encodePhone(chat.phone)}`));
-    if (snap.exists()) {
-      const did = snap.val();
-      SET(REF(DB, `users/${DID}/chats/${chat.id}/theirDid`), did).catch(() => {});
-      const local = chats.find(c => c.id === chat.id);
-      if (local) local.theirDid = did;
+async function resolveTheirDid(chat){
+  if(chat.theirDid)return chat.theirDid;
+  if(!chat.phone)return null;
+  try{
+    const snap=await GET(CHILD(REF(DB),`phone_index/${encodePhone(chat.phone)}`));
+    if(snap.exists()){
+      const did=snap.val();
+      SET(REF(DB,`users/${DID}/chats/${chat.id}/theirDid`),did).catch(()=>{});
+      const local=chats.find(c=>c.id===chat.id);if(local)local.theirDid=did;
       return did;
     }
-  } catch (e) {}
+  }catch(e){}
   return null;
 }
 
-// ── Start a call from conversation header ─────────────
-async function doCallFromConv() {
+async function doCallFromConv(){
   document.getElementById('cdd').classList.remove('open');
-  const chat = chats.find(c => c.id === currentChatId) || {};
-  const name = chat.nickname || chat.name || 'Unknown';
-  if (chat.isGroup) { initiateGroupCall(chat, name); return; }
-  const theirDid = await resolveTheirDid(chat);
-  if (!theirDid) { showToast('Cannot Call', 'Contact is not on Neon OS', null, 'msg'); return; }
-  initiateCall(theirDid, name, chat.phone || '');
+  const chat=chats.find(c=>c.id===currentChatId)||{};
+  const name=chat.nickname||chat.name||'Unknown';
+  if(chat.isGroup){initiateGroupCall(chat,name);return;}
+  const theirDid=await resolveTheirDid(chat);
+  if(!theirDid){showToast('Cannot Call','Contact is not on Neon OS',null,'msg');return;}
+  initiateCall(theirDid,name,chat.phone||'');
 }
 
-// ── Initiate 1-to-1 call ──────────────────────────────
-async function initiateCall(theirDid, name, phone) {
-  if (_activeCallId) return;
-  _activeCallId = 'call_' + Date.now();
-  _activeCallData = { theirDid, name, phone, myRole: 'caller' };
-  showCallScreen(name, avSolidColor(name), 'CALLING...', false);
-  startRingtone(); clearMyCtrl();
-  const callerName = (window.USER.firstName || '') + (window.USER.lastName ? ' ' + window.USER.lastName : '');
-  try {
-    await ctrlWrite(theirDid, { type: 'ringing', callId: _activeCallId, callerDid: DID, callerName, callerPhone: myPhone() });
-  } catch (e) {
-    stopRingtone(); hideCallScreen(); resetCallState(); startCallSignalListener();
-    showToast('Call Failed', 'Network error — check connection', null, 'msg'); return;
-  }
-  _callAutoCancel = setTimeout(async () => {
-    if (_activeCallId && _activeCallData?.myRole === 'caller') {
-      ctrlWrite(theirDid, { type: 'ended', callId: _activeCallId }).catch(() => {});
-      clearSdp(_activeCallId);
+async function initiateCall(theirDid,name,phone){
+  if(_activeCallId)return;
+  _activeCallId='call_'+Date.now();
+  _activeCallData={theirDid,name,phone,myRole:'caller'};
+  showCallScreen(name,avSolidColor(name),'CALLING...',false);
+  startRingtone();clearMyCtrl();
+  try{await initPeer();}catch(e){handleCallFailed('PEER INIT FAILED');return;}
+  const callerName=(window.USER.firstName||'')+(window.USER.lastName?' '+window.USER.lastName:'');
+  try{
+    await ctrlWrite(theirDid,{type:'ringing',callId:_activeCallId,callerDid:DID,callerName,callerPhone:myPhone(),callerPeerId:_peerId});
+  }catch(e){stopRingtone();hideCallScreen();resetCallState();startCallSignalListener();showToast('Call Failed','Network error',null,'msg');return;}
+  const theirPeerId=await resolveTheirPeerId(theirDid);
+  if(!theirPeerId){stopRingtone();handleCallFailed('CONTACT OFFLINE');return;}
+  _callAutoCancel=setTimeout(async()=>{
+    if(_activeCallId&&_activeCallData?.myRole==='caller'){
+      ctrlWrite(theirDid,{type:'ended',callId:_activeCallId}).catch(()=>{});
       handleCallFailed('NO ANSWER');
-      notifyMissedCallForThem(theirDid, name, phone);
+      notifyMissedCallForThem(theirDid,name,phone);
     }
-  }, 35000);
+  },35000);
+  try{
+    const stream=await getLocalStream();
+    const mediaCall=_peer.call(theirPeerId,stream);
+    _activeCall=mediaCall;
+    mediaCall.on('stream',remoteStream=>{
+      console.log('[NeonCall] Caller got remote stream');
+      clearTimeout(_callAutoCancel);stopRingtone();
+      attachRemoteAudio(remoteStream);onCallConnected();
+    });
+    mediaCall.on('close',()=>handleRemoteEnd());
+    mediaCall.on('error',e=>{console.error('[NeonCall] call error:',e);handleRemoteEnd();});
+  }catch(e){handleCallFailed(e.name==='NotAllowedError'?'MIC DENIED':'CALL FAILED');}
 }
 
-// ── Initiate group call ───────────────────────────────
-async function initiateGroupCall(chat, name) {
-  if (_activeCallId) return;
-  _activeCallId = 'call_' + Date.now();
-  _activeCallData = { name, myRole: 'caller', roomId: chat.id, isGroup: true };
-  showCallScreen(name, avSolidColor(name), 'CALLING GROUP...', true);
-  updateGroupCallParticipants();
-  startRingtone(); clearMyCtrl();
-  const callerName = (window.USER.firstName || '') + (window.USER.lastName ? ' ' + window.USER.lastName : '');
-  const members = (chat.members || []).filter(m => m.did && m.did !== DID);
-  for (const m of members) {
-    try { await ctrlWrite(m.did, { type: 'ringing', callId: _activeCallId, callerDid: DID, callerName, callerPhone: myPhone(), isGroup: true, groupName: name, groupId: chat.id }); } catch (e) {}
+async function initiateGroupCall(chat,name){
+  if(_activeCallId)return;
+  _activeCallId='call_'+Date.now();
+  _activeCallData={name,myRole:'caller',roomId:chat.id,isGroup:true};
+  showCallScreen(name,avSolidColor(name),'CALLING GROUP...',true);
+  updateGroupCallParticipants();startRingtone();clearMyCtrl();
+  try{await initPeer();}catch(e){handleCallFailed('PEER INIT FAILED');return;}
+  const callerName=(window.USER.firstName||'')+(window.USER.lastName?' '+window.USER.lastName:'');
+  const members=(chat.members||[]).filter(m=>m.did&&m.did!==DID);
+  for(const m of members){
+    try{await ctrlWrite(m.did,{type:'ringing',callId:_activeCallId,callerDid:DID,callerName,callerPhone:myPhone(),callerPeerId:_peerId,isGroup:true,groupName:name,groupId:chat.id});}catch(e){}
   }
-  _callAutoCancel = setTimeout(() => {
-    if (_activeCallId && _activeCallData?.myRole === 'caller') handleCallFailed('NO ANSWER');
-  }, 35000);
+  const stream=await getLocalStream().catch(()=>null);
+  if(!stream){handleCallFailed('MIC DENIED');return;}
+  let connectedCount=0;
+  for(const m of members){
+    const theirPeerId=await resolveTheirPeerId(m.did);
+    if(!theirPeerId)continue;
+    try{
+      const mediaCall=_peer.call(theirPeerId,stream);
+      _groupCalls.push(mediaCall);
+      mediaCall.on('stream',remoteStream=>{
+        connectedCount++;
+        attachRemoteAudio(remoteStream);
+        if(connectedCount===1){clearTimeout(_callAutoCancel);stopRingtone();onCallConnected();}
+      });
+      mediaCall.on('close',()=>{});
+    }catch(e){console.warn('[NeonCall] Could not call group member:',m.name);}
+  }
+  _callAutoCancel=setTimeout(()=>{if(_activeCallId&&_activeCallData?.myRole==='caller')handleCallFailed('NO ANSWER');},35000);
 }
 
-// ── Incoming call ─────────────────────────────────────
-function showIncomingCall(d) {
-  _activeCallId = d.callId;
-  _activeCallData = { callerDid: d.callerDid, name: d.callerName || 'Unknown', phone: d.callerPhone || '', myRole: 'receiver', isGroup: d.isGroup, groupId: d.groupId, roomId: d.groupId };
-  const nm = d.callerName || 'Unknown';
-  const incAv = document.getElementById('inc-av');
-  incAv.textContent = d.isGroup ? '👥' : nm[0].toUpperCase();
-  incAv.className = 'inc-av' + (d.isGroup ? ' group-inc' : '');
-  incAv.style.background = avSolidColor(nm);
-  document.getElementById('inc-from-lbl').textContent = d.isGroup ? 'INCOMING GROUP CALL' : 'INCOMING NEON CALL';
-  document.getElementById('inc-name').textContent = d.isGroup ? (d.groupName || nm) : nm;
-  document.getElementById('inc-ph').textContent = d.callerPhone || '';
+function showIncomingCall(d){
+  _activeCallId=d.callId;
+  _activeCallData={callerDid:d.callerDid,name:d.callerName||'Unknown',phone:d.callerPhone||'',myRole:'receiver',isGroup:d.isGroup,groupId:d.groupId,roomId:d.groupId,callerPeerId:d.callerPeerId};
+  const nm=d.callerName||'Unknown';
+  const incAv=document.getElementById('inc-av');
+  incAv.textContent=d.isGroup?'👥':nm[0].toUpperCase();
+  incAv.className='inc-av'+(d.isGroup?' group-inc':'');
+  incAv.style.background=avSolidColor(nm);
+  document.getElementById('inc-from-lbl').textContent=d.isGroup?'INCOMING GROUP CALL':'INCOMING NEON CALL';
+  document.getElementById('inc-name').textContent=d.isGroup?(d.groupName||nm):nm;
+  document.getElementById('inc-ph').textContent=d.callerPhone||'';
   document.getElementById('inc-call').classList.add('open');
   startRingtone();
-  sendSystemNotif('Incoming Call', nm + ' is calling you', nm[0].toUpperCase());
+  sendSystemNotif('Incoming Call',nm+' is calling you',nm[0].toUpperCase());
+  initPeer().catch(()=>{});
 }
 
-async function acceptCall() {
+async function acceptCall(){
   stopRingtone();
   document.getElementById('inc-call').classList.remove('open');
-  if (!_activeCallData || !_activeCallData.callerDid) { resetCallState(); startCallSignalListener(); return; }
-  // Tell caller we accepted — they will build the WebRTC offer
-// Show call screen FIRST so the ctrl listener can fire startWebRTCReceiver
-const chat = chats.find(c => c.id === (_activeCallData.roomId || currentChatId)) || {};
-showCallScreen(_activeCallData.name, avSolidColor(_activeCallData.name), 'CONNECTING...', chat.isGroup);
-clearMyCtrl();
-// Tell caller we accepted — they will build the WebRTC offer
-try { await ctrlWrite(_activeCallData.callerDid, { type: 'accepted', callId: _activeCallId, receiverDid: DID }); }
-catch (e) { handleCallFailed('SIGNAL ERROR'); return; }
-  // The ctrl listener (startCallSignalListener) will fire offer_ready and call startWebRTCReceiver
-}
-
-async function declineCall() {
-  stopRingtone();
-  document.getElementById('inc-call').classList.remove('open');
-  if (!_activeCallData) return;
-  try { await ctrlWrite(_activeCallData.callerDid, { type: 'ended', callId: _activeCallId }); } catch (e) {}
+  if(!_activeCallData){resetCallState();startCallSignalListener();return;}
+  const chat=chats.find(c=>c.id===(_activeCallData.roomId||currentChatId))||{};
+  showCallScreen(_activeCallData.name,avSolidColor(_activeCallData.name),'CONNECTING...',_activeCallData.isGroup);
   clearMyCtrl();
-  const chat = findChatByPhone(_activeCallData.phone) || findChatOfDid(_activeCallData.callerDid);
-  if (chat) { logCallEventInRoom(chat.id, _activeCallData.callerDid, 'missed', 0); notifyMissedCallForThem(_activeCallData.callerDid, _activeCallData.name, _activeCallData.phone); }
-  resetCallState(); startCallSignalListener();
+  if(_pendingMediaCall){answerPeerCall(_pendingMediaCall);_pendingMediaCall=null;}
+  // else PeerJS 'call' event will fire and answerPeerCall will run
 }
 
-function handleRemoteEnd() {
-  if (!document.getElementById('cov').classList.contains('open')) return;
-  clearInterval(_callTimer); stopWave();
-  document.getElementById('call-stat-lbl').textContent = 'CALL ENDED';
-  playCallEndSound(); logCurrentCallInChat();
-  stopAllCallMedia(); stopCallListeners();
-  clearMyCtrl(); clearSdp(_activeCallId);
-  setTimeout(() => { hideCallScreen(); resetCallState(); startCallSignalListener(); }, 1500);
+async function declineCall(){
+  stopRingtone();
+  document.getElementById('inc-call').classList.remove('open');
+  if(!_activeCallData)return;
+  try{await ctrlWrite(_activeCallData.callerDid,{type:'ended',callId:_activeCallId});}catch(e){}
+  clearMyCtrl();
+  const chat=findChatByPhone(_activeCallData.phone)||findChatOfDid(_activeCallData.callerDid);
+  if(chat){logCallEventInRoom(chat.id,_activeCallData.callerDid,'missed',0);notifyMissedCallForThem(_activeCallData.callerDid,_activeCallData.name,_activeCallData.phone);}
+  resetCallState();startCallSignalListener();
 }
 
-function handleCallFailed(reason) {
-  stopRingtone(); playCallEndSound(); stopCallListeners(); clearTimeout(_callAutoCancel);
-  stopAllCallMedia(); clearMyCtrl(); clearSdp(_activeCallId);
-  const cov = document.getElementById('cov');
-  if (cov.classList.contains('open')) {
-    document.getElementById('call-stat-lbl').textContent = reason || 'CALL FAILED';
-    setTimeout(() => { hideCallScreen(); resetCallState(); startCallSignalListener(); }, 2000);
-  } else { resetCallState(); startCallSignalListener(); }
+function handleRemoteEnd(){
+  if(!document.getElementById('cov').classList.contains('open'))return;
+  clearInterval(_callTimer);stopWave();
+  document.getElementById('call-stat-lbl').textContent='CALL ENDED';
+  playCallEndSound();logCurrentCallInChat();
+  stopAllCallMedia();stopCallListeners();clearMyCtrl();
+  setTimeout(()=>{hideCallScreen();resetCallState();startCallSignalListener();},1500);
 }
 
-async function endCall() {
-  if (!_activeCallId) return;
-  const ad = _activeCallData;
-  clearInterval(_callTimer); stopWave();
-  playCallEndSound(); logCurrentCallInChat();
-  stopAllCallMedia(); stopCallListeners(); clearTimeout(_callAutoCancel);
-  // Notify other side(s)
-  const theirDid = ad.myRole === 'caller' ? ad.theirDid : ad.callerDid;
-  if (theirDid) { try { await ctrlWrite(theirDid, { type: 'ended', callId: _activeCallId }); } catch (e) {} }
-  if (ad.isGroup) {
-    const chat = chats.find(c => c.id === ad.roomId);
-    if (chat) (chat.members || []).filter(m => m.did && m.did !== DID).forEach(m => ctrlWrite(m.did, { type: 'ended', callId: _activeCallId }).catch(() => {}));
-  }
-  clearMyCtrl(); clearSdp(_activeCallId);
-  hideCallScreen(); resetCallState(); startCallSignalListener();
+function handleCallFailed(reason){
+  stopRingtone();playCallEndSound();stopCallListeners();clearTimeout(_callAutoCancel);
+  stopAllCallMedia();clearMyCtrl();
+  const cov=document.getElementById('cov');
+  if(cov.classList.contains('open')){
+    document.getElementById('call-stat-lbl').textContent=reason||'CALL FAILED';
+    setTimeout(()=>{hideCallScreen();resetCallState();startCallSignalListener();},2000);
+  }else{resetCallState();startCallSignalListener();}
 }
 
-// ── Mute / Speaker ────────────────────────────────────
-function toggleMute() {
-  _isMuted = !_isMuted;
-  if (_localStream) _localStream.getAudioTracks().forEach(t => t.enabled = !_isMuted);
-  document.getElementById('mute-btn').classList.toggle('on', _isMuted);
-  document.getElementById('mute-label').textContent = _isMuted ? 'UNMUTE' : 'MUTE';
+async function endCall(){
+  if(!_activeCallId)return;
+  const ad=_activeCallData;
+  clearInterval(_callTimer);stopWave();
+  playCallEndSound();logCurrentCallInChat();
+  stopAllCallMedia();stopCallListeners();clearTimeout(_callAutoCancel);
+  const theirDid=ad.myRole==='caller'?ad.theirDid:ad.callerDid;
+  if(theirDid){try{await ctrlWrite(theirDid,{type:'ended',callId:_activeCallId});}catch(e){}}
+  if(ad.isGroup){const chat=chats.find(c=>c.id===ad.roomId);if(chat)(chat.members||[]).filter(m=>m.did&&m.did!==DID).forEach(m=>ctrlWrite(m.did,{type:'ended',callId:_activeCallId}).catch(()=>{}));}
+  clearMyCtrl();hideCallScreen();resetCallState();startCallSignalListener();
+}
+
+function toggleMute(){
+  _isMuted=!_isMuted;
+  if(_localStream)_localStream.getAudioTracks().forEach(t=>t.enabled=!_isMuted);
+  document.getElementById('mute-btn').classList.toggle('on',_isMuted);
+  document.getElementById('mute-label').textContent=_isMuted?'UNMUTE':'MUTE';
   playUIClick();
 }
-function toggleSpeaker() {
-  _isSpeaker = !_isSpeaker;
-  document.getElementById('spk-btn').classList.toggle('on', _isSpeaker);
-  document.getElementById('spk-label').textContent = _isSpeaker ? 'EARPIECE' : 'SPEAKER';
+function toggleSpeaker(){
+  _isSpeaker=!_isSpeaker;
+  document.getElementById('spk-btn').classList.toggle('on',_isSpeaker);
+  document.getElementById('spk-label').textContent=_isSpeaker?'EARPIECE':'SPEAKER';
   playUIClick();
 }
 
-// ── Misc helpers ──────────────────────────────────────
-function resetCallState() {
-  _activeCallId = null; _activeCallData = null; _callSeconds = 0;
-  _isMuted = false; _isSpeaker = false;
-  clearInterval(_callTimer); _callTimer = null;
-  const mb = document.getElementById('mute-btn'); if (mb) mb.classList.remove('on');
-  const sb = document.getElementById('spk-btn'); if (sb) sb.classList.remove('on');
-  const ml = document.getElementById('mute-label'); if (ml) ml.textContent = 'MUTE';
-  const sl = document.getElementById('spk-label'); if (sl) sl.textContent = 'SPEAKER';
-  document.getElementById('group-call-participants').style.display = 'none';
+function resetCallState(){
+  _activeCallId=null;_activeCallData=null;_callSeconds=0;
+  _isMuted=false;_isSpeaker=false;_pendingMediaCall=null;
+  clearInterval(_callTimer);_callTimer=null;
+  const mb=document.getElementById('mute-btn');if(mb)mb.classList.remove('on');
+  const sb=document.getElementById('spk-btn');if(sb)sb.classList.remove('on');
+  const ml=document.getElementById('mute-label');if(ml)ml.textContent='MUTE';
+  const sl=document.getElementById('spk-label');if(sl)sl.textContent='SPEAKER';
+  document.getElementById('group-call-participants').style.display='none';
 }
-function updateGroupCallParticipants() {
-  const chat = _activeCallData ? chats.find(c => c.id === _activeCallData.roomId) : null;
-  const gcp = document.getElementById('group-call-participants');
-  if (!chat || !chat.isGroup) { gcp.style.display = 'none'; return; }
-  gcp.style.display = 'flex'; gcp.innerHTML = '';
-  (chat.members || []).forEach(m => {
-    const div = document.createElement('div'); div.className = 'gcp';
-    div.innerHTML = `<div class="gcp-av" style="background:${avSolidColor(m.name||'')}">${(m.name||'?')[0].toUpperCase()}</div><div class="gcp-name">${(m.name||m.phone||'').split(' ')[0]}</div>`;
-    gcp.appendChild(div);
-  });
+function updateGroupCallParticipants(){
+  const chat=_activeCallData?chats.find(c=>c.id===_activeCallData.roomId):null;
+  const gcp=document.getElementById('group-call-participants');
+  if(!chat||!chat.isGroup){gcp.style.display='none';return;}
+  gcp.style.display='flex';gcp.innerHTML='';
+  (chat.members||[]).forEach(m=>{const div=document.createElement('div');div.className='gcp';div.innerHTML=`<div class="gcp-av" style="background:${avSolidColor(m.name||'')}">${(m.name||'?')[0].toUpperCase()}</div><div class="gcp-name">${(m.name||m.phone||'').split(' ')[0]}</div>`;gcp.appendChild(div);});
 }
-function logCurrentCallInChat() {
-  if (!_activeCallData) return;
-  const theirDid = _activeCallData.theirDid || _activeCallData.callerDid;
-  const chat = chats.find(c => c.theirDid === theirDid) || chats.find(c => c.id === _activeCallData.roomId);
-  if (chat) logCallEventInRoom(chat.id, DID, 'connected', _callSeconds);
+function logCurrentCallInChat(){
+  if(!_activeCallData)return;
+  const theirDid=_activeCallData.theirDid||_activeCallData.callerDid;
+  const chat=chats.find(c=>c.theirDid===theirDid)||chats.find(c=>c.id===_activeCallData.roomId);
+  if(chat)logCallEventInRoom(chat.id,DID,'connected',_callSeconds);
 }
-async function logCallEventInRoom(roomId, senderDid, callStatus, duration) {
-  try {
-    await PUSH(REF(DB, `rooms/${roomId}/messages`), { type: 'call', callStatus, duration, senderDid, senderPhone: myPhone(), timestamp: Date.now() });
-    const preview = callStatus === 'missed' ? '📵 Missed call' : `📞 Call (${formatDur(duration)})`;
-    await SET(REF(DB, `users/${DID}/chats/${roomId}/lastMessage`), preview);
-    await SET(REF(DB, `users/${DID}/chats/${roomId}/lastTimestamp`), Date.now());
-  } catch (e) {}
+async function logCallEventInRoom(roomId,senderDid,callStatus,duration){
+  try{
+    await PUSH(REF(DB,`rooms/${roomId}/messages`),{type:'call',callStatus,duration,senderDid,senderPhone:myPhone(),timestamp:Date.now()});
+    const preview=callStatus==='missed'?'📵 Missed call':`📞 Call (${formatDur(duration)})`;
+    await SET(REF(DB,`users/${DID}/chats/${roomId}/lastMessage`),preview);
+    await SET(REF(DB,`users/${DID}/chats/${roomId}/lastTimestamp`),Date.now());
+  }catch(e){}
 }
-async function notifyMissedCallForThem(theirDid, name, phone) {
-  try {
-    const chat = findChatOfDid(theirDid); if (!chat) return;
-    await PUSH(REF(DB, `rooms/${chat.id}/messages`), { type: 'call', callStatus: 'missed', duration: 0, senderDid: DID, senderPhone: myPhone(), timestamp: Date.now() });
-    await SET(REF(DB, `users/${theirDid}/chats/${chat.id}/lastMessage`), '📵 Missed call');
-    await SET(REF(DB, `users/${theirDid}/chats/${chat.id}/lastTimestamp`), Date.now());
-    let u = 1;
-    try { const s = await GET(CHILD(REF(DB), `users/${theirDid}/chats/${chat.id}/unread`)); u = (s.exists() ? (s.val() || 0) : 0) + 1; } catch (e) {}
-    await SET(REF(DB, `users/${theirDid}/chats/${chat.id}/unread`), u);
-  } catch (e) {}
-  sendSystemNotif(name || 'Unknown', 'Missed call — no answer', (name || '?')[0].toUpperCase());
-  showToast('Missed Call', '📵 ' + (name || 'Unknown') + ' did not answer', null, 'call_missed');
+async function notifyMissedCallForThem(theirDid,name,phone){
+  try{
+    const chat=findChatOfDid(theirDid);if(!chat)return;
+    await PUSH(REF(DB,`rooms/${chat.id}/messages`),{type:'call',callStatus:'missed',duration:0,senderDid:DID,senderPhone:myPhone(),timestamp:Date.now()});
+    await SET(REF(DB,`users/${theirDid}/chats/${chat.id}/lastMessage`),'📵 Missed call');
+    await SET(REF(DB,`users/${theirDid}/chats/${chat.id}/lastTimestamp`),Date.now());
+    let u=1;try{const s=await GET(CHILD(REF(DB),`users/${theirDid}/chats/${chat.id}/unread`));u=(s.exists()?(s.val()||0):0)+1;}catch(e){}
+    await SET(REF(DB,`users/${theirDid}/chats/${chat.id}/unread`),u);
+  }catch(e){}
+  sendSystemNotif(name||'Unknown','Missed call',(name||'?')[0].toUpperCase());
+  showToast('Missed Call','📵 '+(name||'Unknown')+' did not answer',null,'call_missed');
 }
-function findChatByPhone(phone) { return chats.find(c => c.phone === phone) || null; }
-function findChatOfDid(did) { return chats.find(c => c.theirDid === did) || null; }
-
-function showCallScreen(name, color, status, isGroup) {
-  stopCallBG(); startCallBG(color);
-  const av = document.getElementById('call-av-inner');
-  av.textContent = isGroup ? '👥' : name[0].toUpperCase();
-  av.className = 'call-av-inner' + (isGroup ? ' group-call-av' : '');
-  av.style.background = `radial-gradient(circle at 40% 35%, ${color}cc, ${color}55)`;
-  document.getElementById('call-name-lbl').textContent = name;
-  document.getElementById('call-stat-lbl').textContent = status;
-  document.getElementById('call-status-badge').textContent = isGroup ? 'GROUP NEON CALL' : 'NEON CALL';
-  if (isGroup) updateGroupCallParticipants();
-  else document.getElementById('group-call-participants').style.display = 'none';
+function findChatByPhone(phone){return chats.find(c=>c.phone===phone)||null;}
+function findChatOfDid(did){return chats.find(c=>c.theirDid===did)||null;}
+function showCallScreen(name,color,status,isGroup){
+  stopCallBG();startCallBG(color);
+  const av=document.getElementById('call-av-inner');
+  av.textContent=isGroup?'👥':name[0].toUpperCase();
+  av.className='call-av-inner'+(isGroup?' group-call-av':'');
+  av.style.background=`radial-gradient(circle at 40% 35%, ${color}cc, ${color}55)`;
+  document.getElementById('call-name-lbl').textContent=name;
+  document.getElementById('call-stat-lbl').textContent=status;
+  document.getElementById('call-status-badge').textContent=isGroup?'GROUP NEON CALL':'NEON CALL';
+  if(isGroup)updateGroupCallParticipants();
+  else document.getElementById('group-call-participants').style.display='none';
   document.getElementById('cov').classList.add('open');
 }
-function hideCallScreen() { document.getElementById('cov').classList.remove('open'); stopCallBG(); stopWave(); }
-
+function hideCallScreen(){document.getElementById('cov').classList.remove('open');stopCallBG();stopWave();}
 // ═══════════════════════════════════════════════════
 // MODAL + MISC
 // ═══════════════════════════════════════════════════
