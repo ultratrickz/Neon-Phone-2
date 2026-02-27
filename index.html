@@ -972,7 +972,7 @@ function shakeGlass(){const g=document.getElementById('glass');g.style.animation
 function unlock(){
   const ls=document.getElementById('lock'),hs=document.getElementById('home');
   ls.style.transition='opacity 0.4s,transform 0.4s';ls.style.opacity='0';ls.style.transform='scale(1.04)';
-  setTimeout(()=>{ls.classList.remove('active');ls.style.transform='';padVis=false;document.getElementById('lpad').classList.remove('vis');hs.classList.add('active');hs.style.opacity='0';const hw=document.getElementById('hw');hw.width=window.innerWidth;hw.height=window.innerHeight;drawWall(hw);setTimeout(()=>{hs.style.transition='opacity 0.4s';hs.style.opacity='1';},10);fillProfile();startChatListener();startCallSignalListener();requestSystemNotif();},400);
+  setTimeout(()=>{ls.classList.remove('active');ls.style.transform='';padVis=false;document.getElementById('lpad').classList.remove('vis');hs.classList.add('active');hs.style.opacity='0';const hw=document.getElementById('hw');hw.width=window.innerWidth;hw.height=window.innerHeight;drawWall(hw);setTimeout(()=>{hs.style.transition='opacity 0.4s';hs.style.opacity='1';},10);fillProfile();startChatListener();startCallSignalListener();requestSystemNotif();initPeer().catch(()=>{});},400);
 }
 
 // ═══════════════════════════════════════════════════
