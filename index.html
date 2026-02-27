@@ -1605,13 +1605,16 @@ function initPeer(){
     });
     _peer.on('disconnected',()=>{if(!_peer.destroyed)_peer.reconnect();});
     _peer.on('call',incoming=>{
-      console.log('[NeonCall] Incoming PeerJS call');
-      if(_activeCallData&&_activeCallData.myRole==='receiver'){
-        answerPeerCall(incoming);
-      } else {
-        _pendingMediaCall=incoming;
-      }
-    });
+  console.log('[NeonCall] Incoming PeerJS call');
+  // Always store it — answer immediately if we already accepted, otherwise wait
+  _pendingMediaCall=incoming;
+  if(_activeCallData&&_activeCallData.myRole==='receiver'){
+    answerPeerCall(incoming);
+    _pendingMediaCall=null;
+  }
+  // If activeCallData not set yet (Firebase slower than PeerJS),
+  // acceptCall() will pick it up from _pendingMediaCall
+});
   });
 }
 
@@ -1824,7 +1827,24 @@ async function acceptCall(){
   const chat=chats.find(c=>c.id===(_activeCallData.roomId||currentChatId))||{};
   showCallScreen(_activeCallData.name,avSolidColor(_activeCallData.name),'CONNECTING...',_activeCallData.isGroup);
   clearMyCtrl();
-  if(_pendingMediaCall){answerPeerCall(_pendingMediaCall);_pendingMediaCall=null;}
+  if(_pendingMediaCall){
+    answerPeerCall(_pendingMediaCall);
+    _pendingMediaCall=null;
+  } else {
+    // PeerJS call hasn't arrived yet — wait up to 8 seconds for it
+    let waited=0;
+    const waitForCall=setInterval(()=>{
+      waited+=200;
+      if(_pendingMediaCall){
+        clearInterval(waitForCall);
+        answerPeerCall(_pendingMediaCall);
+        _pendingMediaCall=null;
+      } else if(waited>=8000){
+        clearInterval(waitForCall);
+        handleCallFailed('CALL TIMED OUT');
+      }
+    },200);
+  }
   // else PeerJS 'call' event will fire and answerPeerCall will run
 }
 
