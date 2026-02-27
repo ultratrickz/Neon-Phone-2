@@ -1546,15 +1546,35 @@ function toastTap(){document.getElementById('toast').classList.remove('show');if
 // ═══════════════════════════════════════════════════
 
 const PEERJS_CONFIG = {
-  debug: 0,
+  debug: 2,
   config: {
     iceServers: [
-      { urls: ['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
-      { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turns:openrelay.metered.ca:443'],
-        username:'openrelayproject', credential:'openrelayproject' }
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "844497d3ff138155c1953bcb",
+        credential: "MJvHSsX8OsaVL+qW",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "844497d3ff138155c1953bcb",
+        credential: "MJvHSsX8OsaVL+qW",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "844497d3ff138155c1953bcb",
+        credential: "MJvHSsX8OsaVL+qW",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "844497d3ff138155c1953bcb",
+        credential: "MJvHSsX8OsaVL+qW",
+      },
     ]
   }
-};
+};;
 
 let _peer=null, _peerId=null, _localStream=null, _remoteAudio=null;
 let _activeCall=null, _groupCalls=[], _pendingMediaCall=null;
