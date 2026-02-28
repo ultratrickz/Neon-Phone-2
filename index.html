@@ -358,12 +358,69 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .checks-read .chk svg path{stroke:#0088ff;transition:stroke 1.2s ease;}
 
 /* Night mode */
+/* Night mode */
 body.night{filter:sepia(0.25) brightness(0.82);}
+
+/* ═══ BOTTOM NAV BAR ════════════════════════════ */
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:56px;background:rgba(8,4,20,0.97);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,0.08);display:none;align-items:center;justify-content:space-around;z-index:300;padding-bottom:env(safe-area-inset-bottom,0);}
+#bottom-nav.vis{display:flex;}
+.bnav-btn{width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:12px;transition:background 0.15s;flex-direction:column;gap:3px;}
+.bnav-btn:active{background:rgba(255,255,255,0.1);}
+.bnav-label{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.3);}
+
+/* ═══ RECENT APPS ════════════════════════════════ */
+#recents-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:none;flex-direction:column;}
+#recents-overlay.open{display:flex;animation:fadeIn 0.22s ease;}
+.recents-header{padding:clamp(50px,7vh,70px) 20px 16px;display:flex;align-items:center;justify-content:space-between;}
+.recents-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,0.4);}
+.recents-clear{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:#ff4466;cursor:pointer;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,68,102,0.3);background:rgba(255,68,102,0.08);}
+.recents-scroll{flex:1;display:flex;gap:16px;padding:0 20px 20px;overflow-x:auto;align-items:center;scrollbar-width:none;}
+.recents-scroll::-webkit-scrollbar{display:none;}
+.recent-card{flex-shrink:0;width:clamp(160px,36vw,220px);display:flex;flex-direction:column;gap:10px;cursor:pointer;}
+.recent-card-preview{width:100%;height:clamp(260px,50vh,360px);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;position:relative;transition:transform 0.2s;}
+.recent-card-preview:active{transform:scale(0.96);}
+.recent-card-name{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.6);text-align:center;}
+.recent-card-close{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;border:1px solid rgba(255,255,255,0.2);z-index:2;}
+.recent-swipe-hint{text-align:center;padding-bottom:clamp(70px,10vh,90px);font-family:'Orbitron',monospace;font-size:8px;letter-spacing:3px;color:rgba(255,255,255,0.15);}
+
+/* Push app screens up when bottom nav is visible */
+#bottom-nav.vis~.aps,
+.aps.open{margin-bottom:0;}
+body.nav-open .aps.open>.abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
+body.nav-open .aps.open>.anav{padding-bottom:16px;}
+body.nav-open #cs.open .comp{padding-bottom:calc(56px + 6px);}
+body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
 </style>
 </head>
 <body>
 <div id="scanline"></div>
 <div id="effect-overlay"></div>
+
+<!-- ═══ BOTTOM NAV BAR ════════════════════════════ -->
+<div id="bottom-nav">
+  <div class="bnav-btn" onclick="haptic();navBack()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="bnav-label">BACK</div>
+  </div>
+  <div class="bnav-btn" onclick="haptic();navHome()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H15v-5h-6v5H4a1 1 0 0 1-1-1V9.5z" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+    <div class="bnav-label">HOME</div>
+  </div>
+  <div class="bnav-btn" onclick="haptic();openRecents()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="10" rx="2" stroke="rgba(255,255,255,0.75)" stroke-width="1.8"/><rect x="14" y="3" width="7" height="10" rx="2" stroke="rgba(255,255,255,0.75)" stroke-width="1.8"/><rect x="3" y="17" width="7" height="4" rx="1.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/><rect x="14" y="17" width="7" height="4" rx="1.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/></svg>
+    <div class="bnav-label">RECENTS</div>
+  </div>
+</div>
+
+<!-- ═══ RECENT APPS OVERLAY ═══════════════════════ -->
+<div id="recents-overlay">
+  <div class="recents-header">
+    <div class="recents-title">RECENT APPS</div>
+    <div class="recents-clear" onclick="haptic();clearAllRecents()">CLEAR ALL</div>
+  </div>
+  <div class="recents-scroll" id="recents-scroll"></div>
+  <div class="recent-swipe-hint">SWIPE UP ON A CARD TO DISMISS</div>
+</div>
 
 <!-- ═══ TOAST ════════════════════════════════════ -->
 <div id="toast" onclick="toastTap()">
@@ -765,15 +822,9 @@ body.night{filter:sepia(0.25) brightness(0.82);}
     </div>
   </div>
   <!-- App runner sub-screen -->
+  <!-- App runner sub-screen -->
   <div class="sub" id="ns-runner">
-    <div class="anav between">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div class="bb" onclick="haptic();closeNsRunner()"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="ntitle" id="ns-runner-title">App</div>
-      </div>
-      <div class="bb" id="ns-runner-fullscreen" onclick="haptic();nsToggleFullscreen()" title="Fullscreen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-    </div>
-    <iframe id="ns-iframe" style="flex:1;width:100%;border:none;background:#000;" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    <iframe id="ns-iframe" style="flex:1;width:100%;height:100%;border:none;background:#000;display:block;" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
   </div>
 </div>
 
@@ -1537,7 +1588,22 @@ function nsAddHomeIcon(appId,app){
   const ico=document.createElement('div');ico.className='aico';ico.id='ns-home-'+appId;
   ico.setAttribute('data-ns-app',appId);
   ico.innerHTML=`<div class="ai" style="overflow:hidden;">${app.iconSvg||`<svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" fill="#1a0a2e"/><text x="28" y="36" font-size="22" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div><div class="al">${(app.name||'App').slice(0,10)}</div>`;
-  ico.onclick=()=>{haptic();nsOpenApp(appId);};
+  ico.onclick=()=>{
+    haptic();
+    if(!document.getElementById('ns').classList.contains('open'))openApp('ns');
+    nsEnsureReady(()=>{
+      // If app data not loaded yet, load it first
+      if(!_nsApps.find(a=>a.id===appId)){
+        nsLoadApps().then?nsLoadApps():nsEnsureReady(()=>{});
+        let tries=0;const t=setInterval(()=>{
+          tries++;
+          const app=_nsApps.find(a=>a.id===appId);
+          if(app){clearInterval(t);nsOpenApp(appId);}
+          if(tries>20)clearInterval(t);
+        },300);
+      }else{nsOpenApp(appId);}
+    });
+  };
   grid.appendChild(ico);
 }
 function nsUpdateHomeIcon(appId,app){
@@ -1556,26 +1622,106 @@ function nsRestoreHomeIcons(){
 }
 
 function nsOpenApp(appId){
-  const app=_nsApps.find(a=>a.id===appId);if(!app||!app.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
+  const app=_nsApps.find(a=>a.id===appId)||_nsInstalledApps[appId];
+  if(!app||!app.htmlContent){
+    // Try fetching from DB if not in memory
+    nsEnsureReady(async()=>{
+      try{
+        const snap=await _nsGet(_nsChild(_nsRef(_nsDb),`apps/${appId}`));
+        if(snap.exists()){
+          const appData=snap.val();
+          if(!appData.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
+          _nsApps=_nsApps.filter(a=>a.id!==appId);
+          _nsApps.push({id:appId,...appData});
+          nsLaunchIframe(appId,appData);
+        }else{showToast('App Not Found','Could not find app data',null,'msg');}
+      }catch(e){showToast('Error','Failed to load app',null,'msg');}
+    });
+    return;
+  }
   closeSub('ns-detail');
-  document.getElementById('ns-runner-title').textContent=app.name||'App';
+  nsLaunchIframe(appId,app);
+}
+
+// Standalone runner — no Neon Shop needed
+let _standaloneRunnerOpen=false;
+function nsLaunchFromHome(appId){
+  nsEnsureReady(async()=>{
+    // Try memory first
+    let app=_nsApps.find(a=>a.id===appId);
+    // If not in memory, fetch from DB
+    if(!app||!app.htmlContent){
+      try{
+        const snap=await _nsGet(_nsChild(_nsRef(_nsDb),`apps/${appId}`));
+        if(!snap.exists()){showToast('App Not Found','Could not load app data',null,'msg');return;}
+        app={id:appId,...snap.val()};
+        _nsApps=_nsApps.filter(a=>a.id!==appId);
+        _nsApps.push(app);
+      }catch(e){showToast('Error','Failed to load app',null,'msg');return;}
+    }
+    if(!app.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
+    // Create or reuse standalone runner
+    let runner=document.getElementById('ns-standalone-runner');
+    if(!runner){
+      runner=document.createElement('div');
+      runner.id='ns-standalone-runner';
+      runner.style.cssText='position:fixed;inset:0;z-index:55;background:#000;display:flex;flex-direction:column;';
+      const iframe=document.createElement('iframe');
+      iframe.id='ns-standalone-iframe';
+      iframe.style.cssText='flex:1;width:100%;height:100%;border:none;background:#000;display:block;';
+      iframe.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin');
+      runner.appendChild(iframe);
+      document.body.appendChild(runner);
+    }
+    const iframe=document.getElementById('ns-standalone-iframe');
+    const blob=new Blob([app.htmlContent],{type:'text/html'});
+    const url=URL.createObjectURL(blob);
+    iframe.src=url;
+    iframe.onload=()=>{try{URL.revokeObjectURL(url);}catch(e){}};
+    runner.style.display='flex';
+    runner.style.animation='ao 0.38s cubic-bezier(0.22,1,0.36,1) forwards';
+    _standaloneRunnerOpen=true;
+    showBottomNav();
+    // Track in recents
+    _recentApps=_recentApps.filter(r=>r.id!=='nsapp_'+appId);
+    _recentApps.unshift({id:'nsapp_'+appId,name:app.name||'App',timestamp:Date.now()});
+    if(_recentApps.length>MAX_RECENTS)_recentApps=_recentApps.slice(0,MAX_RECENTS);
+  });
+}
+
+function nsCloseStandaloneRunner(){
+  const runner=document.getElementById('ns-standalone-runner');
+  if(!runner)return;
+  runner.style.animation='ac 0.32s cubic-bezier(0.6,0,0.8,0) forwards';
+  setTimeout(()=>{
+    runner.style.display='none';
+    const iframe=document.getElementById('ns-standalone-iframe');
+    if(iframe)iframe.src='about:blank';
+    _standaloneRunnerOpen=false;
+    const anyOpen=document.querySelector('.aps.open');
+    if(!anyOpen&&!document.getElementById('cs').classList.contains('open'))hideBottomNav();
+  },320);
+}
+
+function nsLaunchIframe(appId,app){
+  closeSub('ns-detail');
   const iframe=document.getElementById('ns-iframe');
   const blob=new Blob([app.htmlContent],{type:'text/html'});
   const url=URL.createObjectURL(blob);
   iframe.src=url;
-  // Clean up old blob URL after load
   iframe.onload=()=>{try{URL.revokeObjectURL(url);}catch(e){}};
-  openSub('ns-runner');
+  // Open runner sub — this fills the whole ns app screen
+  const runner=document.getElementById('ns-runner');
+  runner.classList.add('open');
+  runner.classList.remove('closing');
+  // Track in recents
+  _recentApps=_recentApps.filter(r=>r.id!=='nsapp_'+appId);
+  _recentApps.unshift({id:'nsapp_'+appId,name:app.name||'App',timestamp:Date.now()});
+  if(_recentApps.length>MAX_RECENTS)_recentApps=_recentApps.slice(0,MAX_RECENTS);
 }
 function closeNsRunner(){
   document.getElementById('ns-iframe').src='about:blank';
   closeSub('ns-runner');
-  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
-}
-function nsToggleFullscreen(){
-  const runner=document.getElementById('ns-runner');
-  if(!document.fullscreenElement){runner.requestFullscreen().catch(()=>{});}
-  else{document.exitFullscreen().catch(()=>{});}
 }
 
 function nsScrollToUpdates(){
@@ -2842,8 +2988,201 @@ setInterval(()=>{
 },15000);
 
 // ═══════════════════════════════════════════════════
-// RESIZE
+// AUTO FULLSCREEN
 // ═══════════════════════════════════════════════════
+function tryFullscreen(){
+  const el=document.documentElement;
+  if(!document.fullscreenElement){
+    (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen)?.call(el)?.catch(()=>{});
+  }
+}
+// Request fullscreen on first user tap
+document.addEventListener('pointerdown',tryFullscreen,{once:true});
+document.addEventListener('touchstart',tryFullscreen,{once:true,passive:true});
+
+// ═══════════════════════════════════════════════════
+// BOTTOM NAV + RECENTS
+// ═══════════════════════════════════════════════════
+let _recentApps=[]; // [{id, name, screenshot(dataUrl), timestamp}]
+const MAX_RECENTS=8;
+
+function showBottomNav(){
+  document.getElementById('bottom-nav').classList.add('vis');
+  document.body.classList.add('nav-open');
+}
+function hideBottomNav(){
+  document.getElementById('bottom-nav').classList.remove('vis');
+  document.body.classList.remove('nav-open');
+}
+
+// Patch openApp to show nav and record recents
+const _originalOpenApp=window.openApp;
+window.openApp=function(id){
+  _originalOpenApp&&_originalOpenApp(id);
+  showBottomNav();
+  addToRecents(id);
+};
+
+// Patch closeApp to hide nav if nothing open
+const _originalCloseApp=window.closeApp;
+window.closeApp=function(id){
+  _originalCloseApp&&_originalCloseApp(id);
+  setTimeout(()=>{
+    const anyOpen=document.querySelector('.aps.open');
+    if(!anyOpen&&!document.getElementById('cs').classList.contains('open'))hideBottomNav();
+  },350);
+};
+
+// Also show nav when conversation opens
+const _originalOpenConv=window.openConv;
+window.openConv=async function(roomId){
+  await _originalOpenConv(roomId);
+  showBottomNav();
+  addToRecents('conv_'+roomId);
+};
+const _originalCloseConv=window.closeConv;
+window.closeConv=function(){
+  _originalCloseConv&&_originalCloseConv();
+  setTimeout(()=>{
+    const anyOpen=document.querySelector('.aps.open');
+    if(!anyOpen)hideBottomNav();
+  },350);
+};
+
+function addToRecents(id){
+  // Remove existing entry for this id
+  _recentApps=_recentApps.filter(r=>r.id!==id);
+  const names={sa:'Settings',ns:'Neon Shop',ma:'Messages'};
+  let name=names[id]||id;
+  if(id.startsWith('conv_')){const roomId=id.slice(5);const chat=chats.find(c=>c.id===roomId)||{};name=chat.nickname||chat.name||'Chat';}
+  // For NS runner apps, use app name
+  if(id.startsWith('nsapp_')){const appId=id.slice(6);const app=_nsApps.find(a=>a.id===appId)||{};name=app.name||'App';}
+  _recentApps.unshift({id,name,timestamp:Date.now(),screenshot:null});
+  if(_recentApps.length>MAX_RECENTS)_recentApps=_recentApps.slice(0,MAX_RECENTS);
+}
+
+function navBack(){
+  // Close standalone app runner first if open
+  if(_standaloneRunnerOpen){nsCloseStandaloneRunner();return;}
+  // Close topmost open screen
+  const cs=document.getElementById('cs');
+  if(cs.classList.contains('open')){closeConv();return;}
+  // Check for open subs first (deepest screen)
+  const openSubs=document.querySelectorAll('.sub.open');
+  if(openSubs.length>0){
+    const top=openSubs[openSubs.length-1];
+    const id=top.id;
+    closeSub(id);
+    return;
+  }
+  // Then close app
+  const openApps=document.querySelectorAll('.aps.open');
+  if(openApps.length>0){
+    const top=openApps[openApps.length-1];
+    closeApp(top.id);
+    return;
+  }
+  hideBottomNav();
+}
+
+function navHome(){
+  // Close everything and go home
+  document.getElementById('cs').classList.remove('open');
+  document.querySelectorAll('.sub.open').forEach(s=>s.classList.remove('open'));
+  document.querySelectorAll('.aps.open').forEach(a=>{a.classList.add('closing');setTimeout(()=>a.classList.remove('open','closing'),320);});
+  if(currentRoomId){SET(REF(DB,`rooms/${currentRoomId}/typing/${DID}`),null).catch(()=>{});}
+  if(convUnsub){convUnsub();convUnsub=null;}
+  if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
+  currentRoomId=null;currentChatId=null;
+  dismissKeyboard();
+  cancelReply();
+  setTimeout(()=>hideBottomNav(),50);
+}
+
+function openRecents(){
+  const overlay=document.getElementById('recents-overlay');
+  renderRecents();
+  overlay.classList.add('open');
+  // Tap outside to close
+  setTimeout(()=>{
+    const close=(e)=>{if(e.target===overlay||e.target.classList.contains('recents-scroll')){overlay.classList.remove('open');document.removeEventListener('click',close);}};
+    document.addEventListener('click',close);
+  },100);
+}
+
+function renderRecents(){
+  const scroll=document.getElementById('recents-scroll');
+  scroll.innerHTML='';
+  if(!_recentApps.length){
+    scroll.innerHTML='<div style="font-family:Orbitron,monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.18);margin:auto;">NO RECENT APPS</div>';
+    return;
+  }
+  _recentApps.forEach((r,idx)=>{
+    const card=document.createElement('div');card.className='recent-card';
+    const preview=document.createElement('div');preview.className='recent-card-preview';
+    // App icon preview
+    const appColors={sa:'linear-gradient(135deg,#aa00ff,#ff00aa)',ns:'linear-gradient(135deg,#00ffee,#0088ff)',ma:'linear-gradient(135deg,#aa00ff,#0088ff)'};
+    const appIcons={
+      sa:'<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="12" r="3" fill="rgba(200,150,255,0.8)"/><circle cx="16" cy="8" r="3" fill="rgba(100,100,255,0.8)"/><circle cx="16" cy="16" r="3" fill="rgba(100,255,100,0.8)"/></svg>',
+      ns:'<svg width="48" height="48" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="10" rx="3" stroke="rgba(0,255,238,0.9)" stroke-width="1.8"/><rect x="18" y="4" width="10" height="10" rx="3" stroke="rgba(170,0,255,0.9)" stroke-width="1.8"/><rect x="4" y="18" width="10" height="10" rx="3" stroke="rgba(0,136,255,0.9)" stroke-width="1.8"/><rect x="18" y="18" width="10" height="10" rx="3" stroke="rgba(0,255,238,0.9)" stroke-width="1.8"/></svg>',
+      ma:'<svg width="48" height="48" viewBox="0 0 32 32" fill="none"><path d="M4 6h24a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H10l-6 4V8a2 2 0 0 1 2-2z" stroke="rgba(0,255,238,0.9)" stroke-width="2" fill="none"/></svg>',
+    };
+    let bg=appColors[r.id]||'linear-gradient(135deg,#220044,#001133)';
+    let iconHtml=appIcons[r.id]||`<div style="font-family:Orbitron,monospace;font-size:32px;font-weight:700;color:rgba(255,255,255,0.6);">${r.name[0]?.toUpperCase()||'?'}</div>`;
+    if(r.id.startsWith('conv_')){const roomId=r.id.slice(5);const chat=chats.find(c=>c.id===roomId)||{};bg=avColor(chat.name||r.name);iconHtml=`<div style="font-family:Orbitron,monospace;font-size:32px;font-weight:700;color:#fff;">${r.name[0]?.toUpperCase()||'?'}</div>`;}
+    preview.style.background=bg;
+    preview.innerHTML=`
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+        ${iconHtml}
+        <div style="font-family:Orbitron,monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.5);">${r.name.toUpperCase()}</div>
+      </div>
+      <div class="recent-card-close" onclick="event.stopPropagation();haptic();removeRecent(${idx})">✕</div>
+    `;
+    // Swipe up to dismiss
+    let sy2=0;
+    preview.addEventListener('touchstart',e=>{sy2=e.touches[0].clientY;},{passive:true});
+    preview.addEventListener('touchmove',e=>{
+      const dy=sy2-e.touches[0].clientY;
+      if(dy>0){preview.style.transform=`translateY(-${Math.min(dy,120)}px)`;preview.style.opacity=String(1-dy/120);}
+    },{passive:true});
+    preview.addEventListener('touchend',e=>{
+      const dy=sy2-e.changedTouches[0].clientY;
+      if(dy>60){card.style.animation='none';card.style.opacity='0';card.style.transform='translateY(-30px)';setTimeout(()=>{removeRecent(idx);},180);}
+      else{preview.style.transform='';preview.style.opacity='1';}
+    });
+    // Tap to reopen
+    preview.addEventListener('click',()=>{haptic();reopenRecent(r);document.getElementById('recents-overlay').classList.remove('open');});
+    const label=document.createElement('div');label.className='recent-card-name';label.textContent=r.name.toUpperCase();
+    card.appendChild(preview);card.appendChild(label);
+    scroll.appendChild(card);
+  });
+}
+
+function removeRecent(idx){_recentApps.splice(idx,1);renderRecents();}
+function clearAllRecents(){_recentApps=[];renderRecents();document.getElementById('recents-overlay').classList.remove('open');}
+
+function reopenRecent(r){
+  if(r.id==='sa'||r.id==='ns'||r.id==='ma'){
+    // Check if already open; if so just bring it forward
+    const el=document.getElementById(r.id);
+    if(!el.classList.contains('open'))openApp(r.id);
+    return;
+  }
+  if(r.id.startsWith('conv_')){
+    const roomId=r.id.slice(5);
+    if(!document.getElementById('ma').classList.contains('open'))openApp('ma');
+    setTimeout(()=>openConv(roomId),200);
+    return;
+  }
+  if(r.id.startsWith('nsapp_')){
+    const appId=r.id.slice(6);
+    nsLaunchFromHome(appId);
+    return;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// RESIZE═══════════════════════════════════════════════════
 window.addEventListener('resize',()=>{
   ['wv','hw','cvw'].forEach(id=>{const cv=document.getElementById(id);if(cv&&cv.offsetParent!==null)drawWall(cv);});
   if(document.getElementById('neon-kb').classList.contains('vis'))updateKbPush();
