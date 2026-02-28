@@ -1771,8 +1771,24 @@ function openConv(roomId){
   document.getElementById('ci').value='';document.getElementById('sndbtn').classList.remove('ok');
   cancelReply();startMsgListener(roomId);
 }
+let _typingUnsub=null;
 function startMsgListener(rid){
   if(convUnsub){convUnsub();convUnsub=null;}
+  if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
+  _typingUnsub=ONVAL(REF(DB,`rooms/${rid}/typing`),snap=>{
+    const data=snap.val()||{};
+    const others=Object.entries(data).filter(([did])=>did!==DID);
+    const area=document.getElementById('msg-area');
+    const existing=document.getElementById('typing-indicator');
+    if(others.length>0){
+      const names=others.map(([,v])=>v.name||'...').join(', ');
+      if(!existing){
+        const ti=document.createElement('div');ti.id='typing-indicator';ti.className='bw i';
+        ti.innerHTML=`<div style="font-size:11px;font-family:Orbitron,monospace;color:var(--text2);letter-spacing:1px;margin-bottom:4px;">${names}</div><div class="typing-indicator"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+        area.appendChild(ti);area.scrollTop=area.scrollHeight;
+      }else{existing.querySelector('div').textContent=names;}
+    }else{if(existing)existing.remove();}
+  });
   convUnsub=ONVAL(REF(DB,`rooms/${rid}/messages`),snap=>{
     const data=snap.val()||{};
     const msgs=Object.entries(data).map(([id,m])=>({_id:id,...m})).sort((a,b)=>a.timestamp-b.timestamp);
@@ -1885,13 +1901,29 @@ function renderMsgs(msgs){
   if(wasAtBottom||!msgs.length||msgs[msgs.length-1].senderDid===DID){setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);}
 }
 
+let _typingTimeout=null;
+function setTyping(isTyping){
+  if(!currentRoomId)return;
+  try{
+    if(isTyping){
+      SET(REF(DB,`rooms/${currentRoomId}/typing/${DID}`),{name:window.USER?.firstName||'?',ts:Date.now()});
+      if(_typingTimeout)clearTimeout(_typingTimeout);
+      _typingTimeout=setTimeout(()=>SET(REF(DB,`rooms/${currentRoomId}/typing/${DID}`),null).catch(()=>{}),3000);
+    }else{
+      if(_typingTimeout)clearTimeout(_typingTimeout);
+      SET(REF(DB,`rooms/${currentRoomId}/typing/${DID}`),null).catch(()=>{});
+    }
+  }catch(e){}
+}
 function closeConv(){
   const cs=document.getElementById('cs');cs.classList.add('closing');cs.addEventListener('animationend',()=>{cs.classList.remove('open','closing');},{once:true});
   document.getElementById('cdd').classList.remove('open');
   if(convUnsub){convUnsub();convUnsub=null;}
+  if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
+  if(currentRoomId)SET(REF(DB,`rooms/${currentRoomId}/typing/${DID}`),null).catch(()=>{});
   currentRoomId=null;currentChatId=null;dismissKeyboard();cancelReply();
 }
-function cuUpdate(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';document.getElementById('sndbtn').classList.toggle('ok',el.value.trim().length>0);document.getElementById('fxbtn').classList.toggle('ok',el.value.trim().length>0);}
+function cuUpdate(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';document.getElementById('sndbtn').classList.toggle('ok',el.value.trim().length>0);document.getElementById('fxbtn').classList.toggle('ok',el.value.trim().length>0);setTyping(el.value.trim().length>0);}
 function cuKey(e){if(e.key==='Enter'&&!e.shiftKey&&!IS_MOBILE){e.preventDefault();sendMsg();}}
 
 async function sendMsg(){
