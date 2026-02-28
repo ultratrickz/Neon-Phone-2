@@ -734,6 +734,12 @@ body.night{filter:sepia(0.25) brightness(0.82);}
     </div>
     <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--cyan);opacity:0.7;">APPS & GAMES</div>
   </div>
+ <!-- Update banner -->
+  <div class="ns-update-banner" id="ns-update-banner">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="#ffaa00"/></svg>
+    <span class="ns-update-banner-text">UPDATES AVAILABLE</span>
+    <button onclick="haptic();nsScrollToUpdates()" style="padding:6px 12px;border-radius:10px;background:rgba(255,150,0,0.2);border:1px solid rgba(255,150,0,0.4);color:#ffaa00;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;">VIEW</button>
+  </div>
   <!-- Search & Filter bar -->
   <div style="padding:10px 16px 0;display:flex;gap:8px;">
     <input type="text" class="ni" id="ns-search" placeholder="Search apps & games..." style="font-size:13px;padding:9px 14px;flex:1;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)" oninput="nsSearch(this.value)">
@@ -1165,6 +1171,22 @@ function setWallpaper(id){currentWallId=id;try{localStorage.setItem('neos_wall',
     .ns-review-date{font-size:10px;color:rgba(255,255,255,0.25);font-family:'Orbitron',monospace;margin-top:4px;}
     .ns-loader{text-align:center;padding:48px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:rgba(0,255,238,0.4);animation:nsload 1s ease-in-out infinite alternate;}
     @keyframes nsload{from{opacity:0.3}to{opacity:1}}
+    .ns-install-btn{padding:8px 16px;border-radius:20px;background:var(--accent);border:none;color:#fff;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;white-space:nowrap;box-shadow:0 0 12px rgba(170,0,255,0.35);transition:transform 0.15s;}
+    .ns-install-btn:active{transform:scale(0.92);}
+    .ns-install-btn.installed{background:rgba(0,204,68,0.15);border:1px solid rgba(0,204,68,0.4);color:#00cc44;box-shadow:none;}
+    .ns-install-btn.update{background:linear-gradient(135deg,#ff6600,#ffee00);color:#000;box-shadow:0 0 12px rgba(255,150,0,0.4);}
+    .ns-update-banner{margin:0 14px 10px;padding:12px 16px;background:rgba(255,150,0,0.1);border:1px solid rgba(255,150,0,0.3);border-radius:14px;display:none;align-items:center;gap:10px;}
+    .ns-update-banner.vis{display:flex;}
+    .ns-update-banner-text{flex:1;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:#ffaa00;}
+    .ns-progress-wrap{margin:0 14px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 16px;display:none;}
+    .ns-progress-wrap.vis{display:block;}
+    .ns-progress-title{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.5);margin-bottom:8px;}
+    .ns-progress-bar-bg{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+    .ns-progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:3px;transition:width 0.2s ease;box-shadow:0 0 8px var(--accent);}
+    .ns-progress-pct{font-family:'Orbitron',monospace;font-size:9px;color:var(--cyan);text-align:right;margin-top:5px;letter-spacing:2px;}
+    .ns-installed-section{padding:0 14px;margin-bottom:8px;}
+    .ns-installed-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(0,204,68,0.12);border:1px solid rgba(0,204,68,0.3);border-radius:8px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:#00cc44;}
+    .ns-update-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(255,150,0,0.15);border:1px solid rgba(255,150,0,0.4);border-radius:8px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:#ffaa00;}
     #ns-runner{display:none;flex-direction:column;}
     #ns-runner.open{display:flex;}
     #ns-iframe{flex:1;border:none;width:100%;background:#000;}
@@ -1198,15 +1220,71 @@ function nsEnsureReady(cb){
   let tries=0;const t=setInterval(()=>{tries++;if(window._nsReady){clearInterval(t);cb();}if(tries>40)clearInterval(t);},250);
 }
 
+let _nsInstalledApps={};// {appId: {version, installedAt}}
+let _nsPendingUpdates={};// {appId: updateRecord}
+let _nsDownloading=null;// appId currently downloading/updating
+
+function nsLoadInstalledFromDB(){
+  if(!window.USER||!DID)return;
+  nsEnsureReady(async()=>{
+    try{
+      const snap=await _nsGet(_nsChild(_nsRef(_nsDb),`userInstalls/${DID}`));
+      if(snap.exists())_nsInstalledApps=snap.val()||{};
+      // Load pending updates for installed apps
+      const updateSnap=await _nsGet(_nsChild(_nsRef(_nsDb),'shop/updates'));
+      if(updateSnap.exists()){
+        const updates=updateSnap.val()||{};
+        Object.entries(updates).forEach(([appId,u])=>{
+          if(_nsInstalledApps[appId]&&_nsInstalledApps[appId].version!==u.version){
+            _nsPendingUpdates[appId]=u;
+          }
+        });
+      }
+      nsCheckUpdateBanner();
+      updateMsgBadge();// refresh badge in case shop badge needs update
+      nsUpdateShopBadge();
+    }catch(e){}
+  });
+}
+function nsUpdateShopBadge(){
+  const count=Object.keys(_nsPendingUpdates).length;
+  // Reuse the app-badge on the Neon Shop icon
+  const icons=document.querySelectorAll('.aico');
+  icons.forEach(ico=>{if(ico.querySelector('.al')?.textContent==='Neon Shop'){const badge=ico.querySelector('.app-badge');if(badge){if(count>0){badge.textContent=count;badge.classList.add('visible');}else badge.classList.remove('visible');}}});
+}
+function nsCheckUpdateBanner(){
+  const count=Object.keys(_nsPendingUpdates).length;
+  const banner=document.getElementById('ns-update-banner');
+  if(!banner)return;
+  if(count>0){
+    banner.classList.add('vis');
+    banner.querySelector('.ns-update-banner-text').textContent=`${count} UPDATE${count>1?'S':''} AVAILABLE`;
+  }else{banner.classList.remove('vis');}
+}
+
 async function nsLoadApps(){
   const list=document.getElementById('ns-app-list');
   if(!list)return;
   list.innerHTML='<div class="ns-loader">LOADING APPS...</div>';
+  nsCheckUpdateBanner();
   nsEnsureReady(async()=>{
     try{
-      const snap=await _nsGet(_nsChild(_nsRef(_nsDb),'shop/apps'));
+      const snap=await _nsGet(_nsChild(_nsRef(_nsDb),'apps'));
       if(!snap.exists()){list.innerHTML='<div class="ns-empty">NO APPS YET<br>BE THE FIRST DEVELOPER</div>';return;}
       _nsApps=Object.entries(snap.val()).map(([id,d])=>({id,...d}));
+      // Also refresh pending updates
+      const updateSnap=await _nsGet(_nsChild(_nsRef(_nsDb),'updates'));
+      _nsPendingUpdates={};
+      if(updateSnap.exists()){
+        const updates=updateSnap.val()||{};
+        Object.entries(updates).forEach(([appId,u])=>{
+          if(_nsInstalledApps[appId]&&_nsInstalledApps[appId].version!==u.version){
+            _nsPendingUpdates[appId]=u;
+          }
+        });
+      }
+      nsCheckUpdateBanner();
+      nsUpdateShopBadge();
       nsRenderList();
     }catch(e){list.innerHTML='<div class="ns-empty">FAILED TO LOAD<br>CHECK CONNECTION</div>';}
   });
@@ -1220,6 +1298,13 @@ function nsGetAvg(reviews){
 function nsStars(avg,size=13){
   let s='';for(let i=1;i<=5;i++){const full=i<=Math.floor(avg),half=!full&&i-0.5<=avg;s+=`<span class="ns-star" style="font-size:${size}px;opacity:${full||half?1:0.25};">${full?'★':half?'⭐':'★'}</span>`;}return s;
 }
+function nsGetInstallBtnHtml(appId){
+  const installed=_nsInstalledApps[appId];
+  const hasUpdate=!!_nsPendingUpdates[appId];
+  if(hasUpdate)return`<button class="ns-install-btn update" onclick="event.stopPropagation();haptic();nsDoUpdate('${appId}')">UPDATE</button>`;
+  if(installed)return`<button class="ns-install-btn installed" onclick="event.stopPropagation();haptic();nsOpenApp('${appId}')">OPEN ✓</button>`;
+  return`<button class="ns-install-btn" onclick="event.stopPropagation();haptic();nsInstall('${appId}')">GET</button>`;
+}
 function nsRenderList(){
   const list=document.getElementById('ns-app-list');if(!list)return;
   let apps=_nsApps.filter(a=>!a.hidden);
@@ -1227,22 +1312,30 @@ function nsRenderList(){
   if(_nsQuery)apps=apps.filter(a=>(a.name||'').toLowerCase().includes(_nsQuery)||(a.companyName||'').toLowerCase().includes(_nsQuery));
   if(!apps.length){list.innerHTML='<div class="ns-empty">NO APPS FOUND</div>';return;}
   list.innerHTML='';
-  apps.forEach(app=>{
+  // Show installed section first
+  const installedApps=apps.filter(a=>_nsInstalledApps[a.id]);
+  const notInstalled=apps.filter(a=>!_nsInstalledApps[a.id]);
+  const ordered=[...installedApps,...notInstalled];
+  ordered.forEach(app=>{
     const avg=nsGetAvg(app.reviews);const rc=app.reviews?Object.keys(app.reviews).length:0;
+    const hasUpdate=!!_nsPendingUpdates[app.id];
+    const isInstalled=!!_nsInstalledApps[app.id];
     const card=document.createElement('div');card.className='ns-card';
+    if(hasUpdate)card.style.borderColor='rgba(255,150,0,0.3)';
     card.innerHTML=`
-      <div class="ns-icon-wrap">${app.iconSvg||`<svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" fill="#1a0a2e"/><text x="28" y="36" font-size="22" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div>
+      <div class="ns-icon-wrap" style="${hasUpdate?'box-shadow:0 0 10px rgba(255,150,0,0.3)':''}">${app.iconSvg||`<svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" fill="#1a0a2e"/><text x="28" y="36" font-size="22" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div>
       <div class="ns-card-info">
         <div class="ns-card-name">${app.name||'Untitled'}</div>
         <div class="ns-card-dev">${app.companyName||'Unknown Dev'}</div>
         <div class="ns-card-desc">${app.description||''}</div>
         <div class="ns-card-meta">
           <span class="ns-badge ${app.category||'other'}">${(app.category||'OTHER').toUpperCase()}</span>
+          ${isInstalled?`<span class="ns-installed-badge">✓ INSTALLED</span>`:''}
+          ${hasUpdate?`<span class="ns-update-chip">⚡ UPDATE</span>`:''}
           <div class="ns-stars">${nsStars(avg,11)}<span class="ns-avg">${avg>0?avg.toFixed(1):''}</span></div>
-          ${rc>0?`<span style="font-size:10px;color:rgba(255,255,255,0.25);">(${rc})</span>`:''}
         </div>
       </div>
-      <button class="ns-get-btn" onclick="event.stopPropagation();haptic();nsOpenApp('${app.id}')">OPEN</button>
+      ${nsGetInstallBtnHtml(app.id)}
     `;
     card.onclick=()=>{haptic();nsShowDetail(app.id);};
     list.appendChild(card);
@@ -1271,9 +1364,12 @@ async function nsShowDetail(appId){
         <span class="ns-badge ${app.category||'other'}" style="margin-top:6px;display:inline-block;">${(app.category||'OTHER').toUpperCase()}</span>
       </div>
     </div>
-    <div style="padding:0 18px 16px;">
-      <button class="sbtn" style="margin-bottom:0;" onclick="haptic();nsOpenApp('${app.id}')">▶ LAUNCH APP</button>
+    <div style="padding:0 18px 16px;display:flex;flex-direction:column;gap:8px;">
+      ${_nsInstalledApps[app.id]?`<button class="sbtn" style="margin-bottom:0;" onclick="haptic();nsOpenApp('${app.id}')">▶ LAUNCH APP</button>`:`<button class="sbtn" style="margin-bottom:0;background:linear-gradient(135deg,#00cc44,#00ffee);box-shadow:0 0 20px rgba(0,204,68,0.3);" onclick="haptic();nsInstall('${app.id}');closeSub('ns-detail')">⬇ INSTALL APP</button>`}
+      ${_nsPendingUpdates[app.id]?`<button class="sbtn" style="margin-bottom:0;background:linear-gradient(135deg,#ff6600,#ffee00);color:#000;" onclick="haptic();nsDoUpdate('${app.id}');closeSub('ns-detail')">⚡ UPDATE AVAILABLE — v${_nsPendingUpdates[app.id].version}</button>`:''}
+      ${_nsInstalledApps[app.id]?`<button style="padding:10px;border-radius:12px;background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.25);color:#ff4466;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;" onclick="haptic();nsUninstall('${app.id}');closeSub('ns-detail')">UNINSTALL</button>`:''}
     </div>
+    ${_nsPendingUpdates[app.id]?`<div style="padding:0 18px 12px;"><div style="background:rgba(255,150,0,0.08);border:1px solid rgba(255,150,0,0.2);border-radius:12px;padding:12px 14px;"><div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:#ffaa00;margin-bottom:6px;">WHAT'S NEW IN v${_nsPendingUpdates[app.id].version}</div><div style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;">${(_nsPendingUpdates[app.id].notes||'').replace(/\n/g,'<br>')}</div></div></div>`:''}
     <div style="padding:0 18px;"><div class="ns-section-title">DESCRIPTION</div>
       <div style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;">${app.description||'No description.'}</div>
     </div>
@@ -1340,6 +1436,125 @@ async function nsSubmitReview(appId){
     }catch(e){if(errEl)errEl.textContent='Submit failed. Try again.';}
   });
 }
+async function nsInstall(appId){
+  if(!DID){showToast('Sign In Required','You need a Neon OS account to install apps',null,'msg');return;}
+  const app=_nsApps.find(a=>a.id===appId);if(!app)return;
+  nsShowProgress(`INSTALLING ${(app.name||'').toUpperCase()}...`,appId);
+  nsEnsureReady(async()=>{
+    try{
+      await nsSimulateProgress(appId,'install');
+      const record={version:app.version||'1.0.0',installedAt:Date.now(),name:app.name,iconSvg:app.iconSvg||'',category:app.category||'other'};
+      await _nsSet(_nsRef(_nsDb,`userInstalls/${DID}/${appId}`),record);
+      await _nsSet(_nsRef(_nsDb,`apps/${appId}/installs/${DID}`),{installedAt:Date.now()});
+      _nsInstalledApps[appId]=record;
+      nsHideProgress();
+      nsAddHomeIcon(appId,app);
+      nsRenderList();
+      showToast('App Installed!',`${app.name} added to home screen`,null,'msg');
+    }catch(e){nsHideProgress();showToast('Install Failed','Check your connection',null,'msg');}
+  });
+}
+async function nsDoUpdate(appId){
+  if(!DID)return;
+  const update=_nsPendingUpdates[appId];if(!update)return;
+  const app=_nsApps.find(a=>a.id===appId);if(!app)return;
+  nsShowProgress(`UPDATING ${(app.name||'').toUpperCase()} TO v${update.version}...`,appId);
+  nsEnsureReady(async()=>{
+    try{
+      await nsSimulateProgress(appId,'update');
+      const record={..._nsInstalledApps[appId],version:update.version,updatedAt:Date.now(),iconSvg:app.iconSvg||update.iconSvg||''};
+      await _nsSet(_nsRef(_nsDb,`shop/userInstalls/${DID}/${appId}`),record);
+      _nsInstalledApps[appId]=record;
+      delete _nsPendingUpdates[appId];
+      nsUpdateHomeIcon(appId,app);
+      nsHideProgress();
+      nsCheckUpdateBanner();
+      nsUpdateShopBadge();
+      nsRenderList();
+      showToast('Updated!',`${app.name} updated to v${update.version}`,null,'msg');
+    }catch(e){nsHideProgress();showToast('Update Failed','Check your connection',null,'msg');}
+  });
+}
+async function nsUninstall(appId){
+  const app=_nsApps.find(a=>a.id===appId)||{name:'this app'};
+  if(!confirm(`Uninstall ${app.name}?`))return;
+  nsEnsureReady(async()=>{
+    try{
+      await _nsSet(_nsRef(_nsDb,`userInstalls/${DID}/${appId}`),null);
+      await _nsSet(_nsRef(_nsDb,`apps/${appId}/installs/${DID}`),null);
+      delete _nsInstalledApps[appId];
+      delete _nsPendingUpdates[appId];
+      nsRemoveHomeIcon(appId);
+      nsRenderList();
+      nsCheckUpdateBanner();
+      nsUpdateShopBadge();
+      showToast('Uninstalled',`${app.name} removed from home screen`,null,'msg');
+    }catch(e){showToast('Error','Uninstall failed',null,'msg');}
+  });
+}
+
+// Progress bar simulation
+function nsShowProgress(label,appId){
+  _nsDownloading=appId;
+  let pw=document.getElementById('ns-progress-wrap');
+  if(!pw){pw=document.createElement('div');pw.id='ns-progress-wrap';pw.className='ns-progress-wrap';pw.innerHTML=`<div class="ns-progress-title" id="ns-progress-title"></div><div class="ns-progress-bar-bg"><div class="ns-progress-bar" id="ns-progress-bar"></div></div><div class="ns-progress-pct" id="ns-progress-pct">0%</div><div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,0.25);margin-top:6px;letter-spacing:2px;">YOU CAN BROWSE WHILE THIS RUNS</div>`;
+    const listBody=document.getElementById('ns-list-body');if(listBody)listBody.prepend(pw);}
+  pw.classList.add('vis');
+  document.getElementById('ns-progress-title').textContent=label;
+  document.getElementById('ns-progress-bar').style.width='0%';
+  document.getElementById('ns-progress-pct').textContent='0%';
+}
+function nsHideProgress(){
+  _nsDownloading=null;
+  const pw=document.getElementById('ns-progress-wrap');if(pw)pw.classList.remove('vis');
+}
+function nsSimulateProgress(appId,type){
+  return new Promise(resolve=>{
+    const bar=document.getElementById('ns-progress-bar');
+    const pct=document.getElementById('ns-progress-pct');
+    const app=_nsApps.find(a=>a.id===appId)||{};
+    // Base time on HTML size — bigger app = longer "download"
+    const htmlLen=(app.htmlContent||'').length;
+    const baseMs=Math.min(Math.max(1200,htmlLen/50),6000);
+    let progress=0;
+    const steps=60;const interval=baseMs/steps;
+    const timer=setInterval(()=>{
+      // Simulate realistic progress: fast start, slow middle, fast finish
+      const remaining=100-progress;
+      const increment=remaining*0.08+Math.random()*2;
+      progress=Math.min(progress+increment,98);
+      if(bar)bar.style.width=progress+'%';
+      if(pct)pct.textContent=Math.round(progress)+'%';
+      if(progress>=98){clearInterval(timer);setTimeout(()=>{if(bar)bar.style.width='100%';if(pct)pct.textContent='100%';setTimeout(resolve,400);},200);}
+    },interval);
+  });
+}
+
+// Home screen icon management for installed apps
+function nsAddHomeIcon(appId,app){
+  const grid=document.querySelector('.agrid');if(!grid)return;
+  if(document.getElementById('ns-home-'+appId))return;
+  const ico=document.createElement('div');ico.className='aico';ico.id='ns-home-'+appId;
+  ico.setAttribute('data-ns-app',appId);
+  ico.innerHTML=`<div class="ai" style="overflow:hidden;">${app.iconSvg||`<svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" fill="#1a0a2e"/><text x="28" y="36" font-size="22" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div><div class="al">${(app.name||'App').slice(0,10)}</div>`;
+  ico.onclick=()=>{haptic();nsOpenApp(appId);};
+  grid.appendChild(ico);
+}
+function nsUpdateHomeIcon(appId,app){
+  const ico=document.getElementById('ns-home-'+appId);if(!ico)return;
+  const ai=ico.querySelector('.ai');if(ai&&app.iconSvg)ai.innerHTML=app.iconSvg;
+}
+function nsRemoveHomeIcon(appId){
+  const ico=document.getElementById('ns-home-'+appId);if(ico)ico.remove();
+}
+function nsRestoreHomeIcons(){
+  Object.entries(_nsInstalledApps).forEach(([appId,record])=>{
+    if(document.getElementById('ns-home-'+appId))return;
+    const app={id:appId,...record};
+    nsAddHomeIcon(appId,app);
+  });
+}
+
 function nsOpenApp(appId){
   const app=_nsApps.find(a=>a.id===appId);if(!app||!app.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
   closeSub('ns-detail');
@@ -1363,12 +1578,28 @@ function nsToggleFullscreen(){
   else{document.exitFullscreen().catch(()=>{});}
 }
 
+function nsScrollToUpdates(){
+  // Set filter to show all, scroll top
+  _nsCat='all';_nsQuery='';
+  document.querySelectorAll('.ns-cat').forEach(c=>c.classList.remove('on'));
+  const allCat=document.querySelector('.ns-cat[data-cat="all"]');if(allCat)allCat.classList.add('on');
+  nsRenderList();
+  const list=document.getElementById('ns-list-body');if(list)list.scrollTop=0;
+}
+
 // Load shop apps when shop app is opened (hook into openApp)
 const _origOpenApp=window.openApp;
 // Override openApp to load shop data on first open
 const _nsOpenAppPatched=function(id){
   _origOpenApp&&_origOpenApp(id);
-  if(id==='ns'){nsLoadApps();const c=document.getElementById('nsclk');if(c){const n=new Date();const{full}=fmt12(n);c.textContent=full;}}
+  if(id==='ns'){
+    nsEnsureReady(()=>{
+      nsLoadInstalledFromDB();
+      nsLoadApps();
+    });
+    const c=document.getElementById('nsclk');
+    if(c){const n=new Date();const{full}=fmt12(n);c.textContent=full;}
+  }
 };
 window.openApp=_nsOpenAppPatched;
 
@@ -1527,7 +1758,9 @@ function unlock(){
     hs.classList.add('active');hs.style.opacity='0';
     const hw=document.getElementById('hw');drawWall(hw);
     setTimeout(()=>{hs.style.transition='opacity 0.4s';hs.style.opacity='1';},10);
-    fillProfile();startChatListener();requestSystemNotif();
+fillProfile();startChatListener();requestSystemNotif();
+    nsLoadInstalledFromDB();
+    setTimeout(nsRestoreHomeIcons,800);
   },400);
 }
 
