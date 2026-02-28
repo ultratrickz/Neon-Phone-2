@@ -1514,9 +1514,9 @@ function dismissKeyboard(){
 function pushConvUp(h){const wrap=document.getElementById('conv-body-wrap');if(wrap){wrap.style.paddingBottom=h>0?h+'px':'0';const ma=document.getElementById('msg-area');if(ma&&h>0)setTimeout(()=>{ma.scrollTop=ma.scrollHeight;},80);}}
 function onComposerFocus(){
   const ci=document.getElementById('ci');
-  if(IS_MOBILE){
-    // Mobile: block system keyboard, show Neon KB
+  if(IS_MOBILE||IS_SAFARI){
     ci.setAttribute('inputmode','none');
+    ci.setAttribute('readonly','readonly');
     ci.blur();
     setTimeout(()=>{
       _kbTarget=ci;
@@ -1527,9 +1527,8 @@ function onComposerFocus(){
       document.getElementById('neon-kb').classList.add('vis');
       updateKbPush();
       resetKbIdle();
-    },30);
+    },50);
   } else {
-    // Desktop: just let the browser handle typing natively, no Neon KB
     _kbTarget=ci;
   }
 }
