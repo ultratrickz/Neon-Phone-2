@@ -725,7 +725,9 @@ body.night{filter:sepia(0.25) brightness(0.82);}
       <div class="bb" onclick="haptic();closeApp('ma')"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="ntitle">Messages</div>
     </div>
-    <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--cyan);opacity:0.7;" id="my-phone-display"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--cyan);opacity:0.7;" id="my-phone-display"></div>
+    </div>
   </div>
   <div style="padding:10px 16px 0;"><input type="text" class="ni" placeholder="Search conversations..." style="font-size:14px;padding:10px 16px;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)" oninput="searchChats(this.value)"></div>
   <div class="cl" id="chat-list" style="position:relative;"></div>
@@ -784,9 +786,15 @@ body.night{filter:sepia(0.25) brightness(0.82);}
       <div style="font-size:15px;font-weight:600;color:var(--text);" id="cname">...</div>
       <div style="font-size:11px;color:var(--cyan);letter-spacing:1px;" id="conv-status">Neon Chat · Encrypted ✓</div>
     </div>
+    <div class="bb" onclick="haptic();toggleConvSearch()" title="Search messages">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="rgba(255,255,255,0.8)" stroke-width="2"/><path d="M16.5 16.5l4 4" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
     <div class="bb" onclick="haptic();toggleDD()">
       <svg width="18" height="4" viewBox="0 0 18 4"><circle cx="2" cy="2" r="2" fill="rgba(255,255,255,0.8)"/><circle cx="9" cy="2" r="2" fill="rgba(255,255,255,0.8)"/><circle cx="16" cy="2" r="2" fill="rgba(255,255,255,0.8)"/></svg>
     </div>
+  </div>
+  <div id="conv-search-bar" style="display:none;padding:6px 16px;background:rgba(4,2,12,0.95);border-bottom:1px solid var(--border);">
+    <input type="text" class="ni" id="conv-search-input" placeholder="Search messages..." style="font-size:13px;padding:8px 14px;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)" oninput="searchConvMessages(this.value)">
   </div>
   <div id="cdd">
     <div class="ddi" onclick="haptic();openNickModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="rgba(170,0,255,0.9)" stroke-width="1.8"/></svg> Rename</div>
@@ -1482,11 +1490,15 @@ function kbRawInsert(char){
   if(!_kbTarget)return;
   resetKbIdle();
   const el=_kbTarget;
+  // Remove readonly temporarily to allow value change
+  const wasReadonly=el.hasAttribute('readonly');
+  if(wasReadonly)el.removeAttribute('readonly');
   const v=el.value||'';
   let s=v.length,e2=v.length;
   try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
   el.value=v.slice(0,s)+char+v.slice(e2);
   try{el.selectionStart=el.selectionEnd=s+char.length;}catch(err){}
+  if(wasReadonly)el.setAttribute('readonly','readonly');
   el.dispatchEvent(new Event('input',{bubbles:true}));
   if(el.id==='ci')cuUpdate(el);
   playUIClick();
@@ -1494,11 +1506,14 @@ function kbRawInsert(char){
 function kbBackspace(){
   if(!_kbTarget)return;
   const el=_kbTarget;
+  const wasReadonly=el.hasAttribute('readonly');
+  if(wasReadonly)el.removeAttribute('readonly');
   const v=el.value||'';
   let s=v.length,e2=v.length;
   try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
   if(s!==e2){el.value=v.slice(0,s)+v.slice(e2);try{el.selectionStart=el.selectionEnd=s;}catch(err){}}
   else if(s>0){el.value=v.slice(0,s-1)+v.slice(s);try{el.selectionStart=el.selectionEnd=s-1;}catch(err){}}
+  if(wasReadonly)el.setAttribute('readonly','readonly');
   el.dispatchEvent(new Event('input',{bubbles:true}));
   if(el.id==='ci')cuUpdate(el);
   playUIClick();
@@ -1791,7 +1806,9 @@ function startMsgListener(rid){
   convUnsub=ONVAL(REF(DB,`rooms/${rid}/messages`),snap=>{
     const data=snap.val()||{};
     const msgs=Object.entries(data).map(([id,m])=>({_id:id,...m})).sort((a,b)=>a.timestamp-b.timestamp);
-    renderMsgs(msgs);
+    _allConvMsgs=msgs;
+    const sq=document.getElementById('conv-search-input')?.value||'';
+    if(sq.trim())searchConvMessages(sq);else renderMsgs(msgs);
     // Mark all incoming messages as read (DM only)
     const chat=chats.find(c=>c.id===rid)||{};
     if(!chat.isGroup){
@@ -1803,7 +1820,8 @@ function startMsgListener(rid){
     }
   });
 }
-function renderMsgs(msgs){
+function renderMsgs(msgs,highlight=''){
+
   const area=document.getElementById('msg-area');
   const wasAtBottom=area.scrollHeight-area.clientHeight<=area.scrollTop+80;
   area.innerHTML='';
@@ -1847,7 +1865,11 @@ function renderMsgs(msgs){
       if(isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||'?';wrap.appendChild(sn);}
       if(m.replyToText){const q=document.createElement('div');q.className='quoted-msg';q.textContent='↩ '+m.replyToText.slice(0,60);wrap.appendChild(q);}
       const b=document.createElement('div');b.className=`bbl ${isMe?'o':'i'}`;
-      b.textContent=m.text;b.dataset.msgId=m._id;
+     if(highlight&&m.text.toLowerCase().includes(highlight.toLowerCase())){
+        const idx=m.text.toLowerCase().indexOf(highlight.toLowerCase());
+        b.innerHTML=m.text.slice(0,idx)+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+m.text.slice(idx,idx+highlight.length)+'</mark>'+m.text.slice(idx+highlight.length);
+      }else{b.textContent=m.text;}
+      b.dataset.msgId=m._id;
       b.addEventListener('click',()=>openReactionPicker(m._id,m.text,b));
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(b);wrap.appendChild(t);
@@ -1975,6 +1997,19 @@ async function toggleReaction(msgId,emoji){
 }
 function replyToMsg(){if(!_currentMsgId)return;closeReactionPicker();_replyingTo=_currentMsgId;document.getElementById('reply-preview-bar').classList.add('vis');document.getElementById('reply-preview-text').textContent=_replyingTo.text.slice(0,80);showNeonKb(document.getElementById('ci'));}
 function cancelReply(){_replyingTo=null;document.getElementById('reply-preview-bar').classList.remove('vis');}
+let _convSearchActive=false,_allConvMsgs=[];
+function toggleConvSearch(){
+  _convSearchActive=!_convSearchActive;
+  const bar=document.getElementById('conv-search-bar');
+  const inp=document.getElementById('conv-search-input');
+  if(_convSearchActive){bar.style.display='block';inp.value='';setTimeout(()=>showNeonKb(inp),50);}
+  else{bar.style.display='none';inp.value='';dismissKeyboard();renderMsgs(_allConvMsgs);}
+}
+function searchConvMessages(q){
+  if(!q.trim()){renderMsgs(_allConvMsgs);return;}
+  const filtered=_allConvMsgs.filter(m=>m.text&&m.text.toLowerCase().includes(q.toLowerCase()));
+  renderMsgs(filtered,q);
+}
 
 // ═══ NEW DM ═════════════════════════════════════════
 function openNewMsg(){closeFabMenu();document.getElementById('nm-err').textContent='';document.getElementById('nm-name').value='';document.getElementById('nm-phone').value='';document.getElementById('nm-modal').classList.add('open');}
