@@ -229,6 +229,9 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .reply-preview-text{flex:1;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .reply-cancel{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
 .quoted-msg{background:rgba(255,255,255,0.07);border-left:2px solid rgba(255,255,255,0.3);border-radius:4px 12px 12px 4px;padding:5px 9px;margin-bottom:6px;font-size:12px;color:rgba(255,255,255,0.55);}
+.unsend-btn{display:none;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:#ff4466;cursor:pointer;padding:3px 8px;border-radius:8px;border:1px solid rgba(255,68,102,0.3);background:rgba(255,68,102,0.08);margin-top:4px;transition:all 0.15s;align-self:flex-end;}
+.unsend-btn:active{background:rgba(255,68,102,0.2);}
+.unsend-btn.visible{display:block;}
 /* Reaction Picker */
 #reaction-picker{position:fixed;z-index:200;background:rgba(14,8,28,0.97);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:8px 12px;display:none;flex-direction:column;gap:8px;box-shadow:0 10px 40px rgba(0,0,0,0.7);}
 #reaction-picker.open{display:flex;animation:dd 0.2s cubic-bezier(0.22,1,0.36,1);}
@@ -253,8 +256,9 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .snd{width:38px;height:38px;border-radius:50%;background:var(--accent);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 12px var(--accent);transition:transform 0.15s,opacity 0.15s;opacity:0.4;}
 .snd.ok{opacity:1;}
 .snd:active{transform:scale(0.9);}
-.fx-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.fx-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;padding:0;position:relative;}
 .fx-btn:active{background:rgba(170,0,255,0.2);transform:scale(0.9);}
+.fx-btn svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
 .attach-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
 .attach-btn:active{background:rgba(0,255,238,0.15);transform:scale(0.9);}
 
@@ -621,12 +625,7 @@ body.night{filter:sepia(0.25) brightness(0.82);}
       </div>
       </div></div>
     </div>
-  </div>
-      <div class="sr"><div class="rtxt"><div class="rtitle">Keyboard Auto-Dismiss</div><div class="rsub" id="kb-idle-sub">After 3 minutes idle</div></div>
-          <option value="60">1 min</option><option value="180" selected>3 min</option><option value="300">5 min</option><option value="600">10 min</option><option value="0">Never</option>
-        </select>
-      </div>
-      </div></div>
+</div>
     </div>
   </div>
 
@@ -972,18 +971,7 @@ function playTone(freq,type='sine',duration=0.2,vol=0.3,startDelay=0){
   }catch(e){}
 }
 function playChord(freqs,type='sine',duration=0.4,vol=0.2){freqs.forEach(f=>playTone(f,type,duration,vol));}
-function playBootSound(){
-  try{
-    const ac=getAC();const vol=window._vol||0.8;
-    playTone(40,'sawtooth',0.6,0.08,0.1);playTone(60,'sine',0.5,0.05,0.1);
-    const o1=ac.createOscillator(),g1=ac.createGain();o1.connect(g1);g1.connect(ac.destination);o1.type='sawtooth';
-    o1.frequency.setValueAtTime(80,ac.currentTime+0.3);o1.frequency.exponentialRampToValueAtTime(2400,ac.currentTime+1.2);
-    g1.gain.setValueAtTime(0,ac.currentTime+0.3);g1.gain.linearRampToValueAtTime(0.18*vol,ac.currentTime+0.6);g1.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+1.4);
-    o1.start(ac.currentTime+0.3);o1.stop(ac.currentTime+1.5);
-    setTimeout(()=>{playChord([220,277,330,440],'triangle',0.8,0.12);},1500);
-    setTimeout(()=>{playTone(1760,'sine',0.3,0.3);playTone(2200,'sine',0.2,0.2,0.05);playTone(2640,'sine',0.15,0.18,0.1);},2000);
-  }catch(e){}
-}
+function playBootSound(){}
 function playMsgSound(){
   const tog=document.getElementById('notif-sound');if(tog&&!tog.checked)return;
   try{const vol=window._vol||0.8;playTone(880,'sine',0.06,0.25*vol);playTone(1320,'sine',0.1,0.2*vol,0.07);}catch(e){}
@@ -1395,9 +1383,11 @@ function sendSystemNotif(title,body,icon_letter){
 // NEON KEYBOARD — System keyboard fully suppressed
 // ═══════════════════════════════════════════════════
 let _kbTarget=null,_kbCaps=false,_kbSymMode=false,_kbNumMode=false;
-let _kbIdleTimer=null,_kbIdleSeconds=180;// 3 min default
+let _kbIdleTimer=null,_kbIdleSeconds=180;
 function resetKbIdle(){
+  if(!IS_MOBILE)return;
   if(_kbIdleTimer)clearTimeout(_kbIdleTimer);
+  if(_kbIdleSeconds===0)return;
   if(document.getElementById('neon-kb').classList.contains('vis')){
     _kbIdleTimer=setTimeout(()=>{
       if(document.getElementById('neon-kb').classList.contains('vis'))dismissKeyboard();
@@ -1409,20 +1399,20 @@ const KB_SYM=[['1','2','3','4','5','6','7','8','9','0'],['!','@','#','$','%','^'
 const KB_NUM=[['1','2','3'],['4','5','6'],['7','8','9'],['','0','⌫']];
 
 function showNeonKb(target,numOnly=false){
-  target.setAttribute('readonly','readonly');
-  target.setAttribute('inputmode','none');
-  setTimeout(()=>{target.removeAttribute('readonly');target.blur();},0);
   _kbTarget=target;
   _kbNumMode=numOnly;
   _kbSymMode=false;
   _kbCaps=false;
   buildKeyboard();
-  // Only show visual keyboard on mobile; desktop can use physical keyboard via kbRawInsert
   if(IS_MOBILE){
+    // Block system keyboard on mobile
+    target.setAttribute('inputmode','none');
+    target.blur();
     document.getElementById('neon-kb').classList.add('vis');
     updateKbPush();
+    resetKbIdle();
   }
-  resetKbIdle();
+  // On desktop: do nothing visual, just set _kbTarget so typing works natively
 }
 function updateKbPush(){
   const kb=document.getElementById('neon-kb');
@@ -1491,23 +1481,26 @@ function kbInsert(char){
 function kbRawInsert(char){
   if(!_kbTarget)return;
   resetKbIdle();
-  const s=_kbTarget.selectionStart??_kbTarget.value.length;
-  const e2=_kbTarget.selectionEnd??_kbTarget.value.length;
-  const v=_kbTarget.value;
-  const newVal=v.slice(0,s)+char+v.slice(e2);
-  _kbTarget.value=newVal;
-  try{_kbTarget.selectionStart=_kbTarget.selectionEnd=s+char.length;}catch(e){}
-  _kbTarget.dispatchEvent(new Event('input',{bubbles:true}));
+  const el=_kbTarget;
+  const v=el.value||'';
+  let s=v.length,e2=v.length;
+  try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
+  el.value=v.slice(0,s)+char+v.slice(e2);
+  try{el.selectionStart=el.selectionEnd=s+char.length;}catch(err){}
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  if(el.id==='ci')cuUpdate(el);
   playUIClick();
 }
 function kbBackspace(){
   if(!_kbTarget)return;
-  const s=_kbTarget.selectionStart??_kbTarget.value.length;
-  const e2=_kbTarget.selectionEnd??_kbTarget.value.length;
-  const v=_kbTarget.value;
-  if(s!==e2){_kbTarget.value=v.slice(0,s)+v.slice(e2);try{_kbTarget.selectionStart=_kbTarget.selectionEnd=s;}catch(e){}}
-  else if(s>0){_kbTarget.value=v.slice(0,s-1)+v.slice(s);try{_kbTarget.selectionStart=_kbTarget.selectionEnd=s-1;}catch(e){}}
-  _kbTarget.dispatchEvent(new Event('input',{bubbles:true}));
+  const el=_kbTarget;
+  const v=el.value||'';
+  let s=v.length,e2=v.length;
+  try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
+  if(s!==e2){el.value=v.slice(0,s)+v.slice(e2);try{el.selectionStart=el.selectionEnd=s;}catch(err){}}
+  else if(s>0){el.value=v.slice(0,s-1)+v.slice(s);try{el.selectionStart=el.selectionEnd=s-1;}catch(err){}}
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  if(el.id==='ci')cuUpdate(el);
   playUIClick();
 }
 function toggleCaps(){_kbCaps=!_kbCaps;buildKeyboard();document.getElementById('kb-caps-btn').style.color=_kbCaps?'var(--accent)':'';}
@@ -1520,40 +1513,53 @@ function dismissKeyboard(){
 }
 function pushConvUp(h){const wrap=document.getElementById('conv-body-wrap');if(wrap){wrap.style.paddingBottom=h>0?h+'px':'0';const ma=document.getElementById('msg-area');if(ma&&h>0)setTimeout(()=>{ma.scrollTop=ma.scrollHeight;},80);}}
 function onComposerFocus(){
-  // Prevent system keyboard, show Neon KB
   const ci=document.getElementById('ci');
-  ci.setAttribute('inputmode','none');
-  ci.setAttribute('autocomplete','off');
-  showNeonKb(ci,false);
+  if(IS_MOBILE){
+    // Mobile: block system keyboard, show Neon KB
+    ci.setAttribute('inputmode','none');
+    ci.blur();
+    setTimeout(()=>{
+      _kbTarget=ci;
+      _kbNumMode=false;
+      _kbSymMode=false;
+      _kbCaps=false;
+      buildKeyboard();
+      document.getElementById('neon-kb').classList.add('vis');
+      updateKbPush();
+      resetKbIdle();
+    },30);
+  } else {
+    // Desktop: just let the browser handle typing natively, no Neon KB
+    _kbTarget=ci;
+  }
 }
 
 
-document.addEventListener('touchstart',function(e){
-  const t=e.target;
-  if((t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&!t.closest('#neon-kb')&&!t.classList.contains('sl')){
-    t.setAttribute('inputmode','none');
-    t.setAttribute('readonly','readonly');
-  }
-},{passive:true,capture:true});
+// Mobile only: intercept focus on inputs to show Neon KB instead of system keyboard
+if(IS_MOBILE){
+  document.addEventListener('touchstart',function(e){
+    const t=e.target;
+    if((t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&t.id!=='ci'&&!t.closest('#neon-kb')&&!t.classList.contains('sl')){
+      t.setAttribute('inputmode','none');
+    }
+  },{passive:true,capture:true});
 
-document.addEventListener('focus',function(e){
-  const t=e.target;
-  if((t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&!t.closest('#neon-kb')&&!t.classList.contains('sl')){
-    t.setAttribute('inputmode','none');
-    t.blur();
-    // Only show Neon KB when on mobile OR when inside an open app screen (not settings sliders etc)
-    if(!IS_MOBILE&&!t.closest('.aps')&&!t.closest('#cs')&&!t.closest('#setup'))return;
-    setTimeout(()=>{
-      t.removeAttribute('readonly');
-      const isNum=t.type==='tel'||t.dataset.numpad==='true';
-      if(!document.getElementById('neon-kb').classList.contains('vis')){
-        showNeonKb(t,isNum);
-      } else {
-        _kbTarget=t;_kbNumMode=isNum;buildKeyboard();
-      }
-    },10);
-  }
-},true);
+  document.addEventListener('focus',function(e){
+    const t=e.target;
+    if((t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&t.id!=='ci'&&!t.closest('#neon-kb')&&!t.classList.contains('sl')){
+      t.setAttribute('inputmode','none');
+      t.blur();
+      setTimeout(()=>{
+        const isNum=t.type==='tel';
+        if(!document.getElementById('neon-kb').classList.contains('vis')){
+          showNeonKb(t,isNum);
+        } else {
+          _kbTarget=t;_kbNumMode=isNum;buildKeyboard();
+        }
+      },10);
+    }
+  },true);
+}
 
 // ═══════════════════════════════════════════════════
 // EFFECT SYSTEM
@@ -1562,12 +1568,24 @@ let _pendingEffect=null;
 function openFxPicker(){const text=document.getElementById('ci').value.trim();if(!text){showToast('Type a message first','Enter text before adding an effect',null,'msg');return;}document.getElementById('fx-picker').classList.add('vis');}
 function closeFxPicker(){document.getElementById('fx-picker').classList.remove('vis');}
 function selectEffect(type){_pendingEffect=type;closeFxPicker();sendMsg();}
+function playEffectSound(type){
+  try{
+    const ac=getAC();
+    if(type==='hearts'){playTone(523,'sine',0.3,0.2);playTone(659,'sine',0.3,0.15,0.1);playTone(784,'sine',0.4,0.15,0.2);}
+    else if(type==='confetti'){[523,659,784,1047].forEach((f,i)=>playTone(f,'square',0.2,0.1,i*0.07));}
+    else if(type==='anger'){playTone(110,'sawtooth',0.4,0.3);playTone(90,'sawtooth',0.5,0.25,0.1);}
+    else if(type==='blossom'){playTone(880,'sine',0.5,0.12);playTone(1100,'sine',0.6,0.1,0.15);}
+    else if(type==='snow'){playTone(1047,'sine',0.6,0.1);playTone(1319,'sine',0.8,0.08,0.2);}
+    else if(type==='neon'){playTone(440,'square',0.1,0.2);playTone(880,'square',0.2,0.18,0.1);playTone(1320,'square',0.3,0.15,0.2);}
+  }catch(e){}
+}
 function playEffect(type){
+  playEffectSound(type);
   const ov=document.getElementById('effect-overlay');
   if(type==='anger'){
-    const cs2=document.getElementById('cs');if(cs2)cs2.style.animation='angerShake 0.5s ease';
+    const cs2=document.getElementById('cs');if(cs2){cs2.style.animation='none';cs2.style.transform='translateX(0)';requestAnimationFrame(()=>{cs2.style.animation='angerShake 0.5s ease';}); }
     const flash=document.createElement('div');flash.style.cssText='position:absolute;inset:0;background:rgba(255,0,0,0.16);pointer-events:none;border-radius:inherit;animation:fadeIn 0.1s ease;';ov.appendChild(flash);
-    setTimeout(()=>{flash.remove();if(cs2)cs2.style.animation='';},800);return;
+    setTimeout(()=>{flash.remove();if(cs2){cs2.style.animation='none';}},800);return;
   }
   let emojis=[],duration=3000;
   if(type==='hearts'){emojis=['❤️','💕','💗','💖'];}
@@ -1781,6 +1799,12 @@ function renderMsgs(msgs){
     const wrap=document.createElement('div');wrap.className=`bw ${isMe?'o':'i'}`;
     if(m.type==='image'&&m.imageData){
       if(isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||'?';wrap.appendChild(sn);}
+      if(m.replyToText){const q=document.createElement('div');q.className='quoted-msg';q.textContent='↩ '+m.replyToText.slice(0,60);wrap.appendChild(q);}
+      const b=document.createElement('div');b.className=`bbl ${isMe?'o':'i'}`;
+      if(m.unsent){b.style.cssText='opacity:0.4;font-style:italic;font-size:13px;';b.style.pointerEvents='none';}
+      b.textContent=m.text||'';
+      if(!b.textContent.trim()){wrap.style.display='none';}
+      b.dataset.msgId=m._id;
       const img=document.createElement('img');img.className='msg-img';img.src=m.imageData;img.onclick=()=>{document.getElementById('img-viewer-img').src=m.imageData;document.getElementById('img-viewer').classList.add('open');};
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(img);wrap.appendChild(t);
@@ -1813,6 +1837,18 @@ function renderMsgs(msgs){
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(b);wrap.appendChild(t);
       if(isMe){
+        // Unsend button — only within 5 minutes of sending
+        const ageMs=Date.now()-m.timestamp;
+        if(ageMs<5*60*1000){
+          const ub=document.createElement('div');
+          ub.className='unsend-btn visible';
+          ub.textContent='UNSEND';
+          ub.onclick=(e)=>{e.stopPropagation();haptic();unsendMessage(m._id);};
+          wrap.appendChild(ub);
+          // Auto-hide when 5 min expires
+          const remaining=(5*60*1000)-ageMs;
+          setTimeout(()=>{if(ub.parentNode)ub.classList.remove('visible');},remaining);
+        }
         const chat=chats.find(c=>c.id===currentRoomId)||{};
         const isDM=!chat.isGroup;
         const rr=document.createElement('div');rr.className='msg-checks';
@@ -1980,6 +2016,19 @@ function toggleDD(){const d=document.getElementById('cdd');d.classList.toggle('o
 function openNickModal(){document.getElementById('cdd').classList.remove('open');const chat=chats.find(c=>c.id===currentChatId)||{};document.getElementById('nick-inp').value=chat.nickname||chat.name||'';document.getElementById('nick-modal').classList.add('open');}
 async function saveNick(){const n=document.getElementById('nick-inp').value.trim();if(currentChatId){try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}/nickname`),n||null);}catch(e){}const chat=chats.find(c=>c.id===currentChatId)||{};document.getElementById('cname').textContent=n||chat.name||'Unknown';}closeModal('nick-modal');dismissKeyboard();}
 async function deleteChat(){document.getElementById('cdd').classList.remove('open');if(!confirm('Delete this conversation? Messages are preserved for the other person.'))return;try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}`),null);}catch(e){}closeConv();}
+
+async function unsendMessage(msgId){
+  if(!currentRoomId||!msgId)return;
+  if(!confirm('Unsend this message? It will be removed for everyone.'))return;
+  try{
+    // Replace message content with unsent marker instead of deleting
+    // so read receipts and ordering are preserved
+    await SET(REF(DB,`rooms/${currentRoomId}/messages/${msgId}/text`),'[Message unsent]');
+    await SET(REF(DB,`rooms/${currentRoomId}/messages/${msgId}/unsent`),true);
+    await SET(REF(DB,`rooms/${currentRoomId}/messages/${msgId}/type`),'unsent');
+    haptic('medium');
+  }catch(e){console.error('Unsend failed:',e);}
+}
 
 // ═══════════════════════════════════════════════════
 // TOAST
