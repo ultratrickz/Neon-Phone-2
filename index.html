@@ -435,7 +435,7 @@ body.night{filter:sepia(0.25) brightness(0.82);}
       <circle cx="22" cy="34" r="3.5" fill="rgba(255,255,255,0.9)"/>
       <line x1="22" y1="37" x2="22" y2="42" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
-    <div class="lhint">CLICK TO UNLOCK</div>
+   <div class="lhint" id="lhint">SWIPE UP TO UNLOCK</div>
   </div>
   <div id="sz"></div>
   <div id="lpad">
@@ -468,6 +468,12 @@ body.night{filter:sepia(0.25) brightness(0.82);}
         <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="4.5" stroke="rgba(200,150,255,0.9)" stroke-width="2"/><path d="M16 2v4M16 26v4M2 16h4M26 16h4M5.5 5.5l2.83 2.83M23.67 23.67l2.83 2.83M5.5 26.5l2.83-2.83M23.67 8.33l2.83-2.83" stroke="rgba(200,150,255,0.9)" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="8" stroke="rgba(170,0,255,0.35)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>
       </div>
       <div class="al">Settings</div>
+    </div>
+    <div class="aico" onclick="haptic();openApp('ns')">
+      <div class="ai" id="ns-icon">
+        <svg viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="10" rx="3" stroke="rgba(0,255,238,0.9)" stroke-width="1.8"/><rect x="18" y="4" width="10" height="10" rx="3" stroke="rgba(170,0,255,0.9)" stroke-width="1.8"/><rect x="4" y="18" width="10" height="10" rx="3" stroke="rgba(0,136,255,0.9)" stroke-width="1.8"/><rect x="18" y="18" width="10" height="10" rx="3" stroke="rgba(0,255,238,0.9)" stroke-width="1.8"/><circle cx="23" cy="23" r="3" fill="rgba(0,255,238,0.3)" stroke="rgba(0,255,238,0.8)" stroke-width="1.2"/></svg>
+      </div>
+      <div class="al">Neon Shop</div>
     </div>
     <div class="aico" onclick="haptic();openApp('ma')">
       <div class="ai">
@@ -718,6 +724,53 @@ body.night{filter:sepia(0.25) brightness(0.82);}
   </div>
 </div>
 
+<!-- ═══ NEON SHOP APP ════════════════════════════ -->
+<div id="ns" class="aps">
+  <div class="sbar"><div class="stime" id="nsclk">12:00 AM</div></div>
+  <div class="anav between">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="bb" onclick="haptic();closeApp('ns')"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="ntitle">Neon Shop</div>
+    </div>
+    <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--cyan);opacity:0.7;">APPS & GAMES</div>
+  </div>
+  <!-- Search & Filter bar -->
+  <div style="padding:10px 16px 0;display:flex;gap:8px;">
+    <input type="text" class="ni" id="ns-search" placeholder="Search apps & games..." style="font-size:13px;padding:9px 14px;flex:1;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)" oninput="nsSearch(this.value)">
+  </div>
+  <!-- Category pills -->
+  <div id="ns-cats" style="display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;">
+    <div class="ns-cat on" data-cat="all" onclick="haptic();nsSetCat('all',this)">All</div>
+    <div class="ns-cat" data-cat="game" onclick="haptic();nsSetCat('game',this)">Games</div>
+    <div class="ns-cat" data-cat="app" onclick="haptic();nsSetCat('app',this)">Apps</div>
+    <div class="ns-cat" data-cat="tool" onclick="haptic();nsSetCat('tool',this)">Tools</div>
+    <div class="ns-cat" data-cat="creative" onclick="haptic();nsSetCat('creative',this)">Creative</div>
+    <div class="ns-cat" data-cat="other" onclick="haptic();nsSetCat('other',this)">Other</div>
+  </div>
+  <!-- App list -->
+  <div class="abody" id="ns-list-body">
+    <div id="ns-app-list" style="padding:0 14px 32px;"></div>
+  </div>
+  <!-- App detail sub-screen -->
+  <div class="sub" id="ns-detail">
+    <div class="anav"><div class="bb" onclick="haptic();closeSub('ns-detail')"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ntitle" id="ns-detail-title">App</div></div>
+    <div class="abody">
+      <div id="ns-detail-body"></div>
+    </div>
+  </div>
+  <!-- App runner sub-screen -->
+  <div class="sub" id="ns-runner">
+    <div class="anav between">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="bb" onclick="haptic();closeNsRunner()"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="ntitle" id="ns-runner-title">App</div>
+      </div>
+      <div class="bb" id="ns-runner-fullscreen" onclick="haptic();nsToggleFullscreen()" title="Fullscreen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    </div>
+    <iframe id="ns-iframe" style="flex:1;width:100%;border:none;background:#000;" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+  </div>
+</div>
+
 <!-- ═══ MESSAGES APP ══════════════════════════════ -->
 <div id="ma" class="aps">
   <div class="sbar"><div class="stime" id="mclk">12:00 AM</div></div>
@@ -811,14 +864,20 @@ body.night{filter:sepia(0.25) brightness(0.82);}
     <div class="ma" id="msg-area" style="position:relative;z-index:2;"></div>
     <div class="comp" style="position:relative;z-index:2;">
       <div class="cr">
-        <button class="attach-btn" onclick="haptic();openAttachMenu()" title="Attach photo or file">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button class="attach-btn" onclick="haptic();openAttachMenu()" title="Attach photo or file" style="display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <textarea class="ci" id="ci" placeholder="Message..." rows="1" oninput="cuUpdate(this)" onkeydown="cuKey(event)" onfocus="onComposerFocus()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="-webkit-user-select:text;user-select:text;"></textarea>
-        <button class="fx-btn" id="fxbtn" onclick="haptic();openFxPicker()" title="Send with effect">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5H22L16 14L18.5 21.5L12 17L5.5 21.5L8 14L2 9.5H9.5L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <button class="fx-btn" id="fxbtn" onclick="haptic();openFxPicker()" title="Send with effect" style="display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><path d="M12 2L14.5 9.5H22L16 14L18.5 21.5L12 17L5.5 21.5L8 14L2 9.5H9.5L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         </button>
-        <button class="snd" id="sndbtn" onclick="haptic();sendMsg()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="fx-btn" onclick="haptic();openScheduler()" title="Schedule message" style="color:rgba(0,255,238,0.6);display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button class="fx-btn" onclick="haptic();openSelfDestruct()" title="Self-destruct timer" style="color:rgba(255,68,102,0.8);display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 3h6M12 3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button class="snd" id="sndbtn" onclick="haptic();sendMsg()" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
   </div>
@@ -1067,8 +1126,254 @@ function buildWallGrid(){
 function setWallpaper(id){currentWallId=id;try{localStorage.setItem('neos_wall',id);}catch(e){}['wv','hw','cvw'].forEach(cid=>{const cv=document.getElementById(cid);if(cv&&cv.offsetParent!==null)drawWall(cv,id);});}
 
 // ═══════════════════════════════════════════════════
-// BOOT
+// NEON SHOP STYLES (injected)
 // ═══════════════════════════════════════════════════
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`
+    .ns-cat{padding:6px 14px;border-radius:20px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
+    .ns-cat.on{color:var(--bg);background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 10px rgba(0,255,238,0.4);}
+    .ns-cat:active{transform:scale(0.94);}
+    #ns-cats::-webkit-scrollbar{display:none;}
+    .ns-card{display:flex;align-items:center;gap:14px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;margin-bottom:10px;cursor:pointer;transition:all 0.18s;}
+    .ns-card:active{background:rgba(255,255,255,0.09);transform:scale(0.98);}
+    .ns-icon-wrap{width:56px;height:56px;border-radius:14px;overflow:hidden;flex-shrink:0;background:#111;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.1);}
+    .ns-icon-wrap svg{width:100%;height:100%;}
+    .ns-card-info{flex:1;min-width:0;}
+    .ns-card-name{font-size:15px;font-weight:600;color:#fff;}
+    .ns-card-dev{font-size:11px;color:rgba(0,255,238,0.7);font-family:'Orbitron',monospace;letter-spacing:1px;margin-top:2px;}
+    .ns-card-desc{font-size:12px;color:rgba(255,255,255,0.45);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .ns-card-meta{display:flex;align-items:center;gap:6px;margin-top:4px;}
+    .ns-badge{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;padding:2px 7px;border-radius:8px;border:1px solid;}
+    .ns-badge.game{color:#ffee00;border-color:rgba(255,238,0,0.3);background:rgba(255,238,0,0.07);}
+    .ns-badge.app{color:#00ffee;border-color:rgba(0,255,238,0.3);background:rgba(0,255,238,0.07);}
+    .ns-badge.tool{color:#0088ff;border-color:rgba(0,136,255,0.3);background:rgba(0,136,255,0.07);}
+    .ns-badge.creative{color:#ff00aa;border-color:rgba(255,0,170,0.3);background:rgba(255,0,170,0.07);}
+    .ns-badge.other{color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);}
+    .ns-stars{display:flex;gap:2px;align-items:center;}
+    .ns-star{font-size:11px;}
+    .ns-avg{font-size:11px;color:rgba(255,255,255,0.45);font-family:'Orbitron',monospace;margin-left:2px;}
+    .ns-get-btn{padding:8px 16px;border-radius:20px;background:var(--accent);border:none;color:#fff;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;white-space:nowrap;box-shadow:0 0 12px rgba(170,0,255,0.35);transition:transform 0.15s;}
+    .ns-get-btn:active{transform:scale(0.92);}
+    .ns-empty{text-align:center;padding:60px 20px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.15);line-height:2.5;}
+    .ns-section-title{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:4px;color:var(--accent);margin:20px 0 10px;opacity:0.8;}
+    .ns-detail-icon{width:88px;height:88px;border-radius:22px;overflow:hidden;background:#111;border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .ns-detail-icon svg{width:100%;height:100%;}
+    .ns-review-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+    .ns-review-author{font-size:13px;font-weight:600;color:#fff;}
+    .ns-review-text{font-size:13px;color:rgba(255,255,255,0.6);margin-top:5px;line-height:1.5;}
+    .ns-review-date{font-size:10px;color:rgba(255,255,255,0.25);font-family:'Orbitron',monospace;margin-top:4px;}
+    .ns-loader{text-align:center;padding:48px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:rgba(0,255,238,0.4);animation:nsload 1s ease-in-out infinite alternate;}
+    @keyframes nsload{from{opacity:0.3}to{opacity:1}}
+    #ns-runner{display:none;flex-direction:column;}
+    #ns-runner.open{display:flex;}
+    #ns-iframe{flex:1;border:none;width:100%;background:#000;}
+    .ns-fullscreen-iframe{position:fixed!important;inset:0!important;z-index:999!important;width:100vw!important;height:100vh!important;}
+  `;
+  document.head.appendChild(s);
+})();
+
+// ═══════════════════════════════════════════════════
+// NEON SHOP FIREBASE
+// ═══════════════════════════════════════════════════
+let _nsDb=null,_nsApps=[],_nsCat='all',_nsQuery='';
+(function(){
+  try{
+    const{initializeApp}=window._nsFirebaseMod||{};
+    // Lazy-load shop firebase via dynamic import
+    import("https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js").then(({initializeApp})=>{
+      import("https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js").then(({getDatabase,ref,get,child,push,set,onValue,query,orderByChild,limitToLast})=>{
+        const shopCfg={apiKey:"AIzaSyCR4lF3K5IlNJ9EFlr4Zd5JSp66jWIP11o",authDomain:"neon-shop-7b20f.firebaseapp.com",databaseURL:"https://neon-shop-7b20f-default-rtdb.firebaseio.com",projectId:"neon-shop-7b20f",storageBucket:"neon-shop-7b20f.firebasestorage.app",messagingSenderId:"697191844844",appId:"1:697191844844:web:c6eb8474a8be2446074ec9"};
+        const shopApp=initializeApp(shopCfg,'neon-shop');
+        _nsDb=getDatabase(shopApp);
+        window._nsRef=ref;window._nsGet=get;window._nsChild=child;window._nsPush=push;window._nsSet=set;window._nsOnValue=onValue;window._nsQuery=query;window._nsOrder=orderByChild;window._nsLimit=limitToLast;
+        window._nsReady=true;
+      });
+    });
+  }catch(e){console.warn('Neon Shop firebase init:',e);}
+})();
+
+function nsEnsureReady(cb){
+  if(window._nsReady)return cb();
+  let tries=0;const t=setInterval(()=>{tries++;if(window._nsReady){clearInterval(t);cb();}if(tries>40)clearInterval(t);},250);
+}
+
+async function nsLoadApps(){
+  const list=document.getElementById('ns-app-list');
+  if(!list)return;
+  list.innerHTML='<div class="ns-loader">LOADING APPS...</div>';
+  nsEnsureReady(async()=>{
+    try{
+      const snap=await _nsGet(_nsChild(_nsRef(_nsDb),'shop/apps'));
+      if(!snap.exists()){list.innerHTML='<div class="ns-empty">NO APPS YET<br>BE THE FIRST DEVELOPER</div>';return;}
+      _nsApps=Object.entries(snap.val()).map(([id,d])=>({id,...d}));
+      nsRenderList();
+    }catch(e){list.innerHTML='<div class="ns-empty">FAILED TO LOAD<br>CHECK CONNECTION</div>';}
+  });
+}
+
+function nsGetAvg(reviews){
+  if(!reviews)return 0;
+  const arr=Object.values(reviews);
+  return arr.length?arr.reduce((s,r)=>s+(r.rating||0),0)/arr.length:0;
+}
+function nsStars(avg,size=13){
+  let s='';for(let i=1;i<=5;i++){const full=i<=Math.floor(avg),half=!full&&i-0.5<=avg;s+=`<span class="ns-star" style="font-size:${size}px;opacity:${full||half?1:0.25};">${full?'★':half?'⭐':'★'}</span>`;}return s;
+}
+function nsRenderList(){
+  const list=document.getElementById('ns-app-list');if(!list)return;
+  let apps=_nsApps.filter(a=>!a.hidden);
+  if(_nsCat!=='all')apps=apps.filter(a=>a.category===_nsCat);
+  if(_nsQuery)apps=apps.filter(a=>(a.name||'').toLowerCase().includes(_nsQuery)||(a.companyName||'').toLowerCase().includes(_nsQuery));
+  if(!apps.length){list.innerHTML='<div class="ns-empty">NO APPS FOUND</div>';return;}
+  list.innerHTML='';
+  apps.forEach(app=>{
+    const avg=nsGetAvg(app.reviews);const rc=app.reviews?Object.keys(app.reviews).length:0;
+    const card=document.createElement('div');card.className='ns-card';
+    card.innerHTML=`
+      <div class="ns-icon-wrap">${app.iconSvg||`<svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" fill="#1a0a2e"/><text x="28" y="36" font-size="22" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div>
+      <div class="ns-card-info">
+        <div class="ns-card-name">${app.name||'Untitled'}</div>
+        <div class="ns-card-dev">${app.companyName||'Unknown Dev'}</div>
+        <div class="ns-card-desc">${app.description||''}</div>
+        <div class="ns-card-meta">
+          <span class="ns-badge ${app.category||'other'}">${(app.category||'OTHER').toUpperCase()}</span>
+          <div class="ns-stars">${nsStars(avg,11)}<span class="ns-avg">${avg>0?avg.toFixed(1):''}</span></div>
+          ${rc>0?`<span style="font-size:10px;color:rgba(255,255,255,0.25);">(${rc})</span>`:''}
+        </div>
+      </div>
+      <button class="ns-get-btn" onclick="event.stopPropagation();haptic();nsOpenApp('${app.id}')">OPEN</button>
+    `;
+    card.onclick=()=>{haptic();nsShowDetail(app.id);};
+    list.appendChild(card);
+  });
+}
+function nsSearch(q){_nsQuery=q.toLowerCase();nsRenderList();}
+function nsSetCat(cat,el){
+  _nsCat=cat;
+  document.querySelectorAll('.ns-cat').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  nsRenderList();
+}
+
+async function nsShowDetail(appId){
+  const app=_nsApps.find(a=>a.id===appId);if(!app)return;
+  document.getElementById('ns-detail-title').textContent=app.name||'App';
+  const body=document.getElementById('ns-detail-body');
+  const avg=nsGetAvg(app.reviews);const rc=app.reviews?Object.keys(app.reviews).length:0;
+  body.innerHTML=`
+    <div style="display:flex;gap:16px;padding:20px 18px 12px;align-items:flex-start;">
+      <div class="ns-detail-icon">${app.iconSvg||`<svg viewBox="0 0 88 88" fill="none"><rect width="88" height="88" fill="#1a0a2e"/><text x="44" y="58" font-size="34" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div>
+      <div style="flex:1;">
+        <div style="font-size:18px;font-weight:700;color:#fff;">${app.name||'Untitled'}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--cyan);letter-spacing:1px;margin-top:3px;">${app.companyName||'Unknown Dev'}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">${nsStars(avg)}<span style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,0.45);">${avg>0?avg.toFixed(1)+' ('+rc+')':'No reviews'}</span></div>
+        <span class="ns-badge ${app.category||'other'}" style="margin-top:6px;display:inline-block;">${(app.category||'OTHER').toUpperCase()}</span>
+      </div>
+    </div>
+    <div style="padding:0 18px 16px;">
+      <button class="sbtn" style="margin-bottom:0;" onclick="haptic();nsOpenApp('${app.id}')">▶ LAUNCH APP</button>
+    </div>
+    <div style="padding:0 18px;"><div class="ns-section-title">DESCRIPTION</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;">${app.description||'No description.'}</div>
+    </div>
+    <div style="padding:0 18px;"><div class="ns-section-title" style="margin-top:24px;">REVIEWS</div>
+      <div id="ns-review-list">${nsRenderReviews(app.reviews)}</div>
+      <div style="margin-top:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;" id="ns-review-form">
+        <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);margin-bottom:10px;">LEAVE A REVIEW</div>
+        <input type="text" class="ni" id="ns-rev-name" placeholder="Your name" maxlength="30" style="margin-bottom:8px;font-size:13px;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)">
+        <div style="display:flex;gap:8px;margin-bottom:8px;" id="ns-star-picker">
+          ${[1,2,3,4,5].map(i=>`<span onclick="nsPickStar(${i})" data-star="${i}" style="font-size:24px;cursor:pointer;transition:transform 0.1s;opacity:0.35;">★</span>`).join('')}
+        </div>
+        <textarea class="ni" id="ns-rev-text" placeholder="Write your review..." maxlength="300" rows="2" style="resize:none;font-size:13px;margin-bottom:8px;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)"></textarea>
+        <button class="sbtn" style="padding:11px;" onclick="haptic();nsSubmitReview('${app.id}')">SUBMIT REVIEW →</button>
+        <div class="err" id="ns-rev-err" style="margin-top:6px;"></div>
+      </div>
+    </div>
+    <div style="height:32px;"></div>
+  `;
+  openSub('ns-detail');
+}
+let _nsPickedStar=0;
+function nsPickStar(n){
+  _nsPickedStar=n;
+  document.querySelectorAll('#ns-star-picker span').forEach((s,i)=>{s.style.opacity=i<n?'1':'0.3';s.style.transform=i<n?'scale(1.15)':'scale(1)';});
+}
+function nsRenderReviews(reviews){
+  if(!reviews||!Object.keys(reviews).length)return '<div style="font-size:13px;color:rgba(255,255,255,0.25);padding:8px 0;">No reviews yet — be the first!</div>';
+  return Object.values(reviews).sort((a,b)=>b.timestamp-a.timestamp).slice(0,20).map(r=>`
+    <div class="ns-review-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="ns-review-author">${r.authorName||'Anonymous'}</div>
+        <div class="ns-stars">${nsStars(r.rating||0,12)}</div>
+      </div>
+      <div class="ns-review-text">${r.text||''}</div>
+      <div class="ns-review-date">${r.timestamp?new Date(r.timestamp).toLocaleDateString():''}</div>
+    </div>
+  `).join('');
+}
+async function nsSubmitReview(appId){
+  const name=document.getElementById('ns-rev-name')?.value.trim();
+  const text=document.getElementById('ns-rev-text')?.value.trim();
+  const errEl=document.getElementById('ns-rev-err');
+  if(!name){if(errEl)errEl.textContent='NAME IS REQUIRED';return;}
+  if(!_nsPickedStar){if(errEl)errEl.textContent='PICK A STAR RATING';return;}
+  if(!text){if(errEl)errEl.textContent='WRITE SOMETHING';return;}
+  if(errEl)errEl.textContent='Submitting...';
+  nsEnsureReady(async()=>{
+    try{
+      const review={authorName:name,rating:_nsPickedStar,text,timestamp:Date.now()};
+      await _nsPush(_nsRef(_nsDb,`shop/apps/${appId}/reviews`),review);
+      const snap=await _nsGet(_nsChild(_nsRef(_nsDb),`shop/apps/${appId}`));
+      if(snap.exists()){
+        const updated={id:appId,...snap.val()};
+        const idx=_nsApps.findIndex(a=>a.id===appId);
+        if(idx>=0)_nsApps[idx]=updated;
+        const rl=document.getElementById('ns-review-list');if(rl)rl.innerHTML=nsRenderReviews(updated.reviews);
+      }
+      _nsPickedStar=0;
+      document.getElementById('ns-rev-name').value='';
+      document.getElementById('ns-rev-text').value='';
+      document.querySelectorAll('#ns-star-picker span').forEach(s=>{s.style.opacity='0.35';s.style.transform='scale(1)';});
+      if(errEl)errEl.textContent='';
+      showToast('Review Submitted','Thanks for your review!',null,'msg');
+    }catch(e){if(errEl)errEl.textContent='Submit failed. Try again.';}
+  });
+}
+function nsOpenApp(appId){
+  const app=_nsApps.find(a=>a.id===appId);if(!app||!app.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
+  closeSub('ns-detail');
+  document.getElementById('ns-runner-title').textContent=app.name||'App';
+  const iframe=document.getElementById('ns-iframe');
+  const blob=new Blob([app.htmlContent],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  iframe.src=url;
+  // Clean up old blob URL after load
+  iframe.onload=()=>{try{URL.revokeObjectURL(url);}catch(e){}};
+  openSub('ns-runner');
+}
+function closeNsRunner(){
+  document.getElementById('ns-iframe').src='about:blank';
+  closeSub('ns-runner');
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+}
+function nsToggleFullscreen(){
+  const runner=document.getElementById('ns-runner');
+  if(!document.fullscreenElement){runner.requestFullscreen().catch(()=>{});}
+  else{document.exitFullscreen().catch(()=>{});}
+}
+
+// Load shop apps when shop app is opened (hook into openApp)
+const _origOpenApp=window.openApp;
+// Override openApp to load shop data on first open
+const _nsOpenAppPatched=function(id){
+  _origOpenApp&&_origOpenApp(id);
+  if(id==='ns'){nsLoadApps();const c=document.getElementById('nsclk');if(c){const n=new Date();const{full}=fmt12(n);c.textContent=full;}}
+};
+window.openApp=_nsOpenAppPatched;
+
+// ═══════════════════════════════════════════════════
+// BOOT
 function startBoot(){
   let _bootSoundPlayed=false;
   const _playOnGesture=()=>{
@@ -1142,13 +1447,54 @@ function goLock(){
   const ls=document.getElementById('lock');ls.classList.add('active');ls.style.opacity='0';
   setTimeout(()=>{ls.style.transition='opacity 0.6s';ls.style.opacity='1';},10);
   initSlide();
+  renderLockNotifs();
+}
+function renderLockNotifs(){
+  let el=document.getElementById('lock-notifs');
+  if(!el){
+    el=document.createElement('div');
+    el.id='lock-notifs';
+    el.style.cssText='position:absolute;bottom:22vh;left:50%;transform:translateX(-50%);width:min(380px,88vw);display:flex;flex-direction:column;gap:8px;z-index:3;pointer-events:none;';
+    document.getElementById('lock').appendChild(el);
+  }
+  el.innerHTML='';
+  const unread=chats.filter(c=>(c.unread||0)>0).slice(0,4);
+  if(!unread.length)return;
+  unread.forEach(c=>{
+    const nm=c.nickname||c.name||'Unknown';
+    const card=document.createElement('div');
+    card.style.cssText='background:rgba(255,255,255,0.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;animation:fadeIn 0.3s ease;';
+    card.innerHTML=`
+      <div style="width:36px;height:36px;border-radius:50%;background:${avColor(c.name||'')};display:flex;align-items:center;justify-content:center;font-family:Orbitron,monospace;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">${nm[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:#fff;">${nm}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.lastMessage||'New message'}</div>
+      </div>
+      ${c.unread>0?`<div style="min-width:18px;height:18px;border-radius:9px;padding:0 5px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 8px var(--accent);">${c.unread}</div>`:''}
+    `;
+    el.appendChild(card);
+  });
 }
 let padState='create',created='',padIn='';
 function initSlide(){
   const z=document.getElementById('sz');const newZ=z.cloneNode(true);z.parentNode.replaceChild(newZ,z);
+  // Click to unlock on desktop
   newZ.addEventListener('click',showPad);
-  let sy=0;newZ.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
-  newZ.addEventListener('touchend',e=>{if(sy-e.changedTouches[0].clientY>30)showPad();});
+  // Swipe up to unlock on mobile
+  let sy=0,dragging=false;
+  const ico=document.getElementById('lico');
+  newZ.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;dragging=true;},{passive:true});
+  newZ.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const dy=sy-e.touches[0].clientY;
+    if(dy>0&&ico){ico.style.transform=`translateY(-${Math.min(dy*0.4,40)}px)`;ico.style.opacity=String(1-dy/120);}
+  },{passive:true});
+  newZ.addEventListener('touchend',e=>{
+    dragging=false;
+    if(ico){ico.style.transform='';ico.style.opacity='1';}
+    const dy=sy-e.changedTouches[0].clientY;
+    if(dy>60)showPad();
+  });
 }
 function showPad(){
   // Play boot sound now — this is the first user gesture, AudioContext unlocks here
@@ -1547,6 +1893,116 @@ function onComposerFocus(){
 // EFFECT SYSTEM
 // ═══════════════════════════════════════════════════
 let _pendingEffect=null;
+function openSelfDestruct(){
+  const text=document.getElementById('ci').value.trim();
+  if(!text){showToast('Type a message first','Enter text before setting a timer',null,'msg');return;}
+  if(!currentRoomId){return;}
+  const existing=document.getElementById('selfdestruct-modal');if(existing)existing.remove();
+  const modal=document.createElement('div');modal.id='selfdestruct-modal';modal.className='mov open';
+  modal.innerHTML=`<div class="mc">
+    <div class="mtitle">💥 SELF-DESTRUCT TIMER</div>
+    <div style="background:rgba(255,40,70,0.08);border:1px solid rgba(255,68,102,0.3);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:rgba(255,255,255,0.7);word-break:break-word;">"${text.slice(0,80)}${text.length>80?'...':''}"</div>
+    <div class="fl" style="margin-bottom:8px;">Delete after</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;" id="sd-options">
+      <div class="sd-opt" data-secs="10" onclick="haptic();selectSdOpt(this)" style="padding:12px 6px;border-radius:12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);cursor:pointer;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.7);">10 SEC</div>
+      <div class="sd-opt" data-secs="30" onclick="haptic();selectSdOpt(this)" style="padding:12px 6px;border-radius:12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);cursor:pointer;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.7);">30 SEC</div>
+      <div class="sd-opt" data-secs="60" onclick="haptic();selectSdOpt(this)" style="padding:12px 6px;border-radius:12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);cursor:pointer;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.7);">1 MIN</div>
+      <div class="sd-opt" data-secs="300" onclick="haptic();selectSdOpt(this)" style="padding:12px 6px;border-radius:12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);cursor:pointer;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.7);">5 MIN</div>
+      <div class="sd-opt" data-secs="3600" onclick="haptic();selectSdOpt(this)" style="padding:12px 6px;border-radius:12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);cursor:pointer;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.7);">1 HOUR</div>
+      <div class="sd-opt" data-secs="86400" onclick="haptic();selectSdOpt(this)" style="padding:12px 6px;border-radius:12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.25);cursor:pointer;text-align:center;font-family:Orbitron,monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.7);">24 HOUR</div>
+    </div>
+    <div class="err" id="sd-err"></div>
+    <div class="mbtns">
+      <button class="mb s" onclick="haptic();document.getElementById('selfdestruct-modal').remove();">CANCEL</button>
+      <button class="mb p" style="background:linear-gradient(135deg,#ff2244,#aa0022);" onclick="haptic();confirmSelfDestruct();">SEND 💥</button>
+    </div>
+  </div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+function selectSdOpt(el){
+  document.querySelectorAll('.sd-opt').forEach(o=>{o.style.borderColor='rgba(255,68,102,0.25)';o.style.background='rgba(255,68,102,0.1)';o.style.color='rgba(255,255,255,0.7)';});
+  el.style.borderColor='#ff2244';el.style.background='rgba(255,34,68,0.25)';el.style.color='#fff';
+  el.dataset.selected='1';
+}
+async function confirmSelfDestruct(){
+  const selected=document.querySelector('.sd-opt[data-selected="1"]');
+  const errEl=document.getElementById('sd-err');
+  if(!selected){if(errEl)errEl.textContent='Pick a timer duration';return;}
+  const secs=parseInt(selected.dataset.secs);
+  const text=document.getElementById('ci').value.trim();
+  const deleteAt=Date.now()+(secs*1000);
+  const myName=(window.USER?.firstName||'')+(window.USER?.lastName?' '+window.USER.lastName:'');
+  const msg={text,senderDid:DID,senderPhone:myPhone(),senderName:myName,timestamp:Date.now(),delivered:true,selfDestruct:true,deleteAt};
+  try{
+    const msgRef=await PUSH(REF(DB,`rooms/${currentRoomId}/messages`),msg);
+    await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastMessage`),'💥 '+text);
+    await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastTimestamp`),Date.now());
+    const chat=chats.find(c=>c.id===currentRoomId)||{};
+    const notifyDids=chat.isGroup?(chat.members||[]).filter(m=>m.did&&m.did!==DID).map(m=>m.did):(chat.theirDid?[chat.theirDid]:[]);
+    for(const td of notifyDids){
+      if(!td)continue;
+      let unread=1;try{const us=await GET(CHILD(REF(DB),`users/${td}/chats/${currentRoomId}/unread`));unread=(us.exists()?(us.val()||0):0)+1;}catch(e){}
+      await SET(REF(DB,`users/${td}/chats/${currentRoomId}/lastMessage`),'💥 '+text);
+      await SET(REF(DB,`users/${td}/chats/${currentRoomId}/lastTimestamp`),Date.now());
+      await SET(REF(DB,`users/${td}/chats/${currentRoomId}/unread`),unread);
+    }
+    // Schedule deletion
+    setTimeout(async()=>{
+      try{await SET(REF(DB,`rooms/${currentRoomId}/messages/${msgRef.key}`),null);}catch(e){}
+    },secs*1000);
+    document.getElementById('selfdestruct-modal').remove();
+    document.getElementById('ci').value='';
+    document.getElementById('sndbtn').classList.remove('ok');
+    const label=secs<60?`${secs}s`:secs<3600?`${secs/60}m`:`${secs/3600}h`;
+    showToast('💥 Self-Destruct Set',`Message deletes in ${label}`,null,'msg');
+  }catch(e){if(errEl)errEl.textContent='Failed to send';}
+}
+
+function openScheduler(){
+  const text=document.getElementById('ci').value.trim();
+  if(!text){showToast('Type a message first','Enter text before scheduling',null,'msg');return;}
+  if(!currentRoomId){return;}
+  const existing=document.getElementById('scheduler-modal');if(existing)existing.remove();
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const defaultDate=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const defaultTime=`${pad(now.getHours())}:${pad(now.getMinutes()+5>59?now.getMinutes()-54:now.getMinutes()+5)}`;
+  const modal=document.createElement('div');modal.id='scheduler-modal';modal.className='mov open';
+  modal.innerHTML=`<div class="mc">
+    <div class="mtitle">⏰ SCHEDULE MESSAGE</div>
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:rgba(255,255,255,0.7);word-break:break-word;">"${text.slice(0,80)}${text.length>80?'...':''}"</div>
+    <div class="fl" style="margin-bottom:6px;">Date</div>
+    <input type="date" id="sched-date" class="ni" value="${defaultDate}" style="margin-bottom:12px;">
+    <div class="fl" style="margin-bottom:6px;">Time</div>
+    <input type="time" id="sched-time" class="ni" value="${defaultTime}" style="margin-bottom:8px;">
+    <div class="err" id="sched-err"></div>
+    <div class="mbtns" style="margin-top:12px;">
+      <button class="mb s" onclick="haptic();document.getElementById('scheduler-modal').remove();">CANCEL</button>
+      <button class="mb p" onclick="haptic();confirmSchedule();">SCHEDULE →</button>
+    </div>
+  </div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+async function confirmSchedule(){
+  const dateVal=document.getElementById('sched-date')?.value;
+  const timeVal=document.getElementById('sched-time')?.value;
+  const errEl=document.getElementById('sched-err');
+  if(!dateVal||!timeVal){if(errEl)errEl.textContent='Please pick a date and time';return;}
+  const sendAt=new Date(`${dateVal}T${timeVal}`).getTime();
+  if(sendAt<=Date.now()){if(errEl)errEl.textContent='Must be in the future';return;}
+  const text=document.getElementById('ci').value.trim();
+  const job={text,roomId:currentRoomId,sendAt,createdAt:Date.now()};
+  try{
+    await PUSH(REF(DB,`users/${DID}/scheduled`),job);
+    document.getElementById('scheduler-modal').remove();
+    document.getElementById('ci').value='';
+    document.getElementById('sndbtn').classList.remove('ok');
+    const t=new Date(sendAt);
+    showToast('Message Scheduled',`Will send at ${t.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`,null,'msg');
+  }catch(e){if(errEl)errEl.textContent='Failed to schedule';}
+}
 function openFxPicker(){const text=document.getElementById('ci').value.trim();if(!text){showToast('Type a message first','Enter text before adding an effect',null,'msg');return;}document.getElementById('fx-picker').classList.add('vis');}
 function closeFxPicker(){document.getElementById('fx-picker').classList.remove('vis');}
 function selectEffect(type){_pendingEffect=type;closeFxPicker();sendMsg();}
@@ -1685,7 +2141,41 @@ function closeFabMenu(){if(_fabOpen){_fabOpen=false;document.getElementById('fab
 // ═══════════════════════════════════════════════════
 let chats=[],chatListUnsub=null,convUnsub=null,currentRoomId=null,currentChatId=null;
 let toastTimeout=null,toastPendingRoom=null;
-let _replyingTo=null,_currentMsgId=null;
+let _replyingTo=null,_currentMsgId=null,_scheduledFor=null;
+// Check and send scheduled messages every 30 seconds
+setInterval(async()=>{
+  try{
+    const snap=await GET(CHILD(REF(DB),`users/${DID}/scheduled`));
+    if(!snap.exists())return;
+    const now=Date.now();
+    const jobs=Object.entries(snap.val()||{});
+    for(const[key,job]of jobs){
+      if(job.sendAt<=now){
+        // Send the message
+        const myName=(window.USER?.firstName||'')+(window.USER?.lastName?' '+window.USER.lastName:'');
+        const msg={text:job.text,senderDid:DID,senderPhone:myPhone(),senderName:myName,timestamp:now,delivered:true};
+        try{
+          await PUSH(REF(DB,`rooms/${job.roomId}/messages`),msg);
+          await SET(REF(DB,`users/${DID}/chats/${job.roomId}/lastMessage`),job.text);
+          await SET(REF(DB,`users/${DID}/chats/${job.roomId}/lastTimestamp`),now);
+          // Notify recipient
+          const chat=chats.find(c=>c.id===job.roomId)||{};
+          const notifyDids=chat.isGroup?(chat.members||[]).filter(m=>m.did&&m.did!==DID).map(m=>m.did):(chat.theirDid?[chat.theirDid]:[]);
+          for(const td of notifyDids){
+            if(!td)continue;
+            let unread=1;try{const us=await GET(CHILD(REF(DB),`users/${td}/chats/${job.roomId}/unread`));unread=(us.exists()?(us.val()||0):0)+1;}catch(e){}
+            await SET(REF(DB,`users/${td}/chats/${job.roomId}/lastMessage`),job.text);
+            await SET(REF(DB,`users/${td}/chats/${job.roomId}/lastTimestamp`),now);
+            await SET(REF(DB,`users/${td}/chats/${job.roomId}/unread`),unread);
+          }
+          // Remove from scheduled
+          await SET(REF(DB,`users/${DID}/scheduled/${key}`),null);
+          showToast('Scheduled Message Sent',job.text,job.roomId,'msg');
+        }catch(e){console.error('Scheduled send error:',e);}
+      }
+    }
+  }catch(e){}
+},30000);
 
 function myPhone(){return window.USER?.phoneNumber||'';}
 function mkRoomId(a,b){return[encodePhone(a),encodePhone(b)].sort().join('__');}
@@ -1721,7 +2211,8 @@ function startChatListener(){
       prevChats[c.id]={...c};
     });
     if(isFirstLoad)newChats.forEach(c=>{prevChats[c.id]={...c};});
-    chats=newChats;renderChatList(chats);updateMsgBadge();
+chats=newChats;renderChatList(chats);updateMsgBadge();
+    if(document.getElementById('lock').classList.contains('active'))renderLockNotifs();
   });
 }
 
@@ -1910,7 +2401,10 @@ function setTyping(isTyping){
   }catch(e){}
 }
 function closeConv(){
-  const cs=document.getElementById('cs');cs.classList.add('closing');cs.addEventListener('animationend',()=>{cs.classList.remove('open','closing');},{once:true});
+  const cs=document.getElementById('cs');
+  cs.classList.remove('open');
+  cs.classList.add('closing');
+  setTimeout(()=>{cs.classList.remove('closing');},320);
   document.getElementById('cdd').classList.remove('open');
   if(convUnsub){convUnsub();convUnsub=null;}
   if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
