@@ -513,6 +513,7 @@ body.night{filter:sepia(0.25) brightness(0.82);}
         <div style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;" id="sub-ph">+0 000000000</div>
       </div>
       <div class="ssec"><div class="seclbl">Edit Profile</div><div class="sg">
+        <div class="sr" onclick="haptic();openStatusPicker()"><div class="rico" style="background:linear-gradient(135deg,#ff00aa,#ffee00)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><path d="M8 13s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div><div class="rtxt"><div class="rtitle">Set Status</div><div class="rsub" id="profile-status">No status set</div></div><div class="rchev"><svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1L6 6L1 11" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" stroke-linecap="round"/></svg></div></div>
         <div class="sr" onclick="haptic();openSub('sa-editname')"><div class="rico" style="background:linear-gradient(135deg,#0055ff,#aa00ff)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="white" stroke-width="2"/></svg></div><div class="rtxt"><div class="rtitle">Change Display Name</div></div><div class="rchev"><svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1L6 6L1 11" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" stroke-linecap="round"/></svg></div></div>
       </div></div>
       <div class="ssec" style="padding-top:16px"><div class="sg"><div class="sr" onclick="haptic();doSignOut()"><div class="rico" style="background:rgba(255,40,70,0.2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff4466" stroke-width="2" stroke-linecap="round"/></svg></div><div class="rtxt"><div class="rtitle" style="color:#ff4466;">Sign Out</div></div></div></div></div>
@@ -1201,12 +1202,25 @@ function closeSub(id){haptic();const el=document.getElementById(id);el.classList
 // ═══════════════════════════════════════════════════
 // PROFILE
 // ═══════════════════════════════════════════════════
+const MOODS=['😊 Happy','😎 Cool','🔥 Lit','💀 Dead inside','👻 Ghosting','💜 Vibing','😴 Tired','🤙 Chilling','⚡ Energized','🎮 Gaming','🎵 Listening','📚 Studying','🚀 Focused'];
+async function setStatus(status){
+  if(!status)return;
+  try{await SET(REF(DB,`users/${DID}/status`),status);window.USER.status=status;fillProfile();showToast('Status Updated',status,null,'msg');}catch(e){}
+}
+function openStatusPicker(){
+  const existing=document.getElementById('status-picker-modal');if(existing)existing.remove();
+  const modal=document.createElement('div');modal.id='status-picker-modal';modal.className='mov open';
+  modal.innerHTML=`<div class="mc"><div class="mtitle">SET STATUS</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">${MOODS.map(m=>`<div onclick="haptic();setStatus('${m}');document.getElementById('status-picker-modal').remove();" style="padding:8px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:13px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">${m}</div>`).join('')}</div><div style="display:flex;gap:8px;"><input type="text" class="ni" id="custom-status-inp" placeholder="Custom status..." maxlength="40" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)" style="flex:1;font-size:13px;"><button class="mb p" style="flex:0.4;padding:10px;" onclick="haptic();const v=document.getElementById('custom-status-inp').value.trim();if(v){setStatus(v);document.getElementById('status-picker-modal').remove();}">SET</button></div><div class="mbtns" style="margin-top:12px;"><button class="mb s" onclick="haptic();setStatus('');document.getElementById('status-picker-modal').remove();">CLEAR</button><button class="mb s" onclick="haptic();document.getElementById('status-picker-modal').remove();">CANCEL</button></div></div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
 function fillProfile(){
   if(!window.USER)return;
   const u=window.USER,full=u.firstName+(u.lastName?' '+u.lastName:''),init=(u.firstName||'?')[0].toUpperCase();
   ['sav','sub-av'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=init;});
   ['sname','sub-full'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=full;});
   ['sphone','sub-ph'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=u.phoneNumber||'';});
+  const statusEl=document.getElementById('profile-status');if(statusEl)statusEl.textContent=u.status||'No status set';
   const ds=document.getElementById('did-sub');if(ds)ds.textContent=DID.slice(0,18)+'...';
   const mp=document.getElementById('myph-sub');if(mp)mp.textContent=u.phoneNumber||'';
   const es=document.getElementById('edition-sub');if(es)es.textContent=`Version 3.2 · ${EDITION} · Tap for update notes`;
@@ -1411,16 +1425,17 @@ function showNeonKb(target,numOnly=false){
   _kbNumMode=numOnly;
   _kbSymMode=false;
   _kbCaps=false;
+  // Always remove readonly so neon KB can write to it
+  target.removeAttribute('readonly');
+  target.removeAttribute('disabled');
   buildKeyboard();
-  if(IS_MOBILE){
-    // Block system keyboard on mobile
+  if(IS_MOBILE||IS_SAFARI){
     target.setAttribute('inputmode','none');
     target.blur();
     document.getElementById('neon-kb').classList.add('vis');
     updateKbPush();
     resetKbIdle();
   }
-  // On desktop: do nothing visual, just set _kbTarget so typing works natively
 }
 function updateKbPush(){
   const kb=document.getElementById('neon-kb');
@@ -1490,15 +1505,13 @@ function kbRawInsert(char){
   if(!_kbTarget)return;
   resetKbIdle();
   const el=_kbTarget;
-  // Remove readonly temporarily to allow value change
-  const wasReadonly=el.hasAttribute('readonly');
-  if(wasReadonly)el.removeAttribute('readonly');
+  el.removeAttribute('readonly');
+  el.removeAttribute('disabled');
   const v=el.value||'';
   let s=v.length,e2=v.length;
   try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
   el.value=v.slice(0,s)+char+v.slice(e2);
   try{el.selectionStart=el.selectionEnd=s+char.length;}catch(err){}
-  if(wasReadonly)el.setAttribute('readonly','readonly');
   el.dispatchEvent(new Event('input',{bubbles:true}));
   if(el.id==='ci')cuUpdate(el);
   playUIClick();
@@ -1506,14 +1519,13 @@ function kbRawInsert(char){
 function kbBackspace(){
   if(!_kbTarget)return;
   const el=_kbTarget;
-  const wasReadonly=el.hasAttribute('readonly');
-  if(wasReadonly)el.removeAttribute('readonly');
+  el.removeAttribute('readonly');
+  el.removeAttribute('disabled');
   const v=el.value||'';
   let s=v.length,e2=v.length;
   try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
   if(s!==e2){el.value=v.slice(0,s)+v.slice(e2);try{el.selectionStart=el.selectionEnd=s;}catch(err){}}
   else if(s>0){el.value=v.slice(0,s-1)+v.slice(s);try{el.selectionStart=el.selectionEnd=s-1;}catch(err){}}
-  if(wasReadonly)el.setAttribute('readonly','readonly');
   el.dispatchEvent(new Event('input',{bubbles:true}));
   if(el.id==='ci')cuUpdate(el);
   playUIClick();
@@ -1770,12 +1782,14 @@ function renderChatList(list){
 }
 function searchChats(q){renderChatList(q?chats.filter(c=>(c.nickname||c.name||'').toLowerCase().includes(q.toLowerCase())):chats);}
 
-function openConv(roomId){
+async function openConv(roomId){
   currentRoomId=roomId;currentChatId=roomId;
   const chat=chats.find(c=>c.id===roomId)||{};
   const nm=chat.nickname||chat.name||'Unknown';const isGroup=chat.isGroup;
   document.getElementById('cname').textContent=nm;
-  document.getElementById('conv-status').textContent=isGroup?`Group · ${(chat.members||[]).length} members · Encrypted ✓`:'Neon Chat · Encrypted ✓';
+  let theirStatus='';
+  if(!isGroup&&chat.theirDid){try{const ss=await GET(CHILD(REF(DB),`users/${chat.theirDid}/status`));if(ss.exists()&&ss.val())theirStatus=' · '+ss.val();}catch(e){}}
+  document.getElementById('conv-status').textContent=isGroup?`Group · ${(chat.members||[]).length} members · Encrypted ✓`:`Neon Chat · Encrypted ✓${theirStatus}`;
   const av=document.getElementById('cav2');if(isGroup){av.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>';}else{av.textContent=nm[0].toUpperCase();}av.className='cav2'+(isGroup?' group':'');av.style.background=avColor(chat.name||'');
   document.getElementById('ddi-members').style.display=isGroup?'flex':'none';
   if((chat.unread||0)>0){SET(REF(DB,`users/${DID}/chats/${roomId}/unread`),0).catch(()=>{});}
