@@ -2119,6 +2119,26 @@ function loadPrefs(){
 }
 loadPrefs();
 
+// Suppress system keyboard on ALL inputs globally for mobile/Safari
+function suppressSystemKeyboard(){
+  document.querySelectorAll('input,textarea').forEach(el=>{
+    if(el.id==='file-input-photo'||el.id==='file-input-gallery'||el.id==='file-input-any'||el.id==='file-input-audio'||el.id==='file-input-video')return;
+    el.setAttribute('inputmode','none');
+    el.setAttribute('autocomplete','off');
+    el.setAttribute('autocorrect','off');
+    el.setAttribute('autocapitalize','off');
+    el.setAttribute('spellcheck','false');
+    // Prevent the system keyboard from appearing on touchstart
+    el.addEventListener('touchstart',e=>{e.preventDefault();showNeonKb(el,el.type==='tel');},{passive:false});
+    el.addEventListener('mousedown',e=>{if(IS_MOBILE||IS_SAFARI){e.preventDefault();showNeonKb(el,el.type==='tel');}});
+  });
+}
+suppressSystemKeyboard();
+
+// Re-run suppression whenever new modals/screens open since they create new inputs
+const _mutObs=new MutationObserver(()=>suppressSystemKeyboard());
+_mutObs.observe(document.body,{childList:true,subtree:true});
+
 // Battery & network status
 async function updateDeviceStatus(){
   // Network
@@ -2241,17 +2261,16 @@ function showNeonKb(target,numOnly=false){
   _kbNumMode=numOnly;
   _kbSymMode=false;
   _kbCaps=false;
-  // Always remove readonly so neon KB can write to it
   target.removeAttribute('readonly');
   target.removeAttribute('disabled');
+  target.setAttribute('inputmode','none');
+  target.setAttribute('readonly','readonly');
+  // Force blur to kill system keyboard, then re-allow input via neon KB
+  target.blur();
   buildKeyboard();
-  if(IS_MOBILE||IS_SAFARI){
-    target.setAttribute('inputmode','none');
-    target.blur();
-    document.getElementById('neon-kb').classList.add('vis');
-    updateKbPush();
-    resetKbIdle();
-  }
+  document.getElementById('neon-kb').classList.add('vis');
+  updateKbPush();
+  resetKbIdle();
 }
 function updateKbPush(){
   const kb=document.getElementById('neon-kb');
