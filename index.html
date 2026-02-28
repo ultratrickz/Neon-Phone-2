@@ -133,6 +133,9 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .tw input:checked+.tsl{background:var(--accent);box-shadow:0 0 12px var(--accent);}
 .tw input:checked+.tsl:before{transform:translateX(18px);}
 .slrow{padding:12px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.setting-pill{padding:7px 14px;border-radius:20px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.setting-pill:active{transform:scale(0.93);}
+.setting-pill.active{color:var(--bg);background:var(--accent);border-color:var(--accent);box-shadow:0 0 10px rgba(170,0,255,0.4);}
 .sllbl{display:flex;justify-content:space-between;margin-bottom:10px;}
 .sllbl span:first-child{font-size:14px;color:var(--text);}
 .sllbl span:last-child{font-size:12px;color:var(--text2);}
@@ -362,7 +365,7 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 body.night{filter:sepia(0.25) brightness(0.82);}
 
 /* ═══ BOTTOM NAV BAR ════════════════════════════ */
-#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:56px;background:rgba(8,4,20,0.97);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,0.08);display:none;align-items:center;justify-content:space-around;z-index:300;padding-bottom:env(safe-area-inset-bottom,0);}
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:56px;background:rgba(8,4,20,0.97);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,0.08);display:none;align-items:center;justify-content:space-around;z-index:200;padding-bottom:env(safe-area-inset-bottom,0);}
 #bottom-nav.vis{display:flex;}
 .bnav-btn{width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:12px;transition:background 0.15s;flex-direction:column;gap:3px;}
 .bnav-btn:active{background:rgba(255,255,255,0.1);}
@@ -384,17 +387,25 @@ body.night{filter:sepia(0.25) brightness(0.82);}
 .recent-swipe-hint{text-align:center;padding-bottom:clamp(70px,10vh,90px);font-family:'Orbitron',monospace;font-size:8px;letter-spacing:3px;color:rgba(255,255,255,0.15);}
 
 /* Push app screens up when bottom nav is visible */
-#bottom-nav.vis~.aps,
-.aps.open{margin-bottom:0;}
 body.nav-open .aps.open>.abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
-body.nav-open .aps.open>.anav{padding-bottom:16px;}
+body.nav-open .aps.open .sub .abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
 body.nav-open #cs.open .comp{padding-bottom:calc(56px + 6px);}
 body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
+body.nav-open #ns-standalone-runner{padding-bottom:56px;}
+body.nav-open #ns-standalone-runner #ns-standalone-iframe{height:calc(100% - 56px) !important;}
 </style>
 </head>
 <body>
 <div id="scanline"></div>
 <div id="effect-overlay"></div>
+
+<!-- ═══ DISCONNECT SCREEN ════════════════════════ -->
+<div id="disconnect-screen" style="display:none;position:fixed;inset:0;z-index:9000;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke="rgba(255,68,102,0.8)" stroke-width="1.8" stroke-linecap="round"/></svg>
+  <div style="font-family:'Orbitron',monospace;font-size:13px;letter-spacing:4px;color:rgba(255,255,255,0.7);">NO CONNECTION</div>
+  <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.3);">CHECK YOUR NETWORK</div>
+  <button onclick="retryConnection()" style="margin-top:12px;padding:12px 24px;border-radius:14px;background:rgba(170,0,255,0.2);border:1px solid rgba(170,0,255,0.4);color:#fff;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;">RETRY</button>
+</div>
 
 <!-- ═══ BOTTOM NAV BAR ════════════════════════════ -->
 <div id="bottom-nav">
@@ -627,13 +638,13 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
       <div class="slrow"><div class="sllbl"><span>Brightness</span><span id="bv">75%</span></div><input type="range" class="sl" id="bright-sl" min="20" max="100" value="75" oninput="setBrightness(this.value)"></div>
       <div class="sr"><div class="rtxt"><div class="rtitle">Night Mode</div><div class="rsub">Reduces blue light</div></div><label class="tw"><input type="checkbox" id="night-tog" onchange="setNight(this.checked)"><span class="tsl"></span></label></div>
       <div class="sr"><div class="rtxt"><div class="rtitle">Auto-Lock</div><div class="rsub" id="autolock-sub">After 5 minutes</div></div>
-      <select id="autolock-sel" style="background:#1a0a2e;border:1px solid rgba(170,0,255,0.4);border-radius:8px;color:#fff;padding:6px 10px;font-family:Orbitron,monospace;font-size:10px;cursor:pointer;outline:none;-webkit-appearance:auto;appearance:auto;" onchange="setAutoLock(this.value)">
-          <option value="1" style="background:#1a0a2e;color:#fff;">1 min</option>
-          <option value="2" style="background:#1a0a2e;color:#fff;">2 min</option>
-          <option value="5" selected style="background:#1a0a2e;color:#fff;">5 min</option>
-          <option value="10" style="background:#1a0a2e;color:#fff;">10 min</option>
-          <option value="30" style="background:#1a0a2e;color:#fff;">30 min</option>
-        </select>
+<div style="display:flex;gap:6px;flex-wrap:wrap;" id="autolock-pills">
+  <div class="setting-pill" data-val="1" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('1')">1 MIN</div>
+  <div class="setting-pill" data-val="2" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('2')">2 MIN</div>
+  <div class="setting-pill active" data-val="5" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('5')">5 MIN</div>
+  <div class="setting-pill" data-val="10" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('10')">10 MIN</div>
+  <div class="setting-pill" data-val="30" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('30')">30 MIN</div>
+</div>
       </div>
     </div></div></div>
   </div>
@@ -679,13 +690,13 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
         <div class="sr"><div class="rtxt"><div class="rtitle">Reduce Motion</div><div class="rsub">Minimize animations</div></div><label class="tw"><input type="checkbox" id="reduce-motion" onchange="setReduceMotion(this.checked)"><span class="tsl"></span></label></div>
        <div class="sr"><div class="rtxt"><div class="rtitle">Bold Text</div><div class="rsub">Increase font weight</div></div><label class="tw"><input type="checkbox" id="bold-text" onchange="setBoldText(this.checked)"><span class="tsl"></span></label></div>
       <div class="sr"><div class="rtxt"><div class="rtitle">Keyboard Auto-Dismiss</div><div class="rsub" id="kb-idle-sub">After 3 minutes idle</div></div>
-        <select id="kb-idle-sel" style="background:#1a0a2e;border:1px solid rgba(170,0,255,0.4);border-radius:8px;color:#fff;padding:6px 10px;font-family:Orbitron,monospace;font-size:10px;cursor:pointer;outline:none;-webkit-appearance:auto;appearance:auto;" onchange="setKbIdle(this.value)">
-          <option value="60" style="background:#1a0a2e;color:#fff;">1 min</option>
-          <option value="180" selected style="background:#1a0a2e;color:#fff;">3 min</option>
-          <option value="300" style="background:#1a0a2e;color:#fff;">5 min</option>
-          <option value="600" style="background:#1a0a2e;color:#fff;">10 min</option>
-          <option value="0" style="background:#1a0a2e;color:#fff;">Never</option>
-        </select>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="kb-idle-pills">
+  <div class="setting-pill" data-val="60" onclick="haptic();selectPill('kb-idle-pills',this);setKbIdle('60')">1 MIN</div>
+  <div class="setting-pill active" data-val="180" onclick="haptic();selectPill('kb-idle-pills',this);setKbIdle('180')">3 MIN</div>
+  <div class="setting-pill" data-val="300" onclick="haptic();selectPill('kb-idle-pills',this);setKbIdle('300')">5 MIN</div>
+  <div class="setting-pill" data-val="600" onclick="haptic();selectPill('kb-idle-pills',this);setKbIdle('600')">10 MIN</div>
+  <div class="setting-pill" data-val="0" onclick="haptic();selectPill('kb-idle-pills',this);setKbIdle('0')">NEVER</div>
+</div>
       </div>
       </div></div>
     </div>
@@ -969,6 +980,9 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
       <div class="kb-top-btn" id="kb-caps-btn" onclick="hapticKb();toggleCaps()">CAPS</div>
     </div>
     <div class="kb-topbar-btns">
+      <div class="kb-top-btn" id="kb-emoji-btn" onclick="hapticKb();toggleEmojiMode()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path d="M8 14.5c1 2 6 2 8 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+      </div>
       <div class="kb-top-btn" onclick="hapticKb();kbMode('sym')" id="kb-sym-btn">?!#</div>
       <div class="kb-top-btn dismiss" onclick="dismissKeyboard()">▼ DISMISS</div>
     </div>
@@ -1034,12 +1048,34 @@ window.DID=did;
 // ═══════════════════════════════════════════════════
 const IS_SAFARI = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || /iPad|iPhone|iPod/.test(navigator.userAgent);
 const IS_MOBILE = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent)||('ontouchstart' in window&&navigator.maxTouchPoints>1)||window.innerWidth<=768;
-const EDITION = IS_MOBILE ? 'MOBILE EDITION' : 'COMPUTER EDITION';
-const BROWSER = IS_SAFARI ? 'Safari' : (navigator.userAgent.includes('Chrome') ? 'Chrome' : (navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Browser'));
+const IS_MEDIAN = typeof window.median !== 'undefined' || navigator.userAgent.includes('Median') || navigator.userAgent.includes('gonative') || (typeof Android !== 'undefined') || window.location.href.startsWith('file://');
+const IS_APK = IS_MEDIAN || (IS_MOBILE && !IS_SAFARI && !navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Firefox'));
+const EDITION = IS_APK ? 'APK EDITION' : IS_SAFARI ? 'SAFARI EDITION' : IS_MOBILE ? 'MOBILE EDITION' : 'COMPUTER EDITION';
+const BROWSER = IS_APK ? 'Median WebView' : IS_SAFARI ? 'Safari' : (navigator.userAgent.includes('Chrome') ? 'Chrome' : (navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Browser'));
+
+// APK/Median WebView fixes
+if(IS_APK){
+  // Prevent scroll bounce
+  document.body.style.overscrollBehavior='none';
+  document.body.style.webkitOverflowScrolling='touch';
+  // Prevent text selection issues in WebView
+  document.body.style.webkitUserSelect='none';
+  document.body.style.userSelect='none';
+  // Fix viewport
+  const viewport=document.querySelector('meta[name=viewport]');
+  if(viewport)viewport.content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+  // WebView network check — reconnect handler
+  window.addEventListener('online',()=>{
+    const disc=document.getElementById('disconnect-screen');
+    if(disc)disc.style.display='none';
+  });
+  window.addEventListener('offline',()=>{
+    showDisconnectScreen();
+  });
+}
 
 // Safari: prevent double-tap zoom
 if(IS_SAFARI){
-  let lastTouch=0;
   document.addEventListener('touchend',e=>{
     const now=Date.now();
     if(now-lastTouch<350&&!e.target.classList.contains('ci')){e.preventDefault();}
@@ -1352,8 +1388,8 @@ function nsStars(avg,size=13){
 function nsGetInstallBtnHtml(appId){
   const installed=_nsInstalledApps[appId];
   const hasUpdate=!!_nsPendingUpdates[appId];
-  if(hasUpdate)return`<button class="ns-install-btn update" onclick="event.stopPropagation();haptic();nsDoUpdate('${appId}')">UPDATE</button>`;
-  if(installed)return`<button class="ns-install-btn installed" onclick="event.stopPropagation();haptic();nsOpenApp('${appId}')">OPEN ✓</button>`;
+if(hasUpdate)return`<button class="ns-install-btn update" onclick="event.stopPropagation();haptic();nsDoUpdate('${appId}')">UPDATE</button>`;
+  if(installed)return`<button class="ns-install-btn installed" onclick="event.stopPropagation();haptic();closeApp('ns');setTimeout(()=>nsLaunchFromHome('${appId}'),350);">OPEN ✓</button>`;
   return`<button class="ns-install-btn" onclick="event.stopPropagation();haptic();nsInstall('${appId}')">GET</button>`;
 }
 function nsRenderList(){
@@ -1416,9 +1452,9 @@ async function nsShowDetail(appId){
       </div>
     </div>
     <div style="padding:0 18px 16px;display:flex;flex-direction:column;gap:8px;">
-      ${_nsInstalledApps[app.id]?`<button class="sbtn" style="margin-bottom:0;" onclick="haptic();nsOpenApp('${app.id}')">▶ LAUNCH APP</button>`:`<button class="sbtn" style="margin-bottom:0;background:linear-gradient(135deg,#00cc44,#00ffee);box-shadow:0 0 20px rgba(0,204,68,0.3);" onclick="haptic();nsInstall('${app.id}');closeSub('ns-detail')">⬇ INSTALL APP</button>`}
+     ${_nsInstalledApps[app.id]?`<button class="sbtn" style="margin-bottom:0;" onclick="haptic();closeSub('ns-detail');closeApp('ns');setTimeout(()=>nsLaunchFromHome('${app.id}'),350);">▶ LAUNCH APP</button>`:`<button class="sbtn" style="margin-bottom:0;background:linear-gradient(135deg,#00cc44,#00ffee);box-shadow:0 0 20px rgba(0,204,68,0.3);" onclick="haptic();nsInstall('${app.id}');closeSub('ns-detail')">⬇ INSTALL APP</button>`}
       ${_nsPendingUpdates[app.id]?`<button class="sbtn" style="margin-bottom:0;background:linear-gradient(135deg,#ff6600,#ffee00);color:#000;" onclick="haptic();nsDoUpdate('${app.id}');closeSub('ns-detail')">⚡ UPDATE AVAILABLE — v${_nsPendingUpdates[app.id].version}</button>`:''}
-      ${_nsInstalledApps[app.id]?`<button style="padding:10px;border-radius:12px;background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.25);color:#ff4466;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;" onclick="haptic();nsUninstall('${app.id}');closeSub('ns-detail')">UNINSTALL</button>`:''}
+${_nsInstalledApps[app.id]?`<button style="padding:10px;border-radius:12px;background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.25);color:#ff4466;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;" onclick="haptic();nsUninstall('${app.id}')">UNINSTALL</button>`:''}
     </div>
     ${_nsPendingUpdates[app.id]?`<div style="padding:0 18px 12px;"><div style="background:rgba(255,150,0,0.08);border:1px solid rgba(255,150,0,0.2);border-radius:12px;padding:12px 14px;"><div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:#ffaa00;margin-bottom:6px;">WHAT'S NEW IN v${_nsPendingUpdates[app.id].version}</div><div style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;">${(_nsPendingUpdates[app.id].notes||'').replace(/\n/g,'<br>')}</div></div></div>`:''}
     <div style="padding:0 18px;"><div class="ns-section-title">DESCRIPTION</div>
@@ -1528,18 +1564,31 @@ async function nsDoUpdate(appId){
 }
 async function nsUninstall(appId){
   const app=_nsApps.find(a=>a.id===appId)||{name:'this app'};
-  if(!confirm(`Uninstall ${app.name}?`))return;
+  const modal=document.createElement('div');modal.className='mov open';
+  modal.innerHTML=`<div class="mc">
+    <div class="mtitle">UNINSTALL APP</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:4px;">Remove <span style="color:#fff;font-weight:600;">${app.name}</span> from your Neon Phone?</div>
+    <div class="mbtns" style="margin-top:20px;">
+      <button class="mb s" onclick="haptic();this.closest('.mov').remove()">CANCEL</button>
+      <button class="mb p" style="background:linear-gradient(135deg,#ff2244,#aa0022);" onclick="haptic();this.closest('.mov').remove();_nsDoUninstall('${appId}')">UNINSTALL</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  // Do NOT close the detail screen here — let the user see the modal over it
+}
+async function _nsDoUninstall(appId){
   nsEnsureReady(async()=>{
     try{
       await _nsSet(_nsRef(_nsDb,`userInstalls/${DID}/${appId}`),null);
       await _nsSet(_nsRef(_nsDb,`apps/${appId}/installs/${DID}`),null);
+const appData=_nsApps.find(a=>a.id===appId)||{name:'App'};
       delete _nsInstalledApps[appId];
       delete _nsPendingUpdates[appId];
       nsRemoveHomeIcon(appId);
       nsRenderList();
       nsCheckUpdateBanner();
       nsUpdateShopBadge();
-      showToast('Uninstalled',`${app.name} removed from home screen`,null,'msg');
+      showToast('Uninstalled',`${appData.name} removed from your Neon Phone`,null,'msg');
     }catch(e){showToast('Error','Uninstall failed',null,'msg');}
   });
 }
@@ -1588,22 +1637,7 @@ function nsAddHomeIcon(appId,app){
   const ico=document.createElement('div');ico.className='aico';ico.id='ns-home-'+appId;
   ico.setAttribute('data-ns-app',appId);
   ico.innerHTML=`<div class="ai" style="overflow:hidden;">${app.iconSvg||`<svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" fill="#1a0a2e"/><text x="28" y="36" font-size="22" text-anchor="middle" fill="rgba(170,0,255,0.8)" font-family="Orbitron,monospace">${(app.name||'?')[0].toUpperCase()}</text></svg>`}</div><div class="al">${(app.name||'App').slice(0,10)}</div>`;
-  ico.onclick=()=>{
-    haptic();
-    if(!document.getElementById('ns').classList.contains('open'))openApp('ns');
-    nsEnsureReady(()=>{
-      // If app data not loaded yet, load it first
-      if(!_nsApps.find(a=>a.id===appId)){
-        nsLoadApps().then?nsLoadApps():nsEnsureReady(()=>{});
-        let tries=0;const t=setInterval(()=>{
-          tries++;
-          const app=_nsApps.find(a=>a.id===appId);
-          if(app){clearInterval(t);nsOpenApp(appId);}
-          if(tries>20)clearInterval(t);
-        },300);
-      }else{nsOpenApp(appId);}
-    });
-  };
+ico.onclick=()=>{haptic();nsLaunchFromHome(appId);};
   grid.appendChild(ico);
 }
 function nsUpdateHomeIcon(appId,app){
@@ -1622,25 +1656,7 @@ function nsRestoreHomeIcons(){
 }
 
 function nsOpenApp(appId){
-  const app=_nsApps.find(a=>a.id===appId)||_nsInstalledApps[appId];
-  if(!app||!app.htmlContent){
-    // Try fetching from DB if not in memory
-    nsEnsureReady(async()=>{
-      try{
-        const snap=await _nsGet(_nsChild(_nsRef(_nsDb),`apps/${appId}`));
-        if(snap.exists()){
-          const appData=snap.val();
-          if(!appData.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
-          _nsApps=_nsApps.filter(a=>a.id!==appId);
-          _nsApps.push({id:appId,...appData});
-          nsLaunchIframe(appId,appData);
-        }else{showToast('App Not Found','Could not find app data',null,'msg');}
-      }catch(e){showToast('Error','Failed to load app',null,'msg');}
-    });
-    return;
-  }
-  closeSub('ns-detail');
-  nsLaunchIframe(appId,app);
+  nsLaunchFromHome(appId);
 }
 
 // Standalone runner — no Neon Shop needed
@@ -1661,15 +1677,15 @@ function nsLaunchFromHome(appId){
     }
     if(!app.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
     // Create or reuse standalone runner
-    let runner=document.getElementById('ns-standalone-runner');
+let runner=document.getElementById('ns-standalone-runner');
     if(!runner){
       runner=document.createElement('div');
       runner.id='ns-standalone-runner';
-      runner.style.cssText='position:fixed;inset:0;z-index:55;background:#000;display:flex;flex-direction:column;';
+      runner.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:55;background:#000;display:flex;flex-direction:column;';
       const iframe=document.createElement('iframe');
       iframe.id='ns-standalone-iframe';
       iframe.style.cssText='flex:1;width:100%;height:100%;border:none;background:#000;display:block;';
-      iframe.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin');
+     iframe.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads allow-pointer-lock');
       runner.appendChild(iframe);
       document.body.appendChild(runner);
     }
@@ -1699,7 +1715,9 @@ function nsCloseStandaloneRunner(){
     if(iframe)iframe.src='about:blank';
     _standaloneRunnerOpen=false;
     const anyOpen=document.querySelector('.aps.open');
-    if(!anyOpen&&!document.getElementById('cs').classList.contains('open'))hideBottomNav();
+    const convOpen=document.getElementById('cs').classList.contains('open');
+    if(!anyOpen&&!convOpen)hideBottomNav();
+    // else keep nav visible since something else is still open
   },320);
 }
 
@@ -1765,7 +1783,8 @@ function startBoot(){
   document.addEventListener('touchstart',_playOnGesture,{once:true,passive:true});
   document.addEventListener('keydown',_playOnGesture,{once:true});
   const bsEl=document.getElementById('bs');if(bsEl)bsEl.textContent=EDITION;
-  if(IS_SAFARI){const sb=document.getElementById('safari-badge');if(sb)sb.style.display='block';}
+  if(IS_SAFARI){const sb=document.getElementById('safari-badge');if(sb){sb.style.display='block';sb.textContent='SAFARI EDITION · OPTIMIZED';}}
+  if(IS_APK){const sb=document.getElementById('safari-badge');if(sb){sb.style.display='block';sb.textContent='APK EDITION · MEDIAN WEBVIEW';}}
   const cv=document.getElementById('boot-cv');cv.width=window.innerWidth;cv.height=window.innerHeight;
   const ctx=cv.getContext('2d');const stars=Array.from({length:220},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.5,a:Math.random()}));
   let f=0;const anim=()=>{ctx.fillStyle=`rgba(0,0,0,${f<30?1:0.04})`;ctx.fillRect(0,0,cv.width,cv.height);stars.forEach(s=>{s.a=0.3+0.7*Math.abs(Math.sin(f*0.02+s.x));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(200,180,255,${s.a*0.55})`;ctx.fill();});f++;requestAnimationFrame(anim);};anim();
@@ -2043,6 +2062,17 @@ function setAutoLock(v){
   const sub=document.getElementById('autolock-sub');if(sub)sub.textContent=`After ${v} minute${v!=='1'?'s':''}`;
   try{localStorage.setItem('neos_autolock',v);}catch(e){}
 }
+function setKbIdle(v){
+  _kbIdleSeconds=parseInt(v);
+  const sub=document.getElementById('kb-idle-sub');
+  const labels={'60':'After 1 minute idle','180':'After 3 minutes idle','300':'After 5 minutes idle','600':'After 10 minutes idle','0':'Never auto-dismiss'};
+  if(sub)sub.textContent=labels[v]||'After 3 minutes idle';
+  try{localStorage.setItem('neos_kb_idle',v);}catch(e){}
+}
+function selectPill(groupId,el){
+  document.querySelectorAll(`#${groupId} .setting-pill`).forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
 function setReduceMotion(on){
   if(on){const s=document.createElement('style');s.id='reduce-motion-style';s.textContent='*{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}';document.head.appendChild(s);}
   else{const s=document.getElementById('reduce-motion-style');if(s)s.remove();}
@@ -2077,13 +2107,13 @@ function loadPrefs(){
     const w=localStorage.getItem('neos_wall');if(w)currentWallId=w;
     const h=localStorage.getItem('neos_haptic');if(h==='0'){const t=document.getElementById('haptic-tog');if(t)t.checked=false;}
     const kh=localStorage.getItem('neos_kb_haptic');if(kh==='0'){const t=document.getElementById('kb-haptic-tog');if(t)t.checked=false;}
-    const al=localStorage.getItem('neos_autolock');if(al){autoLockMins=parseInt(al);const sel=document.getElementById('autolock-sel');if(sel)sel.value=al;}
+    const al=localStorage.getItem('neos_autolock');if(al){autoLockMins=parseInt(al);const pills=document.querySelectorAll('#autolock-pills .setting-pill');pills.forEach(p=>{p.classList.toggle('active',p.dataset.val===al);});}
     const na=localStorage.getItem('neos_notif_allow');if(na==='0'){const t=document.getElementById('notif-allow');if(t)t.checked=false;}
     const nb=localStorage.getItem('neos_notif_banner');if(nb==='0'){const t=document.getElementById('notif-banner');if(t)t.checked=false;}
     const ns=localStorage.getItem('neos_notif_sound');if(ns==='0'){const t=document.getElementById('notif-sound');if(t)t.checked=false;}
     const rm=localStorage.getItem('neos_reduce_motion');if(rm==='1'){const t=document.getElementById('reduce-motion');if(t)t.checked=true;setReduceMotion(true);}
    const bt2=localStorage.getItem('neos_bold_text');if(bt2==='1'){const t=document.getElementById('bold-text');if(t)t.checked=true;setBoldText(true);}
-    const ki=localStorage.getItem('neos_kb_idle');if(ki){const sel=document.getElementById('kb-idle-sel');if(sel)sel.value=ki;setKbIdle(ki);}
+   const ki=localStorage.getItem('neos_kb_idle');if(ki){setKbIdle(ki);const pills=document.querySelectorAll('#kb-idle-pills .setting-pill');pills.forEach(p=>{p.classList.toggle('active',p.dataset.val===ki);});}
     applyGlowToCSS();
   }catch(e){}
 }
@@ -2144,6 +2174,67 @@ function resetKbIdle(){
 const KB_ALPHA=[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['⇧','z','x','c','v','b','n','m','⌫']];
 const KB_SYM=[['1','2','3','4','5','6','7','8','9','0'],['!','@','#','$','%','^','&','*','(',')'],['?','.',',',';',':','\'','"','-','⌫']];
 const KB_NUM=[['1','2','3'],['4','5','6'],['7','8','9'],['','0','⌫']];
+let _kbEmojiMode=false;
+
+// Neon custom SVG emojis — no device emoji characters used
+const NEON_EMOJIS=[
+  // === FACES ===
+  {id:'smile',label:'Happy',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><circle cx="11.5" cy="13" r="2" fill="#333"/><circle cx="20.5" cy="13" r="2" fill="#333"/><circle cx="12.5" cy="12" r="0.7" fill="#fff"/><circle cx="21.5" cy="12" r="0.7" fill="#fff"/><path d="M11 19.5c1.2 2.5 8.8 2.5 10 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'laugh',label:'Lol',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><path d="M9 12.5c0-1.5 2-2 3-0.5M20 12.5c0-1.5 2-2 3-0.5" stroke="#333" stroke-width="1.5" stroke-linecap="round"/><path d="M10 18.5c1.5 4 10.5 4 12 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/><ellipse cx="16" cy="21" rx="4" ry="2.5" fill="#cc4444" opacity="0.7"/></svg>`},
+  {id:'cry_laugh',label:'CryLaugh',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><path d="M9 11.5c0.5-1.8 2.5-1.8 3 0M20 11.5c0.5-1.8 2.5-1.8 3 0" stroke="#333" stroke-width="1.5" stroke-linecap="round"/><path d="M10 18.5c1.5 4 10.5 4 12 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M9.5 13 Q8 17 9.5 18" stroke="#88ccff" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M22.5 13 Q24 17 22.5 18" stroke="#88ccff" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'wink',label:'Wink',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><circle cx="11.5" cy="13" r="2" fill="#333"/><path d="M18.5 12 l4 1.5" stroke="#333" stroke-width="1.8" stroke-linecap="round"/><path d="M11 19.5c1.2 2.5 8.8 2.5 10 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'cool',label:'Cool',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><rect x="7" y="10" width="18" height="7" rx="3.5" fill="#222" opacity="0.92"/><rect x="7" y="10" width="8" height="7" rx="3.5" fill="#333"/><rect x="17" y="10" width="8" height="7" rx="3.5" fill="#333"/><circle cx="11" cy="13.5" r="2" fill="#66aaff" opacity="0.7"/><circle cx="21" cy="13.5" r="2" fill="#66aaff" opacity="0.7"/><path d="M11 20.5c1.2 2 8.8 2 10 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'sad',label:'Sad',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><circle cx="11.5" cy="13" r="2" fill="#333"/><circle cx="20.5" cy="13" r="2" fill="#333"/><path d="M11 21.5c1.2-2.5 8.8-2.5 10 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M10 11 Q11.5 9.5 13 11" stroke="#333" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M19 11 Q20.5 9.5 22 11" stroke="#333" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'angry',label:'Angry',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ff5533" stroke="#aa2200" stroke-width="1.2"/><circle cx="11.5" cy="14" r="2" fill="#222"/><circle cx="20.5" cy="14" r="2" fill="#222"/><path d="M9 10.5 Q11.5 12 14 10.5" stroke="#222" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M18 10.5 Q20.5 12 23 10.5" stroke="#222" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M11 21c1.2-2.5 8.8-2.5 10 0" stroke="#222" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'surprised',label:'Wow',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><circle cx="11.5" cy="12.5" r="2.2" fill="#333"/><circle cx="20.5" cy="12.5" r="2.2" fill="#333"/><circle cx="12.2" cy="11.8" r="0.8" fill="#fff"/><circle cx="21.2" cy="11.8" r="0.8" fill="#fff"/><path d="M9.5 9.5 Q11.5 8 13.5 9.5" stroke="#333" stroke-width="1.2" stroke-linecap="round" fill="none"/><path d="M18.5 9.5 Q20.5 8 22.5 9.5" stroke="#333" stroke-width="1.2" stroke-linecap="round" fill="none"/><ellipse cx="16" cy="21" rx="3.5" ry="4" fill="#333"/><ellipse cx="16" cy="21" rx="2" ry="2.5" fill="#555"/></svg>`},
+  {id:'love',label:'Love',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><path d="M9.5 12.5 Q9.5 9 12.5 9 Q14.5 9 16 11 Q17.5 9 19.5 9 Q22.5 9 22.5 12.5 Q22.5 16 16 20 Q9.5 16 9.5 12.5z" fill="#ff4466" stroke="#cc0033" stroke-width="0.8"/><path d="M11 22c1.2 2 8.8 2 10 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`},
+  {id:'think',label:'Hmm',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#ffee44" stroke="#cc9900" stroke-width="1.2"/><circle cx="11.5" cy="13.5" r="2" fill="#333"/><circle cx="20.5" cy="13.5" r="2" fill="#333"/><path d="M11 20c1 1.5 8 1.5 9 0" stroke="#333" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M20 8 Q23 6 24 9" stroke="#333" stroke-width="1.2" stroke-linecap="round" fill="none"/><circle cx="24.5" cy="7" r="1" fill="#333"/></svg>`},
+  {id:'skull',label:'Dead',svg:`<svg viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="14" rx="10" ry="11" fill="#eee" stroke="#999" stroke-width="1.2"/><rect x="9" y="22" width="14" height="5" rx="2" fill="#eee" stroke="#999" stroke-width="1.2"/><line x1="12" y1="22" x2="12" y2="27" stroke="#999" stroke-width="1"/><line x1="16" y1="22" x2="16" y2="27" stroke="#999" stroke-width="1"/><line x1="20" y1="22" x2="20" y2="27" stroke="#999" stroke-width="1"/><ellipse cx="11.5" cy="13" rx="3" ry="3.5" fill="#333"/><ellipse cx="20.5" cy="13" rx="3" ry="3.5" fill="#333"/><path d="M14.5 19 l1.5-2 1.5 2" stroke="#999" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`},
+  {id:'ghost',label:'Boo',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M8 28 Q8 14 16 8 Q24 14 24 28 Q21 25 18 28 Q16 26 14 28 Q11 25 8 28z" fill="#eee" stroke="#bbb" stroke-width="1.2"/><circle cx="12.5" cy="17" r="2.5" fill="#333"/><circle cx="19.5" cy="17" r="2.5" fill="#333"/><circle cx="13.2" cy="16.2" r="1" fill="#fff"/><circle cx="20.2" cy="16.2" r="1" fill="#fff"/></svg>`},
+  // === HEARTS ===
+  {id:'heart_red',label:'Heart',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M6 12 Q6 7 11 7 Q14 7 16 10 Q18 7 21 7 Q26 7 26 12 Q26 18 16 25 Q6 18 6 12z" fill="#ff2244" stroke="#cc0022" stroke-width="1"/></svg>`},
+  {id:'heart_purple',label:'PurpleHeart',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M6 12 Q6 7 11 7 Q14 7 16 10 Q18 7 21 7 Q26 7 26 12 Q26 18 16 25 Q6 18 6 12z" fill="#aa00ff" stroke="#7700cc" stroke-width="1"/></svg>`},
+  {id:'heart_cyan',label:'CyanHeart',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M6 12 Q6 7 11 7 Q14 7 16 10 Q18 7 21 7 Q26 7 26 12 Q26 18 16 25 Q6 18 6 12z" fill="#00ffee" stroke="#00bbaa" stroke-width="1"/></svg>`},
+  {id:'broken_heart',label:'Broken',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M6 12 Q6 7 11 7 Q14 7 16 10 Q18 7 21 7 Q26 7 26 12 Q26 18 16 25 Q6 18 6 12z" fill="#cc2244" stroke="#991122" stroke-width="1"/><path d="M16 10 L14 16 L17 16 L15 22" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`},
+  {id:'sparkling_heart',label:'Sparkle',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M6 13 Q6 8 11 8 Q14 8 16 11 Q18 8 21 8 Q26 8 26 13 Q26 19 16 26 Q6 19 6 13z" fill="#ff4466" stroke="#cc0033" stroke-width="1"/><path d="M16 3 L16.5 6 L17 3" stroke="#ffee00" stroke-width="1.2" stroke-linecap="round"/><path d="M25 8 L22.5 9.5 L25 11" stroke="#ffee00" stroke-width="1.2" stroke-linecap="round"/><path d="M7 8 L9.5 9.5 L7 11" stroke="#ffee00" stroke-width="1.2" stroke-linecap="round"/></svg>`},
+  // === GESTURES ===
+  {id:'thumbs_up',label:'ThumbsUp',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M14 6 Q15 3 17 4 Q19 5 18 9 L17 12 H24 Q26 12 26 14 Q26 15.5 24.5 16 Q25.5 17 24.5 18.5 Q25 19.5 23.5 21 Q24 22 22 23 H16 Q14 23 13 22 V12 Q13 9 14 6z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/><path d="M13 12 H9 Q7 12 7 14 V21 Q7 23 9 23 H13" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/></svg>`},
+  {id:'thumbs_down',label:'ThumbsDown',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M14 26 Q15 29 17 28 Q19 27 18 23 L17 20 H24 Q26 20 26 18 Q26 16.5 24.5 16 Q25.5 15 24.5 13.5 Q25 12.5 23.5 11 Q24 10 22 9 H16 Q14 9 13 10 V20 Q13 23 14 26z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/><path d="M13 20 H9 Q7 20 7 18 V11 Q7 9 9 9 H13" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/></svg>`},
+  {id:'wave',label:'Wave',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M10 20 Q8 16 10 12 Q12 9 14 11 L15 12 Q16 8 18 8 Q20 8 20 11 L20 12 Q21 9 23 9.5 Q25 10 24.5 13 L24 16 Q25 17 24 20 Q23 24 20 25 H15 Q12 25 10 20z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/><path d="M14 11 Q12 8 13 6 Q14 4 16 5 Q17 6 16 8" stroke="#cc8800" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`},
+  {id:'clap',label:'Clap',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M14 7 Q15 4 17 6 L22 14 Q22 14 21 15" stroke="#ffcc44" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M12 9 Q10 7 12 5 Q14 4 15 6 L20 14" stroke="#ffcc44" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M9 17 Q7 13 10 10 Q12 8 14 10 L20 20 Q22 24 20 26 Q16 30 11 26 Q8 23 9 17z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/></svg>`},
+  {id:'point_up',label:'Point',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 3 Q18 3 18 6 V16 L22 14 Q24 13 24.5 15 Q25 17 22 18 L18 21 Q18 25 16 26 Q12 27 10 24 Q8 21 9 17 L9 11 Q9 9 11 9 Q13 9 13 11 V6 Q13 3 16 3z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/></svg>`},
+  {id:'peace',label:'Peace',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M14 5 Q12 4 12 7 L13 14 L10 12 Q8 11 7.5 13 Q7 15 10 16 L13 17 V26 Q13 28 15 28 Q17 28 17 26 V17 L20 16 Q23 15 22.5 13 Q22 11 20 12 L17 14 L18 7 Q18 4 16 4 Q15 4 14 5z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2"/></svg>`},
+  // === SYMBOLS / OBJECTS ===
+  {id:'fire',label:'Fire',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 4 Q18 10 22 12 Q26 15 24 21 Q22 27 16 28 Q10 27 8 21 Q6 15 10 12 Q11 18 16 18 Q13 14 14 8 Q14.5 5 16 4z" fill="#ff6600" stroke="#cc3300" stroke-width="1"/><path d="M16 18 Q18 20 17 24 Q15 26 13 24 Q11 21 13 19 Q14 18 16 18z" fill="#ffee00"/></svg>`},
+  {id:'lightning',label:'Zap',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M19 4 L10 18 H17 L13 28 L24 14 H17 L22 4 Z" fill="#ffee00" stroke="#cc9900" stroke-width="1" stroke-linejoin="round"/></svg>`},
+  {id:'star',label:'Star',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 4 L18.5 12 H27 L20.5 17 L23 25 L16 20 L9 25 L11.5 17 L5 12 H13.5 Z" fill="#ffee00" stroke="#cc9900" stroke-width="1" stroke-linejoin="round"/></svg>`},
+  {id:'sparkle',label:'Sparkle',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 4 L17 14 L27 16 L17 18 L16 28 L15 18 L5 16 L15 14 Z" fill="#fff" stroke="#aaa" stroke-width="0.8" stroke-linejoin="round"/><path d="M24 6 L24.5 10 L28 11 L24.5 12 L24 16 L23.5 12 L20 11 L23.5 10 Z" fill="#ffee88" stroke-width="0.5"/></svg>`},
+  {id:'crystal_ball',label:'Magic',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="15" r="11" fill="rgba(170,0,255,0.3)" stroke="#aa00ff" stroke-width="1.5"/><ellipse cx="12" cy="11" rx="3" ry="4" fill="rgba(255,255,255,0.15)" transform="rotate(-30 12 11)"/><circle cx="12" cy="10" r="1.5" fill="rgba(255,255,255,0.4)"/><path d="M11 26 H21" stroke="#888" stroke-width="3" stroke-linecap="round"/><path d="M13 26 V29 H19 V26" stroke="#888" stroke-width="1.5" fill="none"/></svg>`},
+  {id:'diamond',label:'Diamond',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 5 L26 13 L16 27 L6 13 Z" fill="#00ffee" stroke="#00bbaa" stroke-width="1" stroke-linejoin="round" opacity="0.9"/><path d="M6 13 H26" stroke="#00bbaa" stroke-width="1"/><path d="M16 5 L20 13 L16 27 L12 13 Z" fill="rgba(255,255,255,0.25)"/></svg>`},
+  {id:'crown',label:'Crown',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M4 22 L8 12 L13 18 L16 8 L19 18 L24 12 L28 22 Z" fill="#ffcc00" stroke="#cc8800" stroke-width="1.2" stroke-linejoin="round"/><rect x="4" y="22" width="24" height="4" rx="2" fill="#ffcc00" stroke="#cc8800" stroke-width="1.2"/><circle cx="8" cy="12" r="2" fill="#ff4466"/><circle cx="16" cy="8" r="2" fill="#00ffee"/><circle cx="24" cy="12" r="2" fill="#aa00ff"/></svg>`},
+  {id:'rocket',label:'Rocket',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 4 Q21 6 23 14 L23 20 L16 24 L9 20 L9 14 Q11 6 16 4z" fill="#dde" stroke="#99a" stroke-width="1.2"/><circle cx="16" cy="13" r="3.5" fill="#88ccff" stroke="#4488cc" stroke-width="1"/><path d="M9 18 L6 22 L9 20z" fill="#ff6600"/><path d="M23 18 L26 22 L23 20z" fill="#ff6600"/><path d="M13 24 Q14 28 16 28 Q18 28 19 24" fill="#ff6600" stroke="#cc3300" stroke-width="1"/></svg>`},
+  {id:'neon_x',label:'NeonX',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M8 8 L24 24M24 8 L8 24" stroke="#aa00ff" stroke-width="3" stroke-linecap="round"/><path d="M8 8 L24 24M24 8 L8 24" stroke="#ff88ff" stroke-width="1" stroke-linecap="round" opacity="0.6"/></svg>`},
+  {id:'neon_check',label:'Check',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M6 17 L13 24 L26 9" stroke="#00cc44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 17 L13 24 L26 9" stroke="#88ffaa" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/></svg>`},
+  // === NATURE ===
+  {id:'sun',label:'Sun',svg:`<svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="6" fill="#ffee00" stroke="#cc9900" stroke-width="1"/><path d="M16 4 V7M16 25 V28M4 16 H7M25 16 H28M7.5 7.5 L9.6 9.6M22.4 22.4 L24.5 24.5M7.5 24.5 L9.6 22.4M22.4 9.6 L24.5 7.5" stroke="#ffcc00" stroke-width="1.8" stroke-linecap="round"/></svg>`},
+  {id:'moon',label:'Moon',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M20 6 Q14 8 12 14 Q10 21 16 26 Q10 27 7 22 Q3 16 6 10 Q9 4 16 4 Q18 4 20 6z" fill="#ddeeff" stroke="#aabbcc" stroke-width="1.2"/></svg>`},
+  {id:'flower',label:'Flower',svg:`<svg viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="10" rx="3" ry="5" fill="#ff88bb"/><ellipse cx="16" cy="22" rx="3" ry="5" fill="#ff88bb"/><ellipse cx="10" cy="16" rx="5" ry="3" fill="#ff88bb"/><ellipse cx="22" cy="16" rx="5" ry="3" fill="#ff88bb"/><ellipse cx="11.5" cy="11.5" rx="3" ry="5" fill="#ffaacc" transform="rotate(45 11.5 11.5)"/><ellipse cx="20.5" cy="11.5" rx="3" ry="5" fill="#ffaacc" transform="rotate(-45 20.5 11.5)"/><ellipse cx="11.5" cy="20.5" rx="3" ry="5" fill="#ffaacc" transform="rotate(-45 11.5 20.5)"/><ellipse cx="20.5" cy="20.5" rx="3" ry="5" fill="#ffaacc" transform="rotate(45 20.5 20.5)"/><circle cx="16" cy="16" r="4.5" fill="#ffee44" stroke="#cc9900" stroke-width="1"/></svg>`},
+  // === FOOD / FUN ===
+  {id:'pizza',label:'Pizza',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M16 4 L28 26 L4 26 Z" fill="#ffcc44" stroke="#cc8800" stroke-width="1.2" stroke-linejoin="round"/><path d="M16 4 L28 26" stroke="#cc6600" stroke-width="0.8"/><path d="M16 4 L4 26" stroke="#cc6600" stroke-width="0.8"/><circle cx="16" cy="18" r="2" fill="#ff4444"/><circle cx="11" cy="22" r="1.5" fill="#ff4444"/><circle cx="21" cy="22" r="1.5" fill="#ff4444"/><path d="M4 26 H28" stroke="#cc6600" stroke-width="1.5" stroke-linecap="round"/></svg>`},
+  {id:'gaming',label:'Game',svg:`<svg viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="14" rx="7" fill="#334" stroke="#556" stroke-width="1.2"/><path d="M11 17 H15M13 15 V19" stroke="#88aaff" stroke-width="1.8" stroke-linecap="round"/><circle cx="21" cy="15.5" r="1.5" fill="#ff4466"/><circle cx="21" cy="18.5" r="1.5" fill="#ffee00"/></svg>`},
+  {id:'music',label:'Music',svg:`<svg viewBox="0 0 32 32" fill="none"><path d="M13 22 V10 L24 8 V20" stroke="#aa00ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="11" cy="23" r="3" fill="#aa00ff" stroke="#7700cc" stroke-width="1"/><circle cx="22" cy="21" r="3" fill="#aa00ff" stroke="#7700cc" stroke-width="1"/></svg>`},
+  {id:'camera',label:'Cam',svg:`<svg viewBox="0 0 32 32" fill="none"><rect x="3" y="10" width="26" height="18" rx="4" fill="#334" stroke="#556" stroke-width="1.2"/><path d="M10 10 L12 6 H20 L22 10" stroke="#556" stroke-width="1.2" fill="none"/><circle cx="16" cy="19" r="5.5" fill="#445" stroke="#667" stroke-width="1"/><circle cx="16" cy="19" r="3.5" fill="#88ccff" opacity="0.6"/><circle cx="14.5" cy="17.5" r="1.2" fill="rgba(255,255,255,0.5)"/></svg>`},
+];
+
+// Group emojis by category for the panel
+const EMOJI_CATS=[
+  {id:'faces',label:'FACES',ids:['smile','laugh','cry_laugh','wink','cool','sad','angry','surprised','love','think','skull','ghost']},
+  {id:'hearts',label:'HEARTS',ids:['heart_red','heart_purple','heart_cyan','broken_heart','sparkling_heart']},
+  {id:'hands',label:'HANDS',ids:['thumbs_up','thumbs_down','wave','clap','point_up','peace']},
+  {id:'symbols',label:'SYMBOLS',ids:['fire','lightning','star','sparkle','crystal_ball','diamond','crown','rocket','neon_x','neon_check']},
+  {id:'nature',label:'NATURE',ids:['sun','moon','flower']},
+  {id:'other',label:'OTHER',ids:['pizza','gaming','music','camera']},
+];
 
 function showNeonKb(target,numOnly=false){
   _kbTarget=target;
@@ -2168,45 +2259,104 @@ function updateKbPush(){
   setTimeout(()=>{const h=kb.offsetHeight||280;pushConvUp(h);},50);
 }
 function buildKeyboard(){
-  const main=document.getElementById('kb-main');main.innerHTML='';
-  if(_kbNumMode){
-    // Numeric pad layout
-    KB_NUM.forEach(row=>{
-      const rowEl=document.createElement('div');rowEl.className='kb-row';
-      row.forEach(k=>{
-        const btn=document.createElement('div');btn.className='kk'+(k===''?' ghost':'');
-        if(k==='⌫')btn.classList.add('dark');
-        btn.textContent=k;
-        if(k){btn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbPressNum(k);btn.classList.add('pressed');setTimeout(()=>btn.classList.remove('pressed'),100);});}
-        rowEl.appendChild(btn);
-      });
-      main.appendChild(rowEl);
-    });
+  const main=document.getElementById('kb-main');
+  main.innerHTML='';
+
+  if(_kbEmojiMode){
+    buildEmojiPanel(main);
     return;
   }
+
+  if(_kbNumMode){
+    for(let i=0;i<KB_NUM.length;i++){
+      const row=KB_NUM[i];
+      const rowEl=document.createElement('div');
+      rowEl.className='kb-row';
+      for(let j=0;j<row.length;j++){
+        const k=row[j];
+        const btn=document.createElement('div');
+        btn.className='kk'+(k===''?' ghost':'');
+        if(k==='⌫')btn.classList.add('dark');
+        btn.textContent=k;
+        if(k){
+          btn.addEventListener('pointerdown',e=>{
+            e.preventDefault();
+            e.stopPropagation();
+            hapticKb();
+            kbPressNum(k);
+            btn.classList.add('pressed');
+            setTimeout(()=>btn.classList.remove('pressed'),100);
+          });
+        }
+        rowEl.appendChild(btn);
+      }
+      main.appendChild(rowEl);
+    }
+    return;
+  }
+
   const rows=_kbSymMode?KB_SYM:KB_ALPHA;
-  rows.forEach((row,ri)=>{
-    const rowEl=document.createElement('div');rowEl.className='kb-row';
-    row.forEach(k=>{
-      const btn=document.createElement('div');btn.className='kk';
-      if(k==='⌫'){btn.classList.add('dark','wide');btn.style.maxWidth='56px';}
-      else if(k==='⇧'){btn.classList.add('dark','wide','accent-k');btn.style.maxWidth='56px';}
+  const lastRowIndex=rows.length-1;
+
+  for(let i=0;i<rows.length;i++){
+    const row=rows[i];
+    const rowEl=document.createElement('div');
+    rowEl.className='kb-row';
+    for(let j=0;j<row.length;j++){
+      const k=row[j];
+      const btn=document.createElement('div');
+      btn.className='kk';
+      if(k==='⌫'){
+        btn.classList.add('dark','wide');
+        btn.style.maxWidth='56px';
+      } else if(k==='⇧'){
+        btn.classList.add('dark','wide','accent-k');
+        btn.style.maxWidth='56px';
+      }
       const display=(_kbCaps&&!_kbSymMode&&k!=='⌫'&&k!=='⇧')?k.toUpperCase():k;
       btn.textContent=display;
-      btn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbPressAlpha(k);btn.classList.add('pressed');setTimeout(()=>btn.classList.remove('pressed'),100);});
+      btn.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        hapticKb();
+        kbPressAlpha(k);
+        btn.classList.add('pressed');
+        setTimeout(()=>btn.classList.remove('pressed'),100);
+      });
       rowEl.appendChild(btn);
-    });
-    if(ri===rows.length-1){
-      const spaceRow=document.createElement('div');spaceRow.className='kb-row';
-      const sp=document.createElement('div');sp.className='kk space';sp.textContent='SPACE';sp.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbInsert(' ');});
-      const ret=document.createElement('div');ret.className='kk dark';ret.style.maxWidth='80px';ret.style.fontSize='11px';ret.style.fontFamily="'Orbitron',monospace";ret.textContent='↵';
-      ret.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbInsert('\n');});
-      spaceRow.appendChild(sp);spaceRow.appendChild(ret);
-      main.appendChild(rowEl);main.appendChild(spaceRow);return;
     }
     main.appendChild(rowEl);
-  });
+    if(i===lastRowIndex){
+      const spaceRow=document.createElement('div');
+      spaceRow.className='kb-row';
+      const sp=document.createElement('div');
+      sp.className='kk space';
+      sp.textContent='SPACE';
+      sp.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        hapticKb();
+        kbInsert(' ');
+      });
+      const ret=document.createElement('div');
+      ret.className='kk dark';
+      ret.style.maxWidth='80px';
+      ret.style.fontSize='11px';
+      ret.style.fontFamily="'Orbitron',monospace";
+      ret.textContent='↵';
+      ret.addEventListener('pointerdown',e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        hapticKb();
+        kbInsert('\n');
+      });
+      spaceRow.appendChild(sp);
+      spaceRow.appendChild(ret);
+      main.appendChild(spaceRow);
+    }
+  }
 }
+    
 function kbPressNum(k){
   if(k==='⌫'){kbBackspace();return;}
   if(!_kbTarget)return;
@@ -2255,6 +2405,13 @@ function kbBackspace(){
   if(el.id==='ci')cuUpdate(el);
   playUIClick();
 }
+function toggleEmojiMode(){
+  _kbEmojiMode=!_kbEmojiMode;
+  _kbSymMode=false;
+  buildKeyboard();
+  const btn=document.getElementById('kb-emoji-btn');
+  if(btn)btn.style.color=_kbEmojiMode?'var(--accent)':'';
+}
 function toggleCaps(){_kbCaps=!_kbCaps;buildKeyboard();document.getElementById('kb-caps-btn').style.color=_kbCaps?'var(--accent)':'';}
 function kbMode(m){_kbSymMode=(m==='sym'&&!_kbSymMode);buildKeyboard();document.getElementById('kb-sym-btn').style.color=_kbSymMode?'var(--accent)':'';}
 function dismissKeyboard(){
@@ -2262,6 +2419,13 @@ function dismissKeyboard(){
   pushConvUp(0);
   _kbTarget=null;
   if(_kbIdleTimer){clearTimeout(_kbIdleTimer);_kbIdleTimer=null;}
+}
+function renderNeonEmojiText(text){
+  const map={};NEON_EMOJIS.forEach(e=>{map[e.id]=e.svg;});
+  return text.replace(/\[emoji:([^\]]+)\]/g,(match,id)=>{
+    const svg=map[id];if(!svg)return match;
+    return `<span style="display:inline-block;width:22px;height:22px;vertical-align:middle;margin:0 1px;">${svg}</span>`;
+  });
 }
 function pushConvUp(h){const wrap=document.getElementById('conv-body-wrap');if(wrap){wrap.style.paddingBottom=h>0?h+'px':'0';const ma=document.getElementById('msg-area');if(ma&&h>0)setTimeout(()=>{ma.scrollTop=ma.scrollHeight;},80);}}
 function onComposerFocus(){
@@ -2704,14 +2868,13 @@ function renderMsgs(msgs,highlight=''){
     }else{
       if(isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||'?';wrap.appendChild(sn);}
       if(m.replyToText){const q=document.createElement('div');q.className='quoted-msg';q.textContent='↩ '+m.replyToText.slice(0,60);wrap.appendChild(q);}
-      const b=document.createElement('div');b.className=`bbl ${isMe?'o':'i'}`;
-     if(highlight&&m.text.toLowerCase().includes(highlight.toLowerCase())){
-        const idx=m.text.toLowerCase().indexOf(highlight.toLowerCase());
-        b.innerHTML=m.text.slice(0,idx)+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+m.text.slice(idx,idx+highlight.length)+'</mark>'+m.text.slice(idx+highlight.length);
-      }else{b.textContent=m.text;}
+     const b=document.createElement('div');b.className=`bbl ${isMe?'o':'i'}`;
       b.dataset.msgId=m._id;
       b.addEventListener('click',()=>openReactionPicker(m._id,m.text,b));
-      const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
+     if(highlight&&m.text.toLowerCase().includes(highlight.toLowerCase())){
+        const idx=m.text.toLowerCase().indexOf(highlight.toLowerCase());
+        b.innerHTML=renderNeonEmojiText(m.text.slice(0,idx))+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+renderNeonEmojiText(m.text.slice(idx,idx+highlight.length))+'</mark>'+renderNeonEmojiText(m.text.slice(idx+highlight.length));
+      }else{b.innerHTML=renderNeonEmojiText(m.text);}
       wrap.appendChild(b);wrap.appendChild(t);
       if(isMe){
         // Unsend button — only within 5 minutes of sending
@@ -2719,7 +2882,7 @@ function renderMsgs(msgs,highlight=''){
         if(ageMs<5*60*1000){
           const ub=document.createElement('div');
           ub.className='unsend-btn visible';
-          ub.textContent='UNSEND';
+          ub.innerHTML=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" style="margin-right:4px;vertical-align:middle;"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#ff4466" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>UNSEND`;
           ub.onclick=(e)=>{e.stopPropagation();haptic();unsendMessage(m._id);};
           wrap.appendChild(ub);
           // Auto-hide when 5 min expires
@@ -2988,8 +3151,26 @@ setInterval(()=>{
 },15000);
 
 // ═══════════════════════════════════════════════════
-// AUTO FULLSCREEN
+// DISCONNECT HANDLING
 // ═══════════════════════════════════════════════════
+function showDisconnectScreen(){
+  const disc=document.getElementById('disconnect-screen');
+  if(disc)disc.style.display='flex';
+}
+function retryConnection(){
+  if(navigator.onLine){
+    const disc=document.getElementById('disconnect-screen');
+    if(disc)disc.style.display='none';
+  } else {
+    const btn=document.querySelector('#disconnect-screen button');
+    if(btn){btn.textContent='STILL OFFLINE...';setTimeout(()=>{btn.textContent='RETRY';},2000);}
+  }
+}
+// Initial check
+if(!navigator.onLine)showDisconnectScreen();
+
+// ═══════════════════════════════════════════════════
+// AUTO FULLSCREEN═══════════════════════════════════════════════════
 function tryFullscreen(){
   const el=document.documentElement;
   if(!document.fullscreenElement){
@@ -3009,6 +3190,12 @@ const MAX_RECENTS=8;
 function showBottomNav(){
   document.getElementById('bottom-nav').classList.add('vis');
   document.body.classList.add('nav-open');
+  // Push standalone runner up if open
+  const runner=document.getElementById('ns-standalone-runner');
+  if(runner&&runner.style.display!=='none'){
+    const iframe=document.getElementById('ns-standalone-iframe');
+    if(iframe)iframe.style.height='calc(100vh - 56px)';
+  }
 }
 function hideBottomNav(){
   document.getElementById('bottom-nav').classList.remove('vis');
@@ -3029,7 +3216,7 @@ window.closeApp=function(id){
   _originalCloseApp&&_originalCloseApp(id);
   setTimeout(()=>{
     const anyOpen=document.querySelector('.aps.open');
-    if(!anyOpen&&!document.getElementById('cs').classList.contains('open'))hideBottomNav();
+    if(!anyOpen&&!document.getElementById('cs').classList.contains('open')&&!_standaloneRunnerOpen)hideBottomNav();
   },350);
 };
 
@@ -3045,7 +3232,7 @@ window.closeConv=function(){
   _originalCloseConv&&_originalCloseConv();
   setTimeout(()=>{
     const anyOpen=document.querySelector('.aps.open');
-    if(!anyOpen)hideBottomNav();
+    if(!anyOpen&&!_standaloneRunnerOpen)hideBottomNav();
   },350);
 };
 
@@ -3086,6 +3273,8 @@ function navBack(){
 }
 
 function navHome(){
+  // Close standalone NS runner if open
+  if(_standaloneRunnerOpen){nsCloseStandaloneRunner();}
   // Close everything and go home
   document.getElementById('cs').classList.remove('open');
   document.querySelectorAll('.sub.open').forEach(s=>s.classList.remove('open'));
@@ -3096,7 +3285,7 @@ function navHome(){
   currentRoomId=null;currentChatId=null;
   dismissKeyboard();
   cancelReply();
-  setTimeout(()=>hideBottomNav(),50);
+  setTimeout(()=>hideBottomNav(),350);
 }
 
 function openRecents(){
