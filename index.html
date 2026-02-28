@@ -1540,51 +1540,7 @@ function dismissKeyboard(){
 }
 function pushConvUp(h){const wrap=document.getElementById('conv-body-wrap');if(wrap){wrap.style.paddingBottom=h>0?h+'px':'0';const ma=document.getElementById('msg-area');if(ma&&h>0)setTimeout(()=>{ma.scrollTop=ma.scrollHeight;},80);}}
 function onComposerFocus(){
-  const ci=document.getElementById('ci');
-  if(IS_MOBILE||IS_SAFARI){
-    ci.setAttribute('inputmode','none');
-    ci.setAttribute('readonly','readonly');
-    ci.blur();
-    setTimeout(()=>{
-      _kbTarget=ci;
-      _kbNumMode=false;
-      _kbSymMode=false;
-      _kbCaps=false;
-      buildKeyboard();
-      document.getElementById('neon-kb').classList.add('vis');
-      updateKbPush();
-      resetKbIdle();
-    },50);
-  } else {
-    _kbTarget=ci;
-  }
-}
-
-
-// Mobile only: intercept focus on inputs to show Neon KB instead of system keyboard
-if(IS_MOBILE){
-  document.addEventListener('touchstart',function(e){
-    const t=e.target;
-    if((t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&t.id!=='ci'&&!t.closest('#neon-kb')&&!t.classList.contains('sl')){
-      t.setAttribute('inputmode','none');
-    }
-  },{passive:true,capture:true});
-
-  document.addEventListener('focus',function(e){
-    const t=e.target;
-    if((t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&t.id!=='ci'&&!t.closest('#neon-kb')&&!t.classList.contains('sl')){
-      t.setAttribute('inputmode','none');
-      t.blur();
-      setTimeout(()=>{
-        const isNum=t.type==='tel';
-        if(!document.getElementById('neon-kb').classList.contains('vis')){
-          showNeonKb(t,isNum);
-        } else {
-          _kbTarget=t;_kbNumMode=isNum;buildKeyboard();
-        }
-      },10);
-    }
-  },true);
+  _kbTarget=document.getElementById('ci');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1931,7 +1887,10 @@ function renderMsgs(msgs,highlight=''){
       }
     }
     area.appendChild(wrap);
-    if(m.effect&&m.senderDid!==DID&&m.timestamp>Date.now()-5000)playEffect(m.effect);
+   if(m.effect&&m.senderDid!==DID&&!(m.effectSeen&&m.effectSeen[DID])&&m.timestamp>Date.now()-30000){
+      playEffect(m.effect);
+      SET(REF(DB,`rooms/${currentRoomId}/messages/${m._id}/effectSeen/${DID}`),true).catch(()=>{});
+    }
   });
   if(wasAtBottom||!msgs.length||msgs[msgs.length-1].senderDid===DID){setTimeout(()=>{area.scrollTop=area.scrollHeight;},50);}
 }
