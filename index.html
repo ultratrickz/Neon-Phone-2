@@ -18,8 +18,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 input,textarea{-webkit-user-select:text;user-select:text;}
 .screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
 .screen.active{display:flex;}
-#scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,238,0.15),transparent);animation:scan 6s linear infinite;pointer-events:none;z-index:9999;}
-@keyframes scan{0%{top:-2px}100%{top:100vh}}
 
 /* ═══ BOOT ══════════════════════════════════════ */
 #boot{background:#000;}
@@ -86,9 +84,9 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 /* ═══ HOME ══════════════════════════════════════ */
 #home{background:#000;display:none;flex-direction:column;}
 #home.active{display:flex;}
-.sbar{display:flex;align-items:center;justify-content:space-between;padding:clamp(10px,2vh,16px) clamp(16px,3vw,32px);height:clamp(44px,6vh,60px);flex-shrink:0;position:relative;z-index:11;}
-.stime{font-family:'Orbitron',monospace;font-size:clamp(12px,1.4vw,15px);color:#fff;letter-spacing:1px;}
-.sicons{display:flex;gap:8px;align-items:center;}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:clamp(10px,2vh,16px) clamp(16px,3vw,32px);height:clamp(44px,6vh,60px);flex-shrink:0;position:relative;z-index:11;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:auto;}
+.stime{font-family:'Orbitron',monospace;font-size:clamp(12px,1.4vw,15px);color:#fff;letter-spacing:1px;-webkit-transform:translateZ(0);transform:translateZ(0);min-width:80px;}
+.sicons{display:flex;gap:8px;align-items:center;-webkit-transform:translateZ(0);transform:translateZ(0);flex-shrink:0;}
 .agrid{flex:1;display:flex;flex-wrap:wrap;padding:clamp(16px,3vh,32px) clamp(16px,3vw,40px);gap:clamp(14px,2.5vw,28px);overflow-y:auto;align-content:flex-start;position:relative;z-index:10;}
 .aico{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:clamp(68px,9vw,96px);position:relative;}
 .ai{width:100%;aspect-ratio:1;border-radius:22%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.12);transition:transform 0.15s,box-shadow 0.15s;position:relative;}
@@ -380,7 +378,6 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
 </style>
 </head>
 <body>
-<div id="scanline"></div>
 <div id="effect-overlay"></div>
 
 <!-- ═══ DISCONNECT SCREEN ════════════════════════ -->
@@ -510,8 +507,8 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
   <div class="sbar">
     <div class="stime" id="hclk">12:00 AM</div>
   <div class="sicons" id="status-icons">
-      <svg id="signal-icon" width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="1" y="5" width="2.5" height="7" fill="white" opacity="0.4"/><rect x="5.5" y="3" width="2.5" height="9" fill="white" opacity="0.6"/><rect x="10" y="1" width="2.5" height="11" fill="white" opacity="0.85"/><rect x="14.5" y="0" width="2.5" height="12" fill="white"/></svg>
-      <svg id="battery-icon" width="22" height="12" viewBox="0 0 22 12" fill="none"><rect x="0.5" y="1.5" width="18" height="9" rx="2" stroke="white" stroke-width="1.2"/><rect id="batt-fill" x="2" y="3" width="14" height="6" rx="1" fill="white"/><rect x="19" y="4" width="2.5" height="4" rx="1" fill="white" opacity="0.5"/></svg> 
+     <svg id="signal-icon" width="18" height="12" viewBox="0 0 18 12" fill="none" style="display:block;flex-shrink:0;"><rect x="1" y="5" width="2.5" height="7" fill="white" opacity="0.4"/><rect x="5.5" y="3" width="2.5" height="9" fill="white" opacity="0.6"/><rect x="10" y="1" width="2.5" height="11" fill="white" opacity="0.85"/><rect x="14.5" y="0" width="2.5" height="12" fill="white"/></svg>
+      <svg id="battery-icon" width="22" height="12" viewBox="0 0 22 12" fill="none" style="display:block;flex-shrink:0;"><rect x="0.5" y="1.5" width="18" height="9" rx="2" stroke="white" stroke-width="1.2"/><rect id="batt-fill" x="2" y="3" width="14" height="6" rx="1" fill="white"/><rect x="19" y="4" width="2.5" height="4" rx="1" fill="white" opacity="0.5"/></svg>
     </div>
   </div>
   <div class="agrid">
@@ -895,7 +892,7 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
     <input type="text" class="ni" id="conv-search-input" placeholder="Search messages..." style="font-size:13px;padding:8px 14px;" readonly onfocus="this.removeAttribute('readonly');showNeonKb(this)" oninput="searchConvMessages(this.value)">
   </div>
   <div id="cdd">
-    <div class="ddi" onclick="haptic();openNickModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="rgba(170,0,255,0.9)" stroke-width="1.8"/></svg> Rename</div>
+    <div class="ddi" onclick="haptic();openContactPage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="rgba(0,255,238,0.9)" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="rgba(0,255,238,0.9)" stroke-width="1.8" stroke-linecap="round"/></svg> Contact</div>
     <div class="ddi" id="ddi-members" onclick="haptic();openGroupMembers()" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="rgba(0,255,238,0.9)" stroke-width="1.8" stroke-linecap="round"/></svg> Members</div>
     <div class="ddi" onclick="haptic();deleteChat()" style="color:#ff4466;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="#ff4466" stroke-width="1.8" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke="#ff4466" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete Chat</div>
   </div>
@@ -2805,17 +2802,16 @@ function renderMsgs(msgs,highlight=''){
         b.innerHTML=m.text.slice(0,idx)+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+m.text.slice(idx,idx+highlight.length)+'</mark>'+m.text.slice(idx+highlight.length);
       }else{b.textContent=m.text;}
       b.dataset.msgId=m._id;
-     b.addEventListener('pointerdown',(e)=>{
-  if(e.pointerType==='touch'){
-    const startTime=Date.now();
-    const onUp=()=>{
-      if(Date.now()-startTime>400){openReactionPicker(m._id,m.text,b);}
-      b.removeEventListener('pointerup',onUp);
-    };
-    b.addEventListener('pointerup',onUp);
-  }
-});
-b.addEventListener('click',()=>{if(Date.now()-(_lastReactionOpen||0)>500)openReactionPicker(m._id,m.text,b);});
+     let _pressTimer=null;
+      b.addEventListener('pointerdown',(e)=>{
+        _pressTimer=setTimeout(()=>{_pressTimer=null;openReactionPicker(m._id,m.text,b);},400);
+      });
+      b.addEventListener('pointerup',()=>{if(_pressTimer){clearTimeout(_pressTimer);_pressTimer=null;}});
+      b.addEventListener('pointerleave',()=>{if(_pressTimer){clearTimeout(_pressTimer);_pressTimer=null;}});
+      b.addEventListener('click',(e)=>{
+        if(_pressTimer===null&&Date.now()-(_lastReactionOpen||0)<600)return;
+        if(_pressTimer!==null){clearTimeout(_pressTimer);_pressTimer=null;openReactionPicker(m._id,m.text,b);}
+      });;
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(b);wrap.appendChild(t);
       if(isMe){
@@ -3053,6 +3049,45 @@ async function addMemberToGroup(){
   PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`${(window.USER.firstName||'')} added ${name}`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
 }
 function toggleDD(){const d=document.getElementById('cdd');d.classList.toggle('open');if(d.classList.contains('open')){const close=()=>{d.classList.remove('open');document.removeEventListener('click',close);};setTimeout(()=>document.addEventListener('click',close),10);}}
+function openContactPage(){
+  document.getElementById('cdd').classList.remove('open');
+  const chat=chats.find(c=>c.id===currentChatId)||{};
+  const isGroup=chat.isGroup;
+  const nm=chat.nickname||chat.name||'Unknown';
+  const phone=chat.phone||'';
+  const theirDid=chat.theirDid||null;
+  // Build modal
+  const existing=document.getElementById('contact-page-modal');if(existing)existing.remove();
+  const modal=document.createElement('div');modal.id='contact-page-modal';modal.className='mov open';
+  const statusHtml=`<div id="contact-status-line" style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:4px;letter-spacing:1px;">Loading status...</div>`;
+  modal.innerHTML=`<div class="mc" style="display:flex;flex-direction:column;align-items:center;gap:0;padding:32px 28px 36px;">
+    <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:5px;color:var(--accent);margin-bottom:18px;opacity:0.8;">${isGroup?'GROUP INFO':'CONTACT'}</div>
+    <div style="width:80px;height:80px;border-radius:50%;background:${avColor(chat.name||'')};display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:30px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 24px ${avSolid(chat.name||'')}55;margin-bottom:14px;">${isGroup?'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>':nm[0].toUpperCase()}</div>
+    <div style="font-size:22px;font-weight:700;color:#fff;text-align:center;">${nm}</div>
+    ${statusHtml}
+    <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--cyan);letter-spacing:2px;margin-top:6px;opacity:0.8;">+0 ${phone.replace('+0','')}</div>
+    <div style="width:100%;height:1px;background:rgba(255,255,255,0.07);margin:22px 0 18px;"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+      ${!isGroup?`<button class="sbtn" style="padding:12px;background:rgba(170,0,255,0.15);border:1px solid rgba(170,0,255,0.35);box-shadow:none;font-size:10px;" onclick="haptic();document.getElementById('contact-page-modal').remove();openNickModal();">✏️ RENAME CONTACT</button>`:''}
+      ${isGroup?`<button class="sbtn" style="padding:12px;background:rgba(0,255,238,0.08);border:1px solid rgba(0,255,238,0.25);box-shadow:none;font-size:10px;" onclick="haptic();document.getElementById('contact-page-modal').remove();openGroupMembers();">👥 MANAGE MEMBERS</button>`:''}
+      <button class="sbtn" style="padding:12px;background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.28);box-shadow:none;color:#ff4466;font-size:10px;" onclick="haptic();document.getElementById('contact-page-modal').remove();deleteChat();">🗑 DELETE CHAT</button>
+      <button class="sbtn" style="padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);box-shadow:none;color:rgba(255,255,255,0.5);font-size:10px;" onclick="haptic();document.getElementById('contact-page-modal').remove();">CLOSE</button>
+    </div>
+  </div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+  // Load their live status if DM
+  if(!isGroup&&theirDid){
+    GET(CHILD(REF(DB),`users/${theirDid}/status`)).then(snap=>{
+      const line=document.getElementById('contact-status-line');
+      if(line)line.textContent=snap.exists()&&snap.val()?snap.val():'No status set';
+    }).catch(()=>{const line=document.getElementById('contact-status-line');if(line)line.textContent='';});
+  }else{
+    const line=document.getElementById('contact-status-line');
+    if(line)line.style.display='none';
+  }
+}
+
 function openNickModal(){document.getElementById('cdd').classList.remove('open');const chat=chats.find(c=>c.id===currentChatId)||{};document.getElementById('nick-inp').value=chat.nickname||chat.name||'';document.getElementById('nick-modal').classList.add('open');}
 async function saveNick(){const n=document.getElementById('nick-inp').value.trim();if(currentChatId){try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}/nickname`),n||null);}catch(e){}const chat=chats.find(c=>c.id===currentChatId)||{};document.getElementById('cname').textContent=n||chat.name||'Unknown';}closeModal('nick-modal');}
 async function deleteChat(){document.getElementById('cdd').classList.remove('open');if(!confirm('Delete this conversation? Messages are preserved for the other person.'))return;try{await SET(REF(DB,`users/${DID}/chats/${currentChatId}`),null);}catch(e){}closeConv();}
