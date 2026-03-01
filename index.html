@@ -606,8 +606,21 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
         <div class="sllbl"><span>Glow</span><span id="gv">100%</span></div>
         <input type="range" class="sl" id="glow-sl" min="0" max="200" value="100" oninput="setGlow(this.value)">
       </div></div></div>
+      <div class="ssec" style="padding-top:16px"><div class="seclbl">Language / Idioma</div><div class="sg">
+        <div class="sr" id="lang-en-row" onclick="haptic();setLanguage('en');updateLangRows();" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <div class="rico" style="background:linear-gradient(135deg,#0033aa,#0055ff)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" stroke="white" stroke-width="1.5"/></svg></div>
+          <div class="rtxt"><div class="rtitle">English</div><div class="rsub">Default language</div></div>
+          <div id="lang-en-check" style="color:#00cc44;font-size:16px;">✓</div>
+        </div>
+        <div class="sr" id="lang-es-row" onclick="haptic();setLanguage('es');updateLangRows();">
+          <div class="rico" style="background:linear-gradient(135deg,#cc0000,#ffcc00)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" stroke="white" stroke-width="1.5"/></svg></div>
+          <div class="rtxt"><div class="rtitle">Español</div><div class="rsub">Traducción automática de mensajes</div></div>
+          <div id="lang-es-check" style="color:transparent;font-size:16px;">✓</div>
+        </div>
+      </div></div>
       <div class="ssec" style="padding-top:16px"><div class="seclbl">Wallpaper</div>
         <div class="wall-grid" id="wall-grid"></div>
+      </div>
       </div>
     </div>
   </div>
@@ -1779,6 +1792,185 @@ const _nsOpenAppPatched=function(id){
 window.openApp=_nsOpenAppPatched;
 
 // ═══════════════════════════════════════════════════
+// LANGUAGE & TRANSLATION SYSTEM
+// ═══════════════════════════════════════════════════
+let _currentLang='en';
+const LANG_STRINGS={
+  en:{
+    settings:'Settings',messages:'Messages',neonShop:'Neon Shop',
+    newMessage:'NEW MESSAGE',newGroup:'NEW GROUP CHAT',
+    send:'SEND',cancel:'CANCEL',save:'SAVE',close:'CLOSE',
+    typeMessage:'Message...',search:'Search conversations...',
+    searchMessages:'Search messages...',
+    encryptedChat:'Neon Chat · Encrypted ✓',
+    noMessages:'NO MESSAGES YET\nTAP + TO START A CONVERSATION',
+    reply:'↩ Reply',rename:'Rename',deleteChat:'Delete Chat',
+    contact:'Contact',members:'Members',
+    statusNoStatus:'No status set',
+    unsend:'UNSEND',unsendTitle:'UNSEND MESSAGE',unsendBody:'This message will be removed for everyone.',
+    scheduleTitle:'⏰ SCHEDULE MESSAGE',selfDestructTitle:'💥 SELF-DESTRUCT TIMER',
+    installing:'INSTALLING',updating:'UPDATING TO',
+    swipeUnlock:'SWIPE UP TO UNLOCK',
+    wrongPasscode:'WRONG PASSCODE',createPasscode:'CREATE PASSCODE',confirmPasscode:'CONFIRM PASSCODE',enterPasscode:'ENTER PASSCODE',
+    appearance:'Appearance',language:'Language',accentColor:'Accent Color',glowIntensity:'Glow Intensity',wallpaper:'Wallpaper',
+    english:'English',spanish:'Spanish',
+    translating:'Translating...',translatedFrom:'Translated from Spanish',translatedFromEn:'Translated from English',
+  },
+  es:{
+    settings:'Ajustes',messages:'Mensajes',neonShop:'Tienda Neon',
+    newMessage:'NUEVO MENSAJE',newGroup:'NUEVO GRUPO',
+    send:'ENVIAR',cancel:'CANCELAR',save:'GUARDAR',close:'CERRAR',
+    typeMessage:'Mensaje...',search:'Buscar conversaciones...',
+    searchMessages:'Buscar mensajes...',
+    encryptedChat:'Neon Chat · Cifrado ✓',
+    noMessages:'SIN MENSAJES\nTOCA + PARA INICIAR',
+    reply:'↩ Responder',rename:'Renombrar',deleteChat:'Eliminar Chat',
+    contact:'Contacto',members:'Miembros',
+    statusNoStatus:'Sin estado',
+    unsend:'RETIRAR',unsendTitle:'RETIRAR MENSAJE',unsendBody:'Este mensaje será eliminado para todos.',
+    scheduleTitle:'⏰ PROGRAMAR MENSAJE',selfDestructTitle:'💥 AUTODESTRUIR',
+    installing:'INSTALANDO',updating:'ACTUALIZANDO A',
+    swipeUnlock:'DESLIZA PARA DESBLOQUEAR',
+    wrongPasscode:'CONTRASEÑA INCORRECTA',createPasscode:'CREAR CONTRASEÑA',confirmPasscode:'CONFIRMAR CONTRASEÑA',enterPasscode:'INGRESAR CONTRASEÑA',
+    appearance:'Apariencia',language:'Idioma',accentColor:'Color de Acento',glowIntensity:'Intensidad de Brillo',wallpaper:'Fondo de Pantalla',
+    english:'Inglés',spanish:'Español',
+    translating:'Traduciendo...',translatedFrom:'Traducido del Inglés',translatedFromEn:'Traducido del Español',
+  }
+};
+function t(key){return(LANG_STRINGS[_currentLang]||LANG_STRINGS.en)[key]||LANG_STRINGS.en[key]||key;}
+
+// Simple offline translation dictionary for common words/phrases
+const TRANSLATIONS={
+  es:{
+    // Common words
+    'hello':'hola','hi':'hola','hey':'oye','bye':'adiós','goodbye':'adiós',
+    'yes':'sí','no':'no','ok':'ok','okay':'okay','sure':'claro',
+    'please':'por favor','thank you':'gracias','thanks':'gracias','sorry':'lo siento',
+    'good':'bien','great':'genial','awesome':'increíble','cool':'genial',
+    'bad':'malo','terrible':'terrible','sad':'triste','happy':'feliz',
+    'love':'amor','like':'me gusta','hate':'odio',
+    'what':'qué','when':'cuándo','where':'dónde','why':'por qué','how':'cómo','who':'quién',
+    'today':'hoy','tomorrow':'mañana','yesterday':'ayer','now':'ahora','later':'después',
+    'morning':'mañana','night':'noche','afternoon':'tarde',
+    'food':'comida','water':'agua','money':'dinero','time':'tiempo',
+    'help':'ayuda','work':'trabajo','home':'casa','school':'escuela',
+    'friend':'amigo','family':'familia','brother':'hermano','sister':'hermana',
+    'mother':'madre','father':'padre','mom':'mamá','dad':'papá',
+    'phone':'teléfono','message':'mensaje','call':'llamada',
+    'see you':'hasta luego','see you later':'hasta luego',
+    'how are you':'cómo estás','i am fine':'estoy bien','i\'m fine':'estoy bien',
+    'what\'s up':'qué pasa','what is up':'qué pasa',
+    'i miss you':'te extraño','i love you':'te quiero',
+    'come here':'ven aquí','wait':'espera','stop':'para',
+    'go':'ve','run':'corre','eat':'come','drink':'bebe','sleep':'duerme',
+    'beautiful':'hermoso','ugly':'feo','big':'grande','small':'pequeño',
+    'fast':'rápido','slow':'lento','hot':'caliente','cold':'frío',
+    'new':'nuevo','old':'viejo','young':'joven',
+    'always':'siempre','never':'nunca','sometimes':'a veces',
+    'everything':'todo','nothing':'nada','something':'algo',
+    'everyone':'todos','nobody':'nadie','someone':'alguien',
+    'where are you':'dónde estás','i\'m here':'estoy aquí',
+    'let\'s go':'vamos','let me know':'avísame',
+    'of course':'por supuesto','no problem':'no hay problema',
+    'be careful':'ten cuidado','take care':'cuídate',
+    'good morning':'buenos días','good night':'buenas noches','good afternoon':'buenas tardes',
+    'happy birthday':'feliz cumpleaños','congratulations':'felicitaciones',
+    'you\'re welcome':'de nada','excuse me':'disculpa','pardon':'perdón',
+    'i don\'t know':'no sé','i think':'creo que','i want':'quiero',
+    'i need':'necesito','i have':'tengo','i can':'puedo','i will':'voy a',
+    'are you okay':'estás bien','i\'m okay':'estoy bien',
+    'talk later':'hablamos luego','talk soon':'hablamos pronto',
+    'miss you':'te extraño','thinking of you':'pensando en ti',
+    'good luck':'buena suerte','have fun':'diviértete',
+  }
+};
+const TRANSLATIONS_REVERSE={
+  es:{}// built dynamically
+};
+// Build reverse (es->en)
+Object.entries(TRANSLATIONS.es).forEach(([en,es])=>{TRANSLATIONS_REVERSE.es[es]=en;});
+
+function translateText(text,fromLang,toLang){
+  if(fromLang===toLang||!text)return text;
+  const lower=text.toLowerCase().trim();
+  // Try exact phrase first
+  const dict=toLang==='es'?TRANSLATIONS.es:TRANSLATIONS_REVERSE.es;
+  if(dict[lower]){
+    // Preserve original capitalization style
+    const result=dict[lower];
+    if(text[0]===text[0].toUpperCase()&&text[0]!==text[0].toLowerCase()){
+      return result.charAt(0).toUpperCase()+result.slice(1);
+    }
+    return result;
+  }
+  // Try partial replacement for multi-word
+  let result=text;
+  // Sort by length descending to replace longer phrases first
+  const entries=Object.entries(dict).sort((a,b)=>b[0].length-a[0].length);
+  for(const[from,to]of entries){
+    const regex=new RegExp('\\b'+from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');
+    result=result.replace(regex,(match)=>{
+      if(match[0]===match[0].toUpperCase()&&match[0]!==match[0].toLowerCase()){
+        return to.charAt(0).toUpperCase()+to.slice(1);
+      }
+      return to;
+    });
+  }
+  return result;
+}
+
+function setLanguage(lang){
+  _currentLang=lang;
+  try{localStorage.setItem('neos_lang',lang);}catch(e){}
+  applyLanguageToUI();
+  updateLangRows();
+  const ci=document.getElementById('ci');if(ci)ci.placeholder=lang==='es'?'Mensaje...':'Message...';
+  const lhint=document.getElementById('lhint');if(lhint)lhint.textContent=lang==='es'?'DESLIZA PARA DESBLOQUEAR':'SWIPE UP TO UNLOCK';
+  showToast(lang==='es'?'Idioma':'Language',lang==='es'?'Español activado':'English activated',null,'msg');
+}
+
+function applyLanguageToUI(){
+  // Status bar app clocks stay as-is (time)
+  // Update placeholder texts
+  const ci=document.getElementById('ci');if(ci)ci.placeholder=t('typeMessage');
+  // Update composer hints
+  const lhint=document.getElementById('lhint');if(lhint)lhint.textContent=t('swipeUnlock');
+  // Update nav titles
+  const convStatus=document.getElementById('conv-status');
+  if(convStatus&&convStatus.textContent.includes('Encrypted')){
+    const chat=chats.find(c=>c.id===currentRoomId)||{};
+    convStatus.textContent=chat.isGroup?`${t('encryptedChat').replace('Neon Chat · ','Group · ')}`:t('encryptedChat');
+  }
+  // Update passcode title
+  const ptitle=document.getElementById('ptitle');
+  if(ptitle){
+    if(ptitle.textContent.includes('CREATE')||ptitle.textContent.includes('CREAR'))ptitle.textContent=t('createPasscode');
+    if(ptitle.textContent.includes('CONFIRM')||ptitle.textContent.includes('CONFIRMAR'))ptitle.textContent=t('confirmPasscode');
+    if(ptitle.textContent.includes('ENTER')||ptitle.textContent.includes('INGRESAR'))ptitle.textContent=t('enterPasscode');
+  }
+  // Update app icon labels
+  document.querySelectorAll('.aico .al').forEach(el=>{
+    if(el.textContent==='Settings'||el.textContent==='Ajustes')el.textContent=t('settings');
+    if(el.textContent==='Messages'||el.textContent==='Mensajes')el.textContent=t('messages');
+    if(el.textContent==='Neon Shop'||el.textContent==='Tienda Neon')el.textContent=t('neonShop');
+  });
+  // Update appearance sub labels
+  const accentSubLabel=document.querySelector('#sa-appear .seclbl');
+  if(accentSubLabel)accentSubLabel.textContent=t('accentColor').toUpperCase();
+}
+
+function updateLangRows(){
+  const enCheck=document.getElementById('lang-en-check');
+  const esCheck=document.getElementById('lang-es-check');
+  const enRow=document.getElementById('lang-en-row');
+  const esRow=document.getElementById('lang-es-row');
+  if(enCheck)enCheck.style.color=_currentLang==='en'?'#00cc44':'transparent';
+  if(esCheck)esCheck.style.color=_currentLang==='es'?'#00cc44':'transparent';
+  if(enRow)enRow.style.background=_currentLang==='en'?'rgba(0,204,68,0.06)':'';
+  if(esRow)esRow.style.background=_currentLang==='es'?'rgba(0,204,68,0.06)':'';
+}
+
+// ═══════════════════════════════════════════════════
 // BOOT
 function startBoot(){
   let _bootSoundPlayed=false;
@@ -2128,11 +2320,11 @@ applyDisplayFilter();
     const ns=localStorage.getItem('neos_notif_sound');if(ns==='0'){const t=document.getElementById('notif-sound');if(t)t.checked=false;}
     const rm=localStorage.getItem('neos_reduce_motion');if(rm==='1'){const t=document.getElementById('reduce-motion');if(t)t.checked=true;setReduceMotion(true);}
    const bt2=localStorage.getItem('neos_bold_text');if(bt2==='1'){const t=document.getElementById('bold-text');if(t)t.checked=true;}
-   const ki=localStorage.getItem('neos_kb_idle');if(ki){setKbIdle(ki);const pills=document.querySelectorAll('#kb-idle-pills .setting-pill');pills.forEach(p=>{p.classList.toggle('active',p.dataset.val===ki);});}
     applyGlowToCSS();
   }catch(e){}
 }
 loadPrefs();
+try{const sl=localStorage.getItem('neos_lang');if(sl){_currentLang=sl;updateLangRows();applyLanguageToUI();}}catch(e){}
 
 // Battery & network status
 async function updateDeviceStatus(){
@@ -2800,18 +2992,15 @@ function renderMsgs(msgs,highlight=''){
      if(highlight&&m.text.toLowerCase().includes(highlight.toLowerCase())){
         const idx=m.text.toLowerCase().indexOf(highlight.toLowerCase());
         b.innerHTML=m.text.slice(0,idx)+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+m.text.slice(idx,idx+highlight.length)+'</mark>'+m.text.slice(idx+highlight.length);
-      }else{b.textContent=m.text;}
+      }else{const _senderLang=(m.senderDid&&m.senderDid!==DID&&_currentLang==='es')?'en':(_currentLang!=='en'&&m.senderDid===DID?'en':'en');const _displayText=(_currentLang!=='en'&&m.senderDid!==DID)?translateText(m.text,'en',_currentLang):(_currentLang!=='en'&&m.senderDid===DID?m.text:m.text);b.textContent=_displayText;}
       b.dataset.msgId=m._id;
-     let _pressTimer=null;
-      b.addEventListener('pointerdown',(e)=>{
-        _pressTimer=setTimeout(()=>{_pressTimer=null;openReactionPicker(m._id,m.text,b);},400);
-      });
-      b.addEventListener('pointerup',()=>{if(_pressTimer){clearTimeout(_pressTimer);_pressTimer=null;}});
-      b.addEventListener('pointerleave',()=>{if(_pressTimer){clearTimeout(_pressTimer);_pressTimer=null;}});
-      b.addEventListener('click',(e)=>{
-        if(_pressTimer===null&&Date.now()-(_lastReactionOpen||0)<600)return;
-        if(_pressTimer!==null){clearTimeout(_pressTimer);_pressTimer=null;openReactionPicker(m._id,m.text,b);}
-      });;
+    (()=>{
+        let _pt=null,_moved=false;
+        b.addEventListener('pointerdown',()=>{_moved=false;_pt=setTimeout(()=>{_pt=null;if(!_moved){haptic('medium');openReactionPicker(m._id,m.text,b);}},480);},{passive:true});
+        b.addEventListener('pointermove',()=>{_moved=true;if(_pt){clearTimeout(_pt);_pt=null;}},{passive:true});
+        b.addEventListener('pointerup',()=>{if(_pt){clearTimeout(_pt);_pt=null;}},{passive:true});
+        b.addEventListener('pointercancel',()=>{if(_pt){clearTimeout(_pt);_pt=null;}},{passive:true});
+      })();
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(b);wrap.appendChild(t);
       if(isMe){
@@ -2931,15 +3120,23 @@ async function sendMsg(){
 function openReactionPicker(msgId,text,bblEl){
   _currentMsgId={id:msgId,text};
   _lastReactionOpen=Date.now();
-  const picker=document.getElementById('reaction-picker');picker.classList.add('open');
-  const rect=bblEl.getBoundingClientRect();
-  picker.style.position='fixed';
-  const ph=160;
-  let top=rect.top-ph-12;
-  if(top<10)top=rect.bottom+8;
-  top=Math.max(10,Math.min(top,window.innerHeight-ph-10));
-  picker.style.top=top+'px';
-  picker.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-220))+'px';
+  const picker=document.getElementById('reaction-picker');
+  if(!picker)return;
+  picker.classList.add('open');
+  try{
+    const rect=bblEl.getBoundingClientRect();
+    picker.style.position='fixed';
+    const ph=160;
+    let top=rect.top-ph-12;
+    if(top<10)top=rect.bottom+8;
+    top=Math.max(10,Math.min(top,window.innerHeight-ph-10));
+    picker.style.top=top+'px';
+    picker.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-220))+'px';
+  }catch(e){
+    picker.style.top='50%';
+    picker.style.left='50%';
+    picker.style.transform='translate(-50%,-50%)';
+  }
   setTimeout(()=>document.addEventListener('pointerdown',closeReactionPickerOutside,{once:true}),200);
 }
 function closeReactionPickerOutside(e){
@@ -2950,8 +3147,16 @@ function closeReactionPickerOutside(e){
 function closeReactionPicker(){document.getElementById('reaction-picker').classList.remove('open');_currentMsgId=null;}
 async function pickReaction(emoji){if(!_currentMsgId||!currentRoomId)return;closeReactionPicker();await toggleReaction(_currentMsgId.id,emoji);}
 async function toggleReaction(msgId,emoji){
-  if(!currentRoomId)return;
-  try{const path=`rooms/${currentRoomId}/messages/${msgId}/reactions/${DID}`;const snap=await GET(CHILD(REF(DB),path));if(snap.exists()&&snap.val()===emoji)await SET(REF(DB,path),null);else await SET(REF(DB,path),emoji);}catch(e){}
+  if(!currentRoomId||!msgId)return;
+  try{
+    const path=`rooms/${currentRoomId}/messages/${msgId}/reactions/${DID}`;
+    const snap=await GET(CHILD(REF(DB),path));
+    if(snap.exists()&&snap.val()===emoji){
+      await SET(REF(DB,path),null);
+    }else{
+      await SET(REF(DB,path),emoji);
+    }
+  }catch(e){console.error('Reaction error:',e);}
 }
 function replyToMsg(){
   if(!_currentMsgId)return;
