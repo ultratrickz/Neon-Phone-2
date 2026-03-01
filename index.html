@@ -264,15 +264,17 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .attach-btn:active{background:rgba(0,255,238,0.15);transform:scale(0.9);}
 
 /* ═══ EFFECT PICKER ════════════════════════════ */
-#fx-picker{position:fixed;bottom:0;left:0;right:0;z-index:185;background:rgba(8,4,20,0.98);backdrop-filter:blur(30px);border-top:1px solid rgba(170,0,255,0.3);display:none;flex-direction:column;padding:clamp(16px,3vh,24px) clamp(16px,3vw,24px) clamp(24px,5vh,44px);gap:14px;}
-#fx-picker.vis{display:flex;animation:kbUp 0.28s cubic-bezier(0.22,1,0.36,1);}
+#fx-picker{position:fixed;bottom:0;left:0;right:0;z-index:185;background:rgba(8,4,20,0.98);backdrop-filter:blur(30px);border-top:1px solid rgba(170,0,255,0.3);display:none;flex-direction:column;padding:clamp(16px,3vh,24px) clamp(16px,3vw,24px) clamp(24px,5vh,44px);gap:14px;transform:translateY(100%);}
+#fx-picker.vis{display:flex;transform:translateY(0);animation:kbUp 0.28s cubic-bezier(0.22,1,0.36,1);}
+#fx-picker.vis .fx-close-btn{visibility:visible;}
+#attach-menu.vis .fx-close-btn{visibility:visible;}
 .fx-title{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:4px;color:var(--accent);text-align:center;margin-bottom:4px;}
 .fx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .fx-item{padding:14px 8px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.2s;}
 .fx-item:active{transform:scale(0.94);}
 .fx-icon{font-size:26px;}
 .fx-label{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.5);text-align:center;}
-.fx-close-btn{padding:12px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;text-align:center;}
+.fx-close-btn{padding:12px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;text-align:center;visibility:hidden;}
 
 /* ═══ MESSAGE EFFECTS ═══════════════════════════ */
 #effect-overlay{position:fixed;inset:0;z-index:500;pointer-events:none;overflow:hidden;}
@@ -281,6 +283,7 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 @keyframes heartRise{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-100vh) scale(0.5);opacity:0;}}
 @keyframes angerShake{0%,100%{transform:translateX(0);}10%{transform:translateX(-8px);}20%{transform:translateX(8px);}30%{transform:translateX(-6px);}40%{transform:translateX(6px);}50%{transform:translateX(-4px);}60%{transform:translateX(4px);}90%{transform:translateX(-1px)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes kbUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ═══ 3-DOT DROPDOWN ════════════════════════════ */
 #cdd{position:absolute;top:clamp(98px,12vh,128px);right:clamp(12px,2vw,24px);z-index:100;background:rgba(16,10,30,0.97);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.12);border-radius:14px;overflow:hidden;display:none;min-width:160px;box-shadow:0 10px 40px rgba(0,0,0,0.6);}
@@ -307,8 +310,8 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 #member-chips{min-height:30px;padding:4px 0;display:flex;flex-wrap:wrap;}
 .add-member-row{display:flex;gap:8px;margin-top:10px;}
 /* Attach menu */
-#attach-menu{position:fixed;bottom:0;left:0;right:0;z-index:185;background:rgba(8,4,20,0.98);backdrop-filter:blur(30px);border-top:1px solid rgba(0,255,238,0.3);display:none;flex-direction:column;padding:20px 24px clamp(24px,5vh,44px);gap:14px;}
-#attach-menu.vis{display:flex;animation:kbUp 0.28s cubic-bezier(0.22,1,0.36,1);}
+#attach-menu{position:fixed;bottom:0;left:0;right:0;z-index:185;background:rgba(8,4,20,0.98);backdrop-filter:blur(30px);border-top:1px solid rgba(0,255,238,0.3);display:none;flex-direction:column;padding:20px 24px clamp(24px,5vh,44px);gap:14px;transform:translateY(100%);}
+#attach-menu.vis{display:flex;transform:translateY(0);animation:kbUp 0.28s cubic-bezier(0.22,1,0.36,1);}
 .attach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .attach-item{padding:18px 8px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;}
 .attach-item:active{transform:scale(0.94);background:rgba(0,255,238,0.08);}
@@ -959,7 +962,7 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
 </div>
 
 <!-- ═══ EFFECT PICKER ════════════════════════════ -->
-<div id="fx-picker">
+<div id="fx-picker" style="display:none;transform:translateY(100%);">
   <div class="fx-title">SEND WITH EFFECT</div>
   <div class="fx-grid">
    <div class="fx-item" style="border-color:rgba(255,100,180,0.3)" onclick="haptic();selectEffect('hearts')"><div class="fx-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 21C12 21 3 14 3 8a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 13-9 13z" stroke="#ff64b4" stroke-width="1.8" fill="rgba(255,100,180,0.2)"/></svg></div><div class="fx-label">HEARTS</div></div>
@@ -975,7 +978,7 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
 </div>
 
 <!-- ═══ ATTACH MENU ══════════════════════════════ -->
-<div id="attach-menu">
+<div id="attach-menu" style="display:none;transform:translateY(100%);">
   <div class="fx-title">ATTACH</div>
   <div class="attach-grid">
     <div class="attach-item" onclick="haptic();attachPhoto()"><div class="attach-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="4" stroke="var(--cyan)" stroke-width="1.8"/><path d="M2 9a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9z" stroke="var(--cyan)" stroke-width="1.8" fill="none"/></svg></div><div class="attach-lbl">CAMERA</div></div>
@@ -1710,10 +1713,17 @@ let runner=document.getElementById('ns-standalone-runner');
       document.body.appendChild(runner);
     }
     const iframe=document.getElementById('ns-standalone-iframe');
-    const blob=new Blob([app.htmlContent],{type:'text/html'});
-    const url=URL.createObjectURL(blob);
-    iframe.src=url;
-    iframe.onload=()=>{try{URL.revokeObjectURL(url);}catch(e){}};
+    if(app.netlifyUrl&&app.sourceType==='url'){
+  iframe.src=app.netlifyUrl;
+}else if(IS_APK){
+  iframe.removeAttribute('src');
+  iframe.srcdoc=app.htmlContent;
+}else{
+  const blob=new Blob([app.htmlContent],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  iframe.src=url;
+  iframe.onload=()=>{try{URL.revokeObjectURL(url);}catch(e){}};
+}
     runner.style.display='flex';
     runner.style.animation='ao 0.38s cubic-bezier(0.22,1,0.36,1) forwards';
    _standaloneRunnerOpen=true;
@@ -1930,33 +1940,218 @@ function setLanguage(lang){
 }
 
 function applyLanguageToUI(){
-  // Status bar app clocks stay as-is (time)
-  // Update placeholder texts
-  const ci=document.getElementById('ci');if(ci)ci.placeholder=t('typeMessage');
-  // Update composer hints
-  const lhint=document.getElementById('lhint');if(lhint)lhint.textContent=t('swipeUnlock');
-  // Update nav titles
-  const convStatus=document.getElementById('conv-status');
-  if(convStatus&&convStatus.textContent.includes('Encrypted')){
-    const chat=chats.find(c=>c.id===currentRoomId)||{};
-    convStatus.textContent=chat.isGroup?`${t('encryptedChat').replace('Neon Chat · ','Group · ')}`:t('encryptedChat');
-  }
-  // Update passcode title
+  const es=_currentLang==='es';
+  // Composer
+  const ci=document.getElementById('ci');if(ci)ci.placeholder=es?'Mensaje...':'Message...';
+  // Lock screen
+  const lhint=document.getElementById('lhint');if(lhint)lhint.textContent=es?'DESLIZA PARA DESBLOQUEAR':'SWIPE UP TO UNLOCK';
+  // Passcode screen
   const ptitle=document.getElementById('ptitle');
   if(ptitle){
-    if(ptitle.textContent.includes('CREATE')||ptitle.textContent.includes('CREAR'))ptitle.textContent=t('createPasscode');
-    if(ptitle.textContent.includes('CONFIRM')||ptitle.textContent.includes('CONFIRMAR'))ptitle.textContent=t('confirmPasscode');
-    if(ptitle.textContent.includes('ENTER')||ptitle.textContent.includes('INGRESAR'))ptitle.textContent=t('enterPasscode');
+    if(ptitle.textContent.includes('CREATE')||ptitle.textContent.includes('CREAR'))ptitle.textContent=es?'CREAR CONTRASEÑA':'CREATE PASSCODE';
+    if(ptitle.textContent.includes('CONFIRM')||ptitle.textContent.includes('CONFIRMAR'))ptitle.textContent=es?'CONFIRMAR CONTRASEÑA':'CONFIRM PASSCODE';
+    if(ptitle.textContent.includes('ENTER')||ptitle.textContent.includes('INGRESAR'))ptitle.textContent=es?'INGRESAR CONTRASEÑA':'ENTER PASSCODE';
+    if(ptitle.textContent.includes('WRONG')||ptitle.textContent.includes('INCORRECTO'))ptitle.textContent=es?'CONTRASEÑA INCORRECTA':'WRONG PASSCODE';
+    if(ptitle.textContent.includes('TRY')||ptitle.textContent.includes('INTENTA'))ptitle.textContent=es?'INTENTA DE NUEVO':'TRY AGAIN';
   }
-  // Update app icon labels
+  // Home screen app icon labels
   document.querySelectorAll('.aico .al').forEach(el=>{
-    if(el.textContent==='Settings'||el.textContent==='Ajustes')el.textContent=t('settings');
-    if(el.textContent==='Messages'||el.textContent==='Mensajes')el.textContent=t('messages');
-    if(el.textContent==='Neon Shop'||el.textContent==='Tienda Neon')el.textContent=t('neonShop');
+    const t2=el.textContent.trim();
+    if(t2==='Settings'||t2==='Ajustes')el.textContent=es?'Ajustes':'Settings';
+    if(t2==='Messages'||t2==='Mensajes')el.textContent=es?'Mensajes':'Messages';
+    if(t2==='Neon Shop'||t2==='Tienda Neon')el.textContent=es?'Tienda Neon':'Neon Shop';
   });
-  // Update appearance sub labels
-  const accentSubLabel=document.querySelector('#sa-appear .seclbl');
-  if(accentSubLabel)accentSubLabel.textContent=t('accentColor').toUpperCase();
+  // Settings app nav title
+  document.querySelectorAll('.ntitle').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='Settings'||t2==='Ajustes')el.textContent=es?'Ajustes':'Settings';
+    if(t2==='Messages'||t2==='Mensajes')el.textContent=es?'Mensajes':'Messages';
+    if(t2==='Neon Shop'||t2==='Tienda Neon')el.textContent=es?'Tienda Neon':'Neon Shop';
+    if(t2==='Account'||t2==='Cuenta')el.textContent=es?'Cuenta':'Account';
+    if(t2==='Appearance'||t2==='Apariencia')el.textContent=es?'Apariencia':'Appearance';
+    if(t2==='Display'||t2==='Pantalla')el.textContent=es?'Pantalla':'Display';
+    if(t2==='Notifications'||t2==='Notificaciones')el.textContent=es?'Notificaciones':'Notifications';
+    if(t2==='Sounds & Haptics'||t2==='Sonidos')el.textContent=es?'Sonidos':'Sounds & Haptics';
+    if(t2==='Accessibility'||t2==='Accesibilidad')el.textContent=es?'Accesibilidad':'Accessibility';
+    if(t2==='Passcode & Security'||t2==='Seguridad')el.textContent=es?'Seguridad':'Passcode & Security';
+    if(t2==='Privacy'||t2==='Privacidad')el.textContent=es?'Privacidad':'Privacy';
+    if(t2==='General')el.textContent=es?'General':'General';
+    if(t2==='Change Name'||t2==='Cambiar Nombre')el.textContent=es?'Cambiar Nombre':'Change Name';
+    if(t2==='Update Notes'||t2==='Actualizaciones')el.textContent=es?'Actualizaciones':'Update Notes';
+  });
+  // Settings section labels (seclbl)
+  document.querySelectorAll('.seclbl').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='Display & Appearance'||t2==='Pantalla y Apariencia')el.textContent=es?'Pantalla y Apariencia':'Display & Appearance';
+    if(t2==='System'||t2==='Sistema')el.textContent=es?'Sistema':'System';
+    if(t2==='Security'||t2==='Seguridad')el.textContent=es?'Seguridad':'Security';
+    if(t2==='Device'||t2==='Dispositivo')el.textContent=es?'Dispositivo':'Device';
+    if(t2==='Accent Color'||t2==='Color de Acento')el.textContent=es?'Color de Acento':'Accent Color';
+    if(t2==='Glow Intensity'||t2==='Intensidad de Brillo')el.textContent=es?'Intensidad de Brillo':'Glow Intensity';
+    if(t2==='Wallpaper'||t2==='Fondo de Pantalla')el.textContent=es?'Fondo de Pantalla':'Wallpaper';
+    if(t2==='Language / Idioma')el.textContent='Language / Idioma';
+    if(t2==='Volume'||t2==='Volumen')el.textContent=es?'Volumen':'Volume';
+    if(t2==='Haptic Feedback'||t2==='Retroalimentación Háptica')el.textContent=es?'Retroalimentación Háptica':'Haptic Feedback';
+    if(t2==='Text Size'||t2==='Tamaño de Texto')el.textContent=es?'Tamaño de Texto':'Text Size';
+    if(t2==='Reset'||t2==='Restablecer')el.textContent=es?'Restablecer':'Reset';
+    if(t2==='Edit Profile'||t2==='Editar Perfil')el.textContent=es?'Editar Perfil':'Edit Profile';
+  });
+  // Settings row titles (.rtitle)
+  document.querySelectorAll('.rtitle').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='Appearance'||t2==='Apariencia')el.textContent=es?'Apariencia':'Appearance';
+    if(t2==='Display'||t2==='Pantalla')el.textContent=es?'Pantalla':'Display';
+    if(t2==='Notifications'||t2==='Notificaciones')el.textContent=es?'Notificaciones':'Notifications';
+    if(t2==='Sounds & Haptics'||t2==='Sonidos y Hápticos')el.textContent=es?'Sonidos y Hápticos':'Sounds & Haptics';
+    if(t2==='Accessibility'||t2==='Accesibilidad')el.textContent=es?'Accesibilidad':'Accessibility';
+    if(t2==='Passcode & Security'||t2==='Contraseña y Seguridad')el.textContent=es?'Contraseña y Seguridad':'Passcode & Security';
+    if(t2==='Privacy'||t2==='Privacidad')el.textContent=es?'Privacidad':'Privacy';
+    if(t2==='General')el.textContent='General';
+    if(t2==='Allow Notifications'||t2==='Permitir Notificaciones')el.textContent=es?'Permitir Notificaciones':'Allow Notifications';
+    if(t2==='Notification Banners'||t2==='Banners de Notificación')el.textContent=es?'Banners de Notificación':'Notification Banners';
+    if(t2==='Message Sounds'||t2==='Sonidos de Mensajes')el.textContent=es?'Sonidos de Mensajes':'Message Sounds';
+    if(t2==='System Notifications'||t2==='Notificaciones del Sistema')el.textContent=es?'Notificaciones del Sistema':'System Notifications';
+    if(t2==='Night Mode'||t2==='Modo Nocturno')el.textContent=es?'Modo Nocturno':'Night Mode';
+    if(t2==='Haptic Touch'||t2==='Toque Háptico')el.textContent=es?'Toque Háptico':'Haptic Touch';
+    if(t2==='Keyboard Haptics'||t2==='Hápticos del Teclado')el.textContent=es?'Hápticos del Teclado':'Keyboard Haptics';
+    if(t2==='Reduce Motion'||t2==='Reducir Movimiento')el.textContent=es?'Reducir Movimiento':'Reduce Motion';
+    if(t2==='Bold Text'||t2==='Texto en Negrita')el.textContent=es?'Texto en Negrita':'Bold Text';
+    if(t2==='Change Passcode'||t2==='Cambiar Contraseña')el.textContent=es?'Cambiar Contraseña':'Change Passcode';
+    if(t2==='Auto-Lock'||t2==='Bloqueo Automático')el.textContent=es?'Bloqueo Automático':'Auto-Lock';
+    if(t2==='Camera Access'||t2==='Acceso a Cámara')el.textContent=es?'Acceso a Cámara':'Camera Access';
+    if(t2==='Storage / Photos'||t2==='Almacenamiento')el.textContent=es?'Almacenamiento':'Storage / Photos';
+    if(t2==='End-to-End Encryption'||t2==='Cifrado de Extremo a Extremo')el.textContent=es?'Cifrado de Extremo a Extremo':'End-to-End Encryption';
+    if(t2==='Set Status'||t2==='Establecer Estado')el.textContent=es?'Establecer Estado':'Set Status';
+    if(t2==='Change Display Name'||t2==='Cambiar Nombre')el.textContent=es?'Cambiar Nombre':'Change Display Name';
+    if(t2==='Sign Out'||t2==='Cerrar Sesión')el.textContent=es?'Cerrar Sesión':'Sign Out';
+    if(t2==='Erase All Content & Settings'||t2==='Borrar Todo')el.textContent=es?'Borrar Todo':'Erase All Content & Settings';
+    if(t2==='Test Sound & Haptic'||t2==='Probar Sonido')el.textContent=es?'Probar Sonido':'Test Sound & Haptic';
+    if(t2==='Brightness'||t2==='Brillo')el.textContent=es?'Brillo':'Brightness';
+    if(t2==='Glow'||t2==='Brillo Neón')el.textContent=es?'Brillo Neón':'Glow';
+    if(t2==='System Volume'||t2==='Volumen del Sistema')el.textContent=es?'Volumen del Sistema':'System Volume';
+    if(t2==='Size'||t2==='Tamaño')el.textContent=es?'Tamaño':'Size';
+  });
+  // Settings row subtitles (.rsub)
+  document.querySelectorAll('.rsub').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='Reduces blue light'||t2==='Reduce la luz azul')el.textContent=es?'Reduce la luz azul':'Reduces blue light';
+    if(t2==='Vibrate on button taps'||t2==='Vibrar al tocar botones')el.textContent=es?'Vibrar al tocar botones':'Vibrate on button taps';
+    if(t2==='Vibrate on key presses'||t2==='Vibrar al presionar teclas')el.textContent=es?'Vibrar al presionar teclas':'Vibrate on key presses';
+    if(t2==='Tap to preview'||t2==='Toca para previsualizar')el.textContent=es?'Toca para previsualizar':'Tap to preview';
+    if(t2==='In-app banners and sounds'||t2==='Banners y sonidos en la app')el.textContent=es?'Banners y sonidos en la app':'In-app banners and sounds';
+    if(t2==='Show preview at top'||t2==='Mostrar vista previa arriba')el.textContent=es?'Mostrar vista previa arriba':'Show preview at top';
+    if(t2==='Play sound on new messages'||t2==='Reproducir sonido en mensajes nuevos')el.textContent=es?'Reproducir sonido en mensajes nuevos':'Play sound on new messages';
+    if(t2==='Text size, reduce motion'||t2==='Tamaño de texto, reducir movimiento')el.textContent=es?'Tamaño de texto, reducir movimiento':'Text size, reduce motion';
+    if(t2==='Camera, microphone, storage'||t2==='Cámara, micrófono, almacenamiento')el.textContent=es?'Cámara, micrófono, almacenamiento':'Camera, microphone, storage';
+    if(t2==='About, storage, reset'||t2==='Acerca de, almacenamiento, restablecer')el.textContent=es?'Acerca de, almacenamiento, restablecer':'About, storage, reset';
+    if(t2==='Set a new 4-digit code'||t2==='Establecer un nuevo código de 4 dígitos')el.textContent=es?'Establecer un nuevo código de 4 dígitos':'Set a new 4-digit code';
+    if(t2==='All messages are encrypted'||t2==='Todos los mensajes están cifrados')el.textContent=es?'Todos los mensajes están cifrados':'All messages are encrypted';
+    if(t2==='Minimize animations'||t2==='Minimizar animaciones')el.textContent=es?'Minimizar animaciones':'Minimize animations';
+    if(t2==='Increase font weight'||t2==='Aumentar el peso de la fuente')el.textContent=es?'Aumentar el peso de la fuente':'Increase font weight';
+    if(t2==='Default language'||t2==='Idioma predeterminado')el.textContent=es?'Idioma predeterminado':'Default language';
+    if(t2==='Traducción automática de mensajes'||t2==='Automatic message translation')el.textContent=es?'Traducción automática de mensajes':'Automatic message translation';
+  });
+  // Messages app search placeholder
+  document.querySelectorAll('input[placeholder="Search conversations..."],input[placeholder="Buscar conversaciones..."]').forEach(el=>{el.placeholder=es?'Buscar conversaciones...':'Search conversations...';});
+  document.querySelectorAll('input[placeholder="Search messages..."],input[placeholder="Buscar mensajes..."]').forEach(el=>{el.placeholder=es?'Buscar mensajes...':'Search messages...';});
+  // New message modal
+  document.querySelectorAll('.mtitle').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='NEW MESSAGE'||t2==='NUEVO MENSAJE')el.textContent=es?'NUEVO MENSAJE':'NEW MESSAGE';
+    if(t2==='NEW GROUP CHAT'||t2==='NUEVO GRUPO')el.textContent=es?'NUEVO GRUPO':'NEW GROUP CHAT';
+    if(t2==='RENAME CONTACT'||t2==='RENOMBRAR CONTACTO')el.textContent=es?'RENOMBRAR CONTACTO':'RENAME CONTACT';
+    if(t2==='GROUP MEMBERS'||t2==='MIEMBROS DEL GRUPO')el.textContent=es?'MIEMBROS DEL GRUPO':'GROUP MEMBERS';
+    if(t2==='UNSEND MESSAGE'||t2==='RETIRAR MENSAJE')el.textContent=es?'RETIRAR MENSAJE':'UNSEND MESSAGE';
+  });
+  // Conversation status line
+  const convStatus=document.getElementById('conv-status');
+  if(convStatus){
+    if(convStatus.textContent.includes('Encrypted')||convStatus.textContent.includes('Cifrado')){
+      const chat=chats.find(c=>c.id===currentRoomId)||{};
+      if(chat.isGroup)convStatus.textContent=es?`Grupo · ${(chat.members||[]).length} miembros · Cifrado ✓`:`Group · ${(chat.members||[]).length} members · Encrypted ✓`;
+      else convStatus.textContent=es?'Neon Chat · Cifrado ✓':'Neon Chat · Encrypted ✓';
+    }
+  }
+  // FAB labels
+  document.querySelectorAll('#fab-expanded span,#fab-dm-row span').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='GROUP'||t2==='GRUPO')el.textContent=es?'GRUPO':'GROUP';
+    if(t2==='NEW DM'||t2==='NUEVO DM')el.textContent=es?'NUEVO DM':'NEW DM';
+  });
+  // Boot/setup screen texts
+  const slbl=document.querySelector('.slbl');if(slbl)slbl.textContent=es?'CONFIGURACIÓN DE CUENTA':'ACCOUNT SETUP';
+  const stitle=document.querySelector('.stitle');if(stitle)stitle.textContent=es?'Bienvenido a Neon OS':'Welcome to Neon OS';
+  // Setup field labels
+  document.querySelectorAll('.fl').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='First Name *'||t2==='Nombre *')el.textContent=es?'Nombre *':'First Name *';
+    if(t2==='Last Name (optional)'||t2==='Apellido (opcional)')el.textContent=es?'Apellido (opcional)':'Last Name (optional)';
+    if(t2==='Phone Number *'||t2==='Número de Teléfono *')el.textContent=es?'Número de Teléfono *':'Phone Number *';
+    if(t2==='Contact Name *'||t2==='Nombre del Contacto *')el.textContent=es?'Nombre del Contacto *':'Contact Name *';
+    if(t2==='Their Phone Number *'||t2==='Su Número de Teléfono *')el.textContent=es?'Su Número de Teléfono *':'Their Phone Number *';
+    if(t2==='Group Name *'||t2==='Nombre del Grupo *')el.textContent=es?'Nombre del Grupo *':'Group Name *';
+    if(t2==='Add Members (phone numbers)'||t2==='Agregar Miembros')el.textContent=es?'Agregar Miembros':'Add Members (phone numbers)';
+    if(t2==='First Name'||t2==='Nombre')el.textContent=es?'Nombre':'First Name';
+    if(t2==='Last Name'||t2==='Apellido')el.textContent=es?'Apellido':'Last Name';
+    if(t2==='Add Member'||t2==='Agregar Miembro')el.textContent=es?'Agregar Miembro':'Add Member';
+  });
+  // Finalize button
+  document.querySelectorAll('.sbtn').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='FINALIZE →'||t2==='FINALIZAR →')el.textContent=es?'FINALIZAR →':'FINALIZE →';
+    if(t2==='SAVE NAME →'||t2==='GUARDAR NOMBRE →')el.textContent=es?'GUARDAR NOMBRE →':'SAVE NAME →';
+    if(t2==='SUBMIT REVIEW →'||t2==='ENVIAR RESEÑA →')el.textContent=es?'ENVIAR RESEÑA →':'SUBMIT REVIEW →';
+  });
+  // Modal buttons
+  document.querySelectorAll('.mb').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='CANCEL'||t2==='CANCELAR')el.textContent=es?'CANCELAR':'CANCEL';
+    if(t2==='SAVE'||t2==='GUARDAR')el.textContent=es?'GUARDAR':'SAVE';
+    if(t2==='CLOSE'||t2==='CERRAR')el.textContent=es?'CERRAR':'CLOSE';
+    if(t2==='START →'||t2==='INICIAR →')el.textContent=es?'INICIAR →':'START →';
+    if(t2==='CREATE →'||t2==='CREAR →')el.textContent=es?'CREAR →':'CREATE →';
+    if(t2==='ADD'||t2==='AGREGAR')el.textContent=es?'AGREGAR':'ADD';
+  });
+  // Bottom nav labels
+  document.querySelectorAll('.bnav-label').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='BACK'||t2==='ATRÁS')el.textContent=es?'ATRÁS':'BACK';
+    if(t2==='HOME'||t2==='INICIO')el.textContent=es?'INICIO':'HOME';
+    if(t2==='RECENTS'||t2==='RECIENTES')el.textContent=es?'RECIENTES':'RECENTS';
+  });
+  // Empty state messages list
+  document.querySelectorAll('.emptylbl').forEach(el=>{
+    if(el.innerHTML.includes('NO MESSAGES')||el.innerHTML.includes('SIN MENSAJES')){
+      el.innerHTML=es?'SIN MENSAJES<br>TOCA + PARA INICIAR':'NO MESSAGES YET<br>TAP + TO START A CONVERSATION';
+    }
+  });
+  // NS Shop category pills
+  document.querySelectorAll('.ns-cat').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='All'||t2==='Todo')el.textContent=es?'Todo':'All';
+    if(t2==='Games'||t2==='Juegos')el.textContent=es?'Juegos':'Games';
+    if(t2==='Apps')el.textContent='Apps';
+    if(t2==='Tools'||t2==='Herramientas')el.textContent=es?'Herramientas':'Tools';
+    if(t2==='Creative'||t2==='Creativo')el.textContent=es?'Creativo':'Creative';
+    if(t2==='Other'||t2==='Otro')el.textContent=es?'Otro':'Other';
+  });
+  // Reaction picker actions
+  document.querySelectorAll('.rp-action').forEach(el=>{
+    const t2=el.textContent.trim();
+    if(t2==='↩ Reply'||t2==='↩ Responder')el.textContent=es?'↩ Responder':'↩ Reply';
+    if(t2==='✕ Close'||t2==='✕ Cerrar')el.textContent=es?'✕ Cerrar':'✕ Close';
+  });
+  // Effect picker title and labels
+  document.querySelectorAll('.fx-title').forEach(el=>{
+    if(el.textContent.includes('EFFECT')||el.textContent.includes('EFECTO'))el.textContent=es?'ENVIAR CON EFECTO':'SEND WITH EFFECT';
+    if(el.textContent.includes('ATTACH')||el.textContent.includes('ADJUNTAR'))el.textContent=es?'ADJUNTAR':'ATTACH';
+  });
+  document.querySelectorAll('.fx-close-btn').forEach(el=>{
+    if(el.textContent.includes('CANCEL')||el.textContent.includes('CANCELAR'))el.textContent=es?'CANCELAR':'CANCEL';
+  });
+  // Profile status default
+  const ps=document.getElementById('profile-status');
+  if(ps&&(ps.textContent==='No status set'||ps.textContent==='Sin estado'))ps.textContent=es?'Sin estado':'No status set';
 }
 
 function updateLangRows(){
@@ -2421,119 +2616,19 @@ const EMOJI_CATS=[
   {id:'nature',label:'NATURE',ids:['sun','moon','flower']},
   {id:'other',label:'OTHER',ids:['pizza','gaming','music','camera']},
 ];
-
-function showNeonKb(target,numOnly=false){
-  _kbTarget=target;
-  _kbNumMode=numOnly;
-  _kbSymMode=false;
-  _kbCaps=false;
-  // Always remove readonly so neon KB can write to it
-  target.removeAttribute('readonly');
-  target.removeAttribute('disabled');
-  buildKeyboard();
-  if(IS_MOBILE||IS_SAFARI){
-    target.setAttribute('inputmode','none');
-    target.blur();
-    document.getElementById('neon-kb').classList.add('vis');
-    updateKbPush();
-    resetKbIdle();
-  }
-}
-function updateKbPush(){
-  const kb=document.getElementById('neon-kb');
-  if(!kb.classList.contains('vis')){pushConvUp(0);return;}
-  setTimeout(()=>{const h=kb.offsetHeight||280;pushConvUp(h);},50);
-}
-function buildKeyboard(){
-  const main=document.getElementById('kb-main');main.innerHTML='';
-  if(_kbNumMode){
-    // Numeric pad layout
-    KB_NUM.forEach(row=>{
-      const rowEl=document.createElement('div');rowEl.className='kb-row';
-      row.forEach(k=>{
-        const btn=document.createElement('div');btn.className='kk'+(k===''?' ghost':'');
-        if(k==='⌫')btn.classList.add('dark');
-        btn.textContent=k;
-        if(k){btn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbPressNum(k);btn.classList.add('pressed');setTimeout(()=>btn.classList.remove('pressed'),100);});}
-        rowEl.appendChild(btn);
-      });
-      main.appendChild(rowEl);
-    });
-    return;
-  }
-  const rows=_kbSymMode?KB_SYM:KB_ALPHA;
-  rows.forEach((row,ri)=>{
-    const rowEl=document.createElement('div');rowEl.className='kb-row';
-    row.forEach(k=>{
-      const btn=document.createElement('div');btn.className='kk';
-      if(k==='⌫'){btn.classList.add('dark','wide');btn.style.maxWidth='56px';}
-      else if(k==='⇧'){btn.classList.add('dark','wide','accent-k');btn.style.maxWidth='56px';}
-      const display=(_kbCaps&&!_kbSymMode&&k!=='⌫'&&k!=='⇧')?k.toUpperCase():k;
-      btn.textContent=display;
-      btn.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbPressAlpha(k);btn.classList.add('pressed');setTimeout(()=>btn.classList.remove('pressed'),100);});
-      rowEl.appendChild(btn);
-    });
-    if(ri===rows.length-1){
-      const spaceRow=document.createElement('div');spaceRow.className='kb-row';
-      const sp=document.createElement('div');sp.className='kk space';sp.textContent='SPACE';sp.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbInsert(' ');});
-      const ret=document.createElement('div');ret.className='kk dark';ret.style.maxWidth='80px';ret.style.fontSize='11px';ret.style.fontFamily="'Orbitron',monospace";ret.textContent='↵';
-      ret.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();hapticKb();kbInsert('\n');});
-      spaceRow.appendChild(sp);spaceRow.appendChild(ret);
-      main.appendChild(rowEl);main.appendChild(spaceRow);return;
-    }
-    main.appendChild(rowEl);
-  });
-}
-function kbPressNum(k){
-  if(k==='⌫'){kbBackspace();return;}
-  if(!_kbTarget)return;
-  const maxlen=parseInt(_kbTarget.maxLength)||9;
-  if(_kbTarget.value.length<maxlen)kbRawInsert(k);
-}
-function kbPressAlpha(k){
-  if(k==='⌫'){kbBackspace();return;}
-  if(k==='⇧'){toggleCaps();return;}
-  const char=_kbCaps&&!_kbSymMode?k.toUpperCase():k;
-  kbInsert(char);
-  if(_kbCaps&&!_kbSymMode){_kbCaps=false;buildKeyboard();document.getElementById('kb-caps-btn').style.color='';}
-}
-function kbInsert(char){
-  if(!_kbTarget)return;
-  const maxlen=parseInt(_kbTarget.maxLength)||9999;
-  if(_kbTarget.value.length>=maxlen&&char.length===1)return;
-  kbRawInsert(char);
-}
-function kbRawInsert(char){
-  if(!_kbTarget)return;
-  resetKbIdle();
-  const el=_kbTarget;
-  el.removeAttribute('readonly');
-  el.removeAttribute('disabled');
-  const v=el.value||'';
-  let s=v.length,e2=v.length;
-  try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
-  el.value=v.slice(0,s)+char+v.slice(e2);
-  try{el.selectionStart=el.selectionEnd=s+char.length;}catch(err){}
-  el.dispatchEvent(new Event('input',{bubbles:true}));
-  if(el.id==='ci')cuUpdate(el);
-  playUIClick();
-}
-function kbBackspace(){
-  if(!_kbTarget)return;
-  const el=_kbTarget;
-  el.removeAttribute('readonly');
-  el.removeAttribute('disabled');
-  const v=el.value||'';
-  let s=v.length,e2=v.length;
-  try{if(el.selectionStart!==null){s=el.selectionStart;e2=el.selectionEnd;}}catch(err){}
-  if(s!==e2){el.value=v.slice(0,s)+v.slice(e2);try{el.selectionStart=el.selectionEnd=s;}catch(err){}}
-  else if(s>0){el.value=v.slice(0,s-1)+v.slice(s);try{el.selectionStart=el.selectionEnd=s-1;}catch(err){}}
-  el.dispatchEvent(new Event('input',{bubbles:true}));
-  if(el.id==='ci')cuUpdate(el);
-  playUIClick();
-}
-function toggleCaps(){_kbCaps=!_kbCaps;buildKeyboard();document.getElementById('kb-caps-btn').style.color=_kbCaps?'var(--accent)':'';}
-function kbMode(m){_kbSymMode=(m==='sym'&&!_kbSymMode);buildKeyboard();document.getElementById('kb-sym-btn').style.color=_kbSymMode?'var(--accent)':'';}
+function showNeonKb(target,numOnly=false){ target && target.focus(); }
+function buildKeyboard(){}
+function updateKbPush(){}
+function pushConvUp(h){}
+function resetKbIdle(){}
+function kbInsert(char){}
+function kbBackspace(){}
+function kbRawInsert(char){}
+function toggleCaps(){}
+function kbMode(m){}
+function kbPressNum(k){}
+function kbPressAlpha(k){}
+function hapticKb(){ try{if('vibrate' in navigator)navigator.vibrate(6);}catch(e){} }
 
 // ═══════════════════════════════════════════════════
 // EFFECT SYSTEM
@@ -3145,16 +3240,22 @@ function closeReactionPickerOutside(e){
   else{setTimeout(()=>document.addEventListener('pointerdown',closeReactionPickerOutside,{once:true}),200);}
 }
 function closeReactionPicker(){document.getElementById('reaction-picker').classList.remove('open');_currentMsgId=null;}
-async function pickReaction(emoji){if(!_currentMsgId||!currentRoomId)return;closeReactionPicker();await toggleReaction(_currentMsgId.id,emoji);}
+async function pickReaction(emoji){
+  if(!_currentMsgId||!currentRoomId)return;
+  const savedId=_currentMsgId.id;
+  closeReactionPicker();
+  await toggleReaction(savedId,emoji);
+}
 async function toggleReaction(msgId,emoji){
-  if(!currentRoomId||!msgId)return;
+  if(!currentRoomId||!msgId){console.warn('toggleReaction: missing roomId or msgId',currentRoomId,msgId);return;}
   try{
     const path=`rooms/${currentRoomId}/messages/${msgId}/reactions/${DID}`;
+    const r=REF(DB,path);
     const snap=await GET(CHILD(REF(DB),path));
     if(snap.exists()&&snap.val()===emoji){
-      await SET(REF(DB,path),null);
+      await SET(r,null);
     }else{
-      await SET(REF(DB,path),emoji);
+      await SET(r,emoji);
     }
   }catch(e){console.error('Reaction error:',e);}
 }
