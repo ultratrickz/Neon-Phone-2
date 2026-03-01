@@ -371,10 +371,12 @@ body.night{filter:sepia(0.25) brightness(0.82);}
 /* Push app screens up when bottom nav is visible */
 body.nav-open .aps.open>.abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
 body.nav-open .aps.open .sub .abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
-body.nav-open #cs.open .comp{padding-bottom:calc(56px + 6px);}
+body.nav-open #cs.open .comp{padding-bottom:calc(56px + 6px) !important;}
 body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
-body.nav-open #ns-standalone-runner{padding-bottom:56px;}
-body.nav-open #ns-standalone-runner #ns-standalone-iframe{height:calc(100% - 56px) !important;}
+
+/* Bottom nav sits above standalone (non-system) app iframes */
+#bottom-nav{transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);}
+#bottom-nav.hidden-nav{transform:translateY(100%);}
 </style>
 </head>
 <body>
@@ -432,7 +434,7 @@ body.nav-open #ns-standalone-runner #ns-standalone-iframe{height:calc(100% - 56p
     <div class="rp-emoji" onclick="pickReaction('💀')">💀</div>
   </div>
   <div class="rp-actions">
-    <div class="rp-action" onclick="replyToMsg()">↩ Reply</div>
+    <div class="rp-action" onclick="haptic();replyToMsg()">↩ Reply</div>
     <div class="rp-action" onclick="closeReactionPicker()">✕ Close</div>
   </div>
 </div>
@@ -619,14 +621,7 @@ body.nav-open #ns-standalone-runner #ns-standalone-iframe{height:calc(100% - 56p
     <div class="abody"><div class="ssec"><div class="sg">
       <div class="slrow"><div class="sllbl"><span>Brightness</span><span id="bv">75%</span></div><input type="range" class="sl" id="bright-sl" min="20" max="100" value="75" oninput="setBrightness(this.value)"></div>
       <div class="sr"><div class="rtxt"><div class="rtitle">Night Mode</div><div class="rsub">Reduces blue light</div></div><label class="tw"><input type="checkbox" id="night-tog" onchange="setNight(this.checked)"><span class="tsl"></span></label></div>
-      <div class="sr"><div class="rtxt"><div class="rtitle">Auto-Lock</div><div class="rsub" id="autolock-sub">After 5 minutes</div></div>
-<div style="display:flex;gap:6px;flex-wrap:wrap;" id="autolock-pills">
-  <div class="setting-pill" data-val="1" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('1')">1 MIN</div>
-  <div class="setting-pill" data-val="2" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('2')">2 MIN</div>
-  <div class="setting-pill active" data-val="5" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('5')">5 MIN</div>
-  <div class="setting-pill" data-val="10" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('10')">10 MIN</div>
-  <div class="setting-pill" data-val="30" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('30')">30 MIN</div>
-</div>
+     
       </div>
     </div></div></div>
   </div>
@@ -682,6 +677,15 @@ body.nav-open #ns-standalone-runner #ns-standalone-iframe{height:calc(100% - 56p
     <div class="anav"><div class="bb" onclick="haptic();closeSub('sa-sec')"><svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M9 1L2 8L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ntitle">Passcode & Security</div></div>
     <div class="abody"><div class="ssec"><div class="sg">
       <div class="sr" onclick="haptic();changePasscode()"><div class="rtxt"><div class="rtitle">Change Passcode</div><div class="rsub">Set a new 4-digit code</div></div><div class="rchev"><svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1L6 6L1 11" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" stroke-linecap="round"/></svg></div></div>
+      <div class="sr"><div class="rtxt"><div class="rtitle">Auto-Lock</div><div class="rsub" id="autolock-sub">After 5 minutes</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="autolock-pills">
+          <div class="setting-pill" data-val="1" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('1')">1 MIN</div>
+          <div class="setting-pill" data-val="2" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('2')">2 MIN</div>
+          <div class="setting-pill active" data-val="5" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('5')">5 MIN</div>
+          <div class="setting-pill" data-val="10" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('10')">10 MIN</div>
+          <div class="setting-pill" data-val="30" onclick="haptic();selectPill('autolock-pills',this);setAutoLock('30')">30 MIN</div>
+        </div>
+      </div>
     </div></div></div>
   </div>
 
@@ -954,6 +958,8 @@ body.nav-open #ns-standalone-runner #ns-standalone-iframe{height:calc(100% - 56p
     <div class="fx-item" style="border-color:rgba(255,180,200,0.3)" onclick="haptic();selectEffect('blossom')"><div class="fx-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#ffb4c8" stroke-width="1.8"/><ellipse cx="12" cy="6" rx="2" ry="3" stroke="#ffb4c8" stroke-width="1.5"/><ellipse cx="12" cy="18" rx="2" ry="3" stroke="#ffb4c8" stroke-width="1.5"/><ellipse cx="6" cy="12" rx="3" ry="2" stroke="#ffb4c8" stroke-width="1.5"/><ellipse cx="18" cy="12" rx="3" ry="2" stroke="#ffb4c8" stroke-width="1.5"/></svg></div><div class="fx-label">BLOSSOM</div></div>
     <div class="fx-item" style="border-color:rgba(100,200,255,0.3)" onclick="haptic();selectEffect('snow')"><div class="fx-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4" stroke="#64c8ff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="2" stroke="#64c8ff" stroke-width="1.5"/></svg></div><div class="fx-label">SNOW</div></div>
     <div class="fx-item" style="border-color:rgba(170,0,255,0.3)" onclick="haptic();selectEffect('neon')"><div class="fx-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke="#aa00ff" stroke-width="1.8" stroke-linejoin="round" fill="rgba(170,0,255,0.15)"/></svg></div><div class="fx-label">NEON</div></div>
+    <div class="fx-item" style="border-color:rgba(255,80,0,0.3)" onclick="haptic();selectEffect('fire')"><div class="fx-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2 Q14 7 18 9 Q22 12 20 17 Q18 22 12 23 Q6 22 4 17 Q2 12 6 9 Q7 14 12 14 Q9 11 10 6 Q10.5 3.5 12 2z" fill="rgba(255,80,0,0.8)" stroke="#ff4400" stroke-width="1"/><path d="M12 14 Q14 16 13 19 Q11 21 9 19 Q7 17 9 15 Q10 14 12 14z" fill="#ffee00"/></svg></div><div class="fx-label">FIRE</div></div>
+  </div>
   </div>
   <div class="fx-close-btn" onclick="haptic();closeFxPicker()">CANCEL</div>
 </div>
@@ -1615,6 +1621,56 @@ function nsOpenApp(appId){
 
 // Standalone runner — no Neon Shop needed
 let _standaloneRunnerOpen=false;
+// Swipe-up gesture on standalone runner to reveal nav
+(function(){
+  let _swY=0,_swActive=false,_swipeCount=0,_swipeResetTimer=null;
+  document.addEventListener('touchstart',e=>{
+    if(!_standaloneRunnerOpen)return;
+    _swY=e.touches[0].clientY;_swActive=true;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!_standaloneRunnerOpen||!_swActive)return;
+    _swActive=false;
+    const dy=e.changedTouches[0].clientY-_swY;
+    if(dy<-40&&_swY>window.innerHeight-80){
+      _swipeCount++;
+      if(_swipeResetTimer)clearTimeout(_swipeResetTimer);
+      _swipeResetTimer=setTimeout(()=>{_swipeCount=0;},2000);
+      if(_swipeCount>=3){
+        _swipeCount=0;
+        if(_swipeResetTimer)clearTimeout(_swipeResetTimer);
+        showBottomNav(true);
+      }
+  }
+  },{passive:true});
+})();
+
+(function(){
+  let _sysSwY=0,_sysSwActive=false,_sysSwCount=0,_sysSwResetTimer=null;
+  document.addEventListener('touchstart',e=>{
+    if(_standaloneRunnerOpen)return;
+    const anyOpen=document.querySelector('.aps.open')||document.getElementById('cs').classList.contains('open');
+    if(!anyOpen)return;
+    _sysSwY=e.touches[0].clientY;_sysSwActive=true;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    const anyOpen=document.querySelector('.aps.open')||document.getElementById('cs').classList.contains('open');
+    if(!anyOpen||!_sysSwActive||_standaloneRunnerOpen)return;
+    _sysSwActive=false;
+    const dy=e.changedTouches[0].clientY-_sysSwY;
+    if(dy<-40&&_sysSwY>window.innerHeight-80){
+      _sysSwCount++;
+      if(_sysSwResetTimer)clearTimeout(_sysSwResetTimer);
+      _sysSwResetTimer=setTimeout(()=>{_sysSwCount=0;},2000);
+      if(_sysSwCount>=3){
+        _sysSwCount=0;
+        if(_sysSwResetTimer)clearTimeout(_sysSwResetTimer);
+        showBottomNav(true);
+      }
+    }
+  },{passive:true});
+})();
+
 function nsLaunchFromHome(appId){
   nsEnsureReady(async()=>{
     // Try memory first
@@ -1650,8 +1706,12 @@ let runner=document.getElementById('ns-standalone-runner');
     iframe.onload=()=>{try{URL.revokeObjectURL(url);}catch(e){}};
     runner.style.display='flex';
     runner.style.animation='ao 0.38s cubic-bezier(0.22,1,0.36,1) forwards';
-    _standaloneRunnerOpen=true;
-    showBottomNav();
+   _standaloneRunnerOpen=true;
+    // Nav hidden by default for standalone apps — user swipes up 3x to reveal
+    const nav=document.getElementById('bottom-nav');
+    nav.classList.add('vis');
+    nav.classList.add('hidden-nav');
+    document.body.classList.add('nav-open');
     // Track in recents
     _recentApps=_recentApps.filter(r=>r.id!=='nsapp_'+appId);
     _recentApps.unshift({id:'nsapp_'+appId,name:app.name||'App',timestamp:Date.now()});
@@ -1797,6 +1857,8 @@ function goLock(){
   setTimeout(()=>{ls.style.transition='opacity 0.6s';ls.style.opacity='1';},10);
   initSlide();
   renderLockNotifs();
+  hideBottomNav();
+  document.getElementById('recents-overlay').classList.remove('open');
 }
 function renderLockNotifs(){
   let el=document.getElementById('lock-notifs');
@@ -2287,7 +2349,7 @@ function kbMode(m){_kbSymMode=(m==='sym'&&!_kbSymMode);buildKeyboard();document.
 // ═══════════════════════════════════════════════════
 // EFFECT SYSTEM
 // ═══════════════════════════════════════════════════
-let _pendingEffect=null;
+let _pendingEffect=null,_lastReactionOpen=0;
 function openSelfDestruct(){
   const text=document.getElementById('ci').value.trim();
   if(!text){showToast('Type a message first','Enter text before setting a timer',null,'msg');return;}
@@ -2410,6 +2472,7 @@ function playEffectSound(type){
     else if(type==='blossom'){playTone(880,'sine',0.5,0.12);playTone(1100,'sine',0.6,0.1,0.15);}
     else if(type==='snow'){playTone(1047,'sine',0.6,0.1);playTone(1319,'sine',0.8,0.08,0.2);}
     else if(type==='neon'){playTone(440,'square',0.1,0.2);playTone(880,'square',0.2,0.18,0.1);playTone(1320,'square',0.3,0.15,0.2);}
+    else if(type==='fire'){playTone(120,'sawtooth',0.3,0.3);playTone(80,'sawtooth',0.5,0.25,0.1);playTone(200,'sawtooth',0.2,0.2,0.2);}
   }catch(e){}
 }
 function playEffect(type){
@@ -2425,7 +2488,22 @@ function playEffect(type){
   else if(type==='confetti'){emojis=['🎊','🎉','✨','⭐','💫','🌟'];duration=4000;}
   else if(type==='blossom'){emojis=['🌸','🌺','🌻','🌷'];}
   else if(type==='snow'){emojis=['❄️','⛄','✨','💙'];duration=5000;}
-  else if(type==='neon'){emojis=['⚡','💜','🔮','✨','💫','🌈'];}
+else if(type==='neon'){emojis=['⚡','💜','🔮','✨','💫','🌈'];}
+  else if(type==='fire'){
+    playEffectSound('fire');
+    for(let i=0;i<60;i++){
+      const p=document.createElement('div');p.className='effect-particle';
+      const chars=['🔥','💥','✨'];
+      p.textContent=chars[Math.floor(Math.random()*chars.length)];
+      const size=18+Math.random()*20;
+      p.style.cssText=`left:${Math.random()*100}%;bottom:0;top:auto;font-size:${size}px;animation-duration:${1.5+Math.random()*1.5}s;animation-delay:${Math.random()*0.5}s;animation-name:heartRise;`;
+      ov.appendChild(p);p.addEventListener('animationend',()=>p.remove());
+    }
+    // Screen flash
+    const flash=document.createElement('div');flash.style.cssText='position:absolute;inset:0;background:linear-gradient(to top,rgba(255,80,0,0.25),transparent);pointer-events:none;animation:fadeIn 0.15s ease;';
+    ov.appendChild(flash);setTimeout(()=>flash.remove(),600);
+    return;
+  }
   for(let i=0;i<50;i++){const p=document.createElement('div');p.className='effect-particle';p.textContent=emojis[Math.floor(Math.random()*emojis.length)];p.style.cssText=`left:${Math.random()*100}%;top:${type==='hearts'?'100%':'-30px'};font-size:${16+Math.random()*18}px;animation-duration:${duration/1000+Math.random()*2}s;animation-delay:${Math.random()*0.8}s;animation-name:${type==='hearts'?'heartRise':'particleFall'};`;ov.appendChild(p);p.addEventListener('animationend',()=>p.remove());}
 }
 
@@ -2589,11 +2667,10 @@ function updateMsgBadge(){
 
 function startChatListener(){
   if(chatListUnsub)chatListUnsub();
-  const r=REF(DB,`users/${DID}/chats`);const prevChats={};
+  const r=REF(DB,`users/${DID}/chats`);const prevChats={};let isFirstLoad=true;
   chatListUnsub=ONVAL(r,snap=>{
     const data=snap.val()||{};
-    const isFirstLoad=Object.keys(prevChats).length===0;
-    const newChats=Object.entries(data).map(([id,c])=>({id,...c})).sort((a,b)=>(b.lastTimestamp||0)-(a.lastTimestamp||0));
+   const newChats=Object.entries(data).map(([id,c])=>({id,...c})).sort((a,b)=>(b.lastTimestamp||0)-(a.lastTimestamp||0));
     newChats.forEach(c=>{
       const prev=prevChats[c.id];
       if(!isFirstLoad&&prev&&c.unread>0&&c.id!==currentRoomId&&c.lastMessage!==prev.lastMessage){
@@ -2604,9 +2681,12 @@ function startChatListener(){
       }
       prevChats[c.id]={...c};
     });
-    if(isFirstLoad)newChats.forEach(c=>{prevChats[c.id]={...c};});
-chats=newChats;renderChatList(chats);updateMsgBadge();
-    if(document.getElementById('lock').classList.contains('active'))renderLockNotifs();
+   if(isFirstLoad){
+      newChats.forEach(c=>{prevChats[c.id]={...c};});
+      isFirstLoad=false;
+    }
+    chats=newChats;renderChatList(chats);updateMsgBadge();
+    renderLockNotifs();
   });
 }
 
@@ -2725,7 +2805,17 @@ function renderMsgs(msgs,highlight=''){
         b.innerHTML=m.text.slice(0,idx)+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+m.text.slice(idx,idx+highlight.length)+'</mark>'+m.text.slice(idx+highlight.length);
       }else{b.textContent=m.text;}
       b.dataset.msgId=m._id;
-      b.addEventListener('click',()=>openReactionPicker(m._id,m.text,b));
+     b.addEventListener('pointerdown',(e)=>{
+  if(e.pointerType==='touch'){
+    const startTime=Date.now();
+    const onUp=()=>{
+      if(Date.now()-startTime>400){openReactionPicker(m._id,m.text,b);}
+      b.removeEventListener('pointerup',onUp);
+    };
+    b.addEventListener('pointerup',onUp);
+  }
+});
+b.addEventListener('click',()=>{if(Date.now()-(_lastReactionOpen||0)>500)openReactionPicker(m._id,m.text,b);});
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(b);wrap.appendChild(t);
       if(isMe){
@@ -2844,19 +2934,42 @@ async function sendMsg(){
 // ═══ REACTIONS ═════════════════════════════════════
 function openReactionPicker(msgId,text,bblEl){
   _currentMsgId={id:msgId,text};
+  _lastReactionOpen=Date.now();
   const picker=document.getElementById('reaction-picker');picker.classList.add('open');
-  const rect=bblEl.getBoundingClientRect();const ph=picker.offsetHeight||100;
-  picker.style.top=Math.max(10,rect.top-ph-12)+'px';picker.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-200))+'px';
-  setTimeout(()=>document.addEventListener('click',closeReactionPickerOutside,{once:true}),10);
+  const rect=bblEl.getBoundingClientRect();
+  picker.style.position='fixed';
+  const ph=160;
+  let top=rect.top-ph-12;
+  if(top<10)top=rect.bottom+8;
+  top=Math.max(10,Math.min(top,window.innerHeight-ph-10));
+  picker.style.top=top+'px';
+  picker.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-220))+'px';
+  setTimeout(()=>document.addEventListener('pointerdown',closeReactionPickerOutside,{once:true}),200);
 }
-function closeReactionPickerOutside(e){if(!document.getElementById('reaction-picker').contains(e.target))closeReactionPicker();}
+function closeReactionPickerOutside(e){
+  const picker=document.getElementById('reaction-picker');
+  if(!picker.contains(e.target)){closeReactionPicker();}
+  else{setTimeout(()=>document.addEventListener('pointerdown',closeReactionPickerOutside,{once:true}),200);}
+}
 function closeReactionPicker(){document.getElementById('reaction-picker').classList.remove('open');_currentMsgId=null;}
 async function pickReaction(emoji){if(!_currentMsgId||!currentRoomId)return;closeReactionPicker();await toggleReaction(_currentMsgId.id,emoji);}
 async function toggleReaction(msgId,emoji){
   if(!currentRoomId)return;
   try{const path=`rooms/${currentRoomId}/messages/${msgId}/reactions/${DID}`;const snap=await GET(CHILD(REF(DB),path));if(snap.exists()&&snap.val()===emoji)await SET(REF(DB,path),null);else await SET(REF(DB,path),emoji);}catch(e){}
 }
-function replyToMsg(){if(!_currentMsgId)return;closeReactionPicker();_replyingTo=_currentMsgId;document.getElementById('reply-preview-bar').classList.add('vis');document.getElementById('reply-preview-text').textContent=_replyingTo.text.slice(0,80);showNeonKb(document.getElementById('ci'));}
+function replyToMsg(){
+  if(!_currentMsgId)return;
+  const saved={..._currentMsgId};
+  closeReactionPicker();
+  setTimeout(()=>{
+    _replyingTo=saved;
+    document.getElementById('reply-preview-bar').classList.add('vis');
+    document.getElementById('reply-preview-text').textContent=_replyingTo.text.slice(0,80);
+    const ci=document.getElementById('ci');
+    ci.focus();
+    showNeonKb(ci);
+  },150);
+}
 function cancelReply(){_replyingTo=null;document.getElementById('reply-preview-bar').classList.remove('vis');}
 let _convSearchActive=false,_allConvMsgs=[];
 function toggleConvSearch(){
@@ -3004,10 +3117,13 @@ document.addEventListener('click',e=>{
 // ═══════════════════════════════════════════════════
 // AUTO-LOCK
 // ═══════════════════════════════════════════════════
-let autoLockMins=5,lastActivity=Date.now();
+let autoLockMins=5,lastActivity=Date.now(),_autoLockEnabled=false;
 document.addEventListener('pointerdown',()=>{lastActivity=Date.now();});
+// Only enable auto-lock after user has been on home screen for 10 seconds
+setTimeout(()=>{_autoLockEnabled=true;},10000);
 setInterval(()=>{
-  if(document.getElementById('home').classList.contains('active')&&Date.now()-lastActivity>autoLockMins*60*1000){
+  if(!_autoLockEnabled)return;
+  if(document.getElementById('home').classList.contains('active')&&!document.querySelector('.aps.open')&&!document.getElementById('cs').classList.contains('open')&&Date.now()-lastActivity>autoLockMins*60*1000){
     stopAllListeners();
     document.getElementById('home').classList.remove('active');
     document.querySelectorAll('.aps.open').forEach(a=>a.classList.remove('open'));
@@ -3053,26 +3169,42 @@ document.addEventListener('touchstart',tryFullscreen,{once:true,passive:true});
 let _recentApps=[]; // [{id, name, screenshot(dataUrl), timestamp}]
 const MAX_RECENTS=8;
 
-function showBottomNav(){
-  document.getElementById('bottom-nav').classList.add('vis');
+let _navAutoHideTimer=null;
+let _standaloneNavVisible=false;
+
+function showBottomNav(autoHide=false){
+  const nav=document.getElementById('bottom-nav');
+  nav.classList.add('vis');
+  nav.classList.remove('hidden-nav');
   document.body.classList.add('nav-open');
-  // Push standalone runner up if open
-  const runner=document.getElementById('ns-standalone-runner');
-  if(runner&&runner.style.display!=='none'){
-    const iframe=document.getElementById('ns-standalone-iframe');
-    if(iframe)iframe.style.height='calc(100vh - 56px)';
+  if(_navAutoHideTimer)clearTimeout(_navAutoHideTimer);
+  if(autoHide){
+    _standaloneNavVisible=true;
+    _navAutoHideTimer=setTimeout(()=>{
+      nav.classList.add('hidden-nav');
+      _standaloneNavVisible=false;
+    },6000);
   }
 }
 function hideBottomNav(){
-  document.getElementById('bottom-nav').classList.remove('vis');
+  const nav=document.getElementById('bottom-nav');
+  nav.classList.remove('vis');
+  nav.classList.remove('hidden-nav');
   document.body.classList.remove('nav-open');
+  _standaloneNavVisible=false;
+  if(_navAutoHideTimer)clearTimeout(_navAutoHideTimer);
 }
 
 // Patch openApp to show nav and record recents
 const _originalOpenApp=window.openApp;
 window.openApp=function(id){
   _originalOpenApp&&_originalOpenApp(id);
-  showBottomNav();
+  // System apps: never auto-show nav, user must swipe up 3x
+  // But for system apps we DO want nav available, just hidden initially
+  const nav=document.getElementById('bottom-nav');
+  nav.classList.add('vis');
+  nav.classList.add('hidden-nav');
+  document.body.classList.add('nav-open');
   addToRecents(id);
 };
 
@@ -3090,7 +3222,10 @@ window.closeApp=function(id){
 const _originalOpenConv=window.openConv;
 window.openConv=async function(roomId){
   await _originalOpenConv(roomId);
-  showBottomNav();
+  const nav=document.getElementById('bottom-nav');
+  nav.classList.add('vis');
+  nav.classList.add('hidden-nav');
+  document.body.classList.add('nav-open');
   addToRecents('conv_'+roomId);
 };
 const _originalCloseConv=window.closeConv;
