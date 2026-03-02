@@ -3078,6 +3078,26 @@ function updateMsgBadge(){
   else badge.classList.remove('visible');
 }
 
+async function migrateOldGroups(){
+  if(!DID||!window.USER)return;
+  try{
+    const snap=await GET(CHILD(REF(DB),`users/${DID}/chats`));
+    if(!snap.exists())return;
+    const data=snap.val()||{};
+    for(const[roomId,chat]of Object.entries(data)){
+      if(!chat.isGroup)continue;
+      // Fix missing fields
+      const updates={};
+      if(!chat.groupId)updates.groupId=roomId;
+      if(!chat.createdBy)updates.createdBy=DID;
+      if(!chat.members||!Array.isArray(chat.members))updates.members=[];
+      if(Object.keys(updates).length>0){
+        await SET(REF(DB,`users/${DID}/chats/${roomId}`),{...chat,...updates});
+      }
+    }
+  }catch(e){console.warn('Group migration error:',e);}
+}
+
 function startChatListener(){
   if(chatListUnsub)chatListUnsub();
   const r=REF(DB,`users/${DID}/chats`);const prevChats={};let isFirstLoad=true;
@@ -3773,8 +3793,10 @@ async function addMemberToGroup(){
   if(rawPhone.length!==9){errEl.textContent='ENTER EXACTLY 9 DIGITS';return;}
   const phone='+0'+rawPhone;
   const roomId=currentChatId||currentRoomId;
+  console.log('addMember - roomId:',roomId,'phone:',phone,'currentChatId:',currentChatId,'currentRoomId:',currentRoomId);
   if(!roomId){errEl.textContent='NO GROUP SELECTED';return;}
   const chat=chats.find(c=>c.id===roomId)||{};
+  console.log('addMember - chat found:',chat.name,'members:',chat.members?.length);
   if((chat.members||[]).find(m=>m.phone===phone)){errEl.textContent='ALREADY A MEMBER';return;}
   if(phone===myPhone()){errEl.textContent="CAN'T ADD YOURSELF";return;}
   errEl.textContent='Looking up...';
@@ -3852,8 +3874,11 @@ async function saveGroupName(){
 
 async function removeMemberFromGroup(phone){
   const roomId=currentChatId||currentRoomId;
+  console.log('removeMember - roomId:',roomId,'phone:',phone,'currentChatId:',currentChatId,'currentRoomId:',currentRoomId);
   const chat=chats.find(c=>c.id===roomId)||{};
+  console.log('removeMember - chat found:',chat.name,'members:',chat.members?.length);
   const member=(chat.members||[]).find(m=>m.phone===phone);
+  console.log('removeMember - member found:',member);
   if(!member)return;
   const confirmed=await new Promise(resolve=>{
     const modal=document.createElement('div');modal.className='mov open';
