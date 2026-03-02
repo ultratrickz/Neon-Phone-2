@@ -751,7 +751,7 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
     <div class="abody"><div class="ssec"><div class="sg">
       <div class="sr" onclick="haptic();openSub('sa-update-notes')" style="cursor:pointer;">
         <div class="rtxt"><div class="rtitle">Neon OS</div><div class="rsub" id="edition-sub">Version 3.3 · Tap for update notes</div></div>
-        <div style="font-size:10px;font-family:Orbitron,monospace;color:var(--cyan);letter-spacing:2px;">3.2 ▶</div>
+        <div style="font-size:10px;font-family:Orbitron,monospace;color:var(--cyan);letter-spacing:2px;">3.3 ▶</div>
       </div>
       <div class="sr"><div class="rtxt"><div class="rtitle">Device ID</div><div class="rsub" id="did-sub">...</div></div></div>
       <div class="sr"><div class="rtxt"><div class="rtitle">Your Phone Number</div><div class="rsub" id="myph-sub">+0 000000000</div></div></div>
@@ -1841,8 +1841,8 @@ iframe.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow
    _standaloneRunnerOpen=true;
     // Nav hidden by default for standalone apps — user swipes up 3x to reveal
     const nav=document.getElementById('bottom-nav');
-    nav.classList.add('vis');
-    nav.classList.add('hidden-nav');
+ nav.classList.add('vis');
+    nav.classList.remove('hidden-nav');
     document.body.classList.add('nav-open');
     // Track in recents
     _recentApps=_recentApps.filter(r=>r.id!=='nsapp_'+appId);
@@ -2298,7 +2298,7 @@ function startBoot(){
   const cv=document.getElementById('boot-cv');cv.width=window.innerWidth;cv.height=window.innerHeight;
   const ctx=cv.getContext('2d');const stars=Array.from({length:220},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.5,a:Math.random()}));
   let f=0;const anim=()=>{ctx.fillStyle=`rgba(0,0,0,${f<30?1:0.04})`;ctx.fillRect(0,0,cv.width,cv.height);stars.forEach(s=>{s.a=0.3+0.7*Math.abs(Math.sin(f*0.02+s.x));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(200,180,255,${s.a*0.55})`;ctx.fill();});f++;requestAnimationFrame(anim);};anim();
-  const msgs=['Initializing neon kernel...','Loading Safari compatibility layer...','Calibrating display matrix...','Securing comm channels...','Mounting neon file systems...','Enabling haptic engine...','Neon OS 3.2 ready.'];
+  const msgs=['Initializing neon kernel...','Loading Safari compatibility layer...','Calibrating display matrix...','Securing comm channels...','Mounting neon file systems...','Enabling haptic engine...','Neon OS 3 ready.'];
   const bt=document.getElementById('bt'),bw=document.getElementById('bw'),bb_el=document.getElementById('bb'),bst=document.getElementById('bst'),bver=document.getElementById('bver');
 setTimeout(()=>{bt.style.opacity='1';},700);
 // Boot sound plays on first user gesture (showPad) due to browser AudioContext restrictions
@@ -2728,7 +2728,11 @@ const EMOJI_CATS=[
   {id:'nature',label:'NATURE',ids:['sun','moon','flower']},
   {id:'other',label:'OTHER',ids:['pizza','gaming','music','camera']},
 ];
-function showNeonKb(target,numOnly=false){ target && target.focus(); }
+function showNeonKb(target,numOnly=false){
+  if(!target)return;
+  target.removeAttribute('readonly');
+  setTimeout(()=>{ target.focus(); try{ target.setSelectionRange(target.value.length,target.value.length); }catch(e){} },50);
+}
 function buildKeyboard(){}
 function updateKbPush(){}
 function pushConvUp(h){}
