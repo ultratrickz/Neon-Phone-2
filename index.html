@@ -528,10 +528,10 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
       <div class="ptitle" id="ptitle">CREATE PASSCODE</div>
       <div class="dots"><div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div></div>
       <div class="numpad">
-        <button class="nb" onclick="haptic();pi('1')">1</button><button class="nb" onclick="haptic();pi('2')">2</button><button class="nb" onclick="haptic();pi('3')">3</button>
-        <button class="nb" onclick="haptic();pi('4')">4</button><button class="nb" onclick="haptic();pi('5')">5</button><button class="nb" onclick="haptic();pi('6')">6</button>
-        <button class="nb" onclick="haptic();pi('7')">7</button><button class="nb" onclick="haptic();pi('8')">8</button><button class="nb" onclick="haptic();pi('9')">9</button>
-        <button class="nb ghost"></button><button class="nb" onclick="haptic();pi('0')">0</button><button class="nb" onclick="haptic();pdel()">⌫</button>
+       <button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('1')}" onclick="haptic();pi('1')">1</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('2')}" onclick="haptic();pi('2')">2</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('3')}" onclick="haptic();pi('3')">3</button>
+        <button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('4')}" onclick="haptic();pi('4')">4</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('5')}" onclick="haptic();pi('5')">5</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('6')}" onclick="haptic();pi('6')">6</button>
+        <button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('7')}" onclick="haptic();pi('7')">7</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('8')}" onclick="haptic();pi('8')">8</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('9')}" onclick="haptic();pi('9')">9</button>
+        <button class="nb ghost"></button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pi('0')}" onclick="haptic();pi('0')">0</button><button class="nb" ontouchend="e=>{e.preventDefault();haptic();pdel()}" onclick="haptic();pdel()">⌫</button>
       </div>
     </div>
   </div>
