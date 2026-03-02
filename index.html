@@ -1145,12 +1145,7 @@ document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false})
 document.addEventListener('gestureend',e=>e.preventDefault(),{passive:false});
 document.body.style.overscrollBehavior='none';
 document.body.style.touchAction='pan-x pan-y';
-// Prevent all touchstart double-tap zoom on buttons/interactive elements
-document.addEventListener('touchstart',e=>{
-  if(e.target.tagName==='BUTTON'||e.target.closest('button')||e.target.classList.contains('nb')||e.target.closest('.nb')||e.target.closest('.numpad')){
-    e.preventDefault();
-  }
-},{passive:false});
+
   const viewport=document.querySelector('meta[name=viewport]');
   if(viewport)viewport.content='width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover';
 }
