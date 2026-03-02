@@ -78,6 +78,7 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .dot.on{background:#fff;border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,0.9);}
 .numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;}
 .nb{aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.15);color:#fff;font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;box-shadow:0 2px 8px rgba(0,0,0,0.3);user-select:none;touch-action:manipulation;}
+.bbl{touch-action:auto;}
 .nb:active{background:rgba(255,255,255,0.22);box-shadow:0 0 20px rgba(170,100,255,0.5);}
 .nb.ghost{background:transparent;border:none;box-shadow:none;cursor:default;}
 @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}30%{transform:translateX(10px)}45%{transform:translateX(-8px)}60%{transform:translateX(8px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}}
@@ -402,11 +403,10 @@ body.night{filter:sepia(0.25) brightness(0.82);}
 .recent-card-close{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;border:1px solid rgba(255,255,255,0.2);z-index:2;}
 .recent-swipe-hint{text-align:center;padding-bottom:clamp(70px,10vh,90px);font-family:'Orbitron',monospace;font-size:8px;letter-spacing:3px;color:rgba(255,255,255,0.15);}
 
-/* Push app screens up when bottom nav is visible */
-body.nav-open .aps.open>.abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
-body.nav-open .aps.open .sub .abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
-body.nav-open #cs.open .comp{padding-bottom:calc(56px + 6px) !important;}
-body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
+/* Push app screens up only when nav is actually visible (not hidden) */
+body.nav-open:not(.nav-hidden) .aps.open>.abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
+body.nav-open:not(.nav-hidden) .aps.open .sub .abody{padding-bottom:calc(56px + clamp(16px,3vh,32px)) !important;}
+body.nav-open:not(.nav-hidden) #cs.open .comp{padding-bottom:calc(56px + 6px) !important;}
 
 /* Bottom nav sits above standalone (non-system) app iframes */
 #bottom-nav{transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);}
@@ -2908,7 +2908,118 @@ function openAttachMenu(){
 }
 function closeAttachMenu(){document.getElementById('attach-menu').classList.remove('vis');}
 function attachPhoto(){document.getElementById('file-input-photo').click();closeAttachMenu();}
-function attachGallery(){document.getElementById('file-input-gallery').click();closeAttachMenu();}
+function attachGallery(){closeAttachMenu();openInAppGallery();}
+
+function openInAppGallery(){
+  const existing=document.getElementById('gallery-modal');if(existing)existing.remove();
+  const modal=document.createElement('div');modal.id='gallery-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(4,2,12,0.97);display:flex;flex-direction:column;overflow:hidden;animation:ao 0.3s cubic-bezier(0.22,1,0.36,1) forwards;';
+  modal.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:clamp(44px,7vh,64px) 16px 12px;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button onclick="document.getElementById('gallery-modal').remove()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;">×</button>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:#fff;">SELECT PHOTOS</div>
+      <button id="gallery-send-btn" onclick="sendSelectedPhotos()" style="padding:8px 16px;border-radius:20px;background:var(--accent);border:none;color:#fff;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;opacity:0.4;pointer-events:none;">SEND</button>
+    </div>
+    <div style="padding:8px 12px;background:rgba(0,255,238,0.06);border-bottom:1px solid rgba(0,255,238,0.15);">
+      <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:var(--cyan);text-align:center;" id="gallery-hint">TAP TO SELECT · UP TO 4 PHOTOS</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px;">
+      <input type="file" id="gallery-file-input" accept="image/*" multiple style="display:none" onchange="loadGalleryImages(this)">
+      <div id="gallery-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;"></div>
+      <div id="gallery-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:16px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="rgba(0,255,238,0.4)" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.5" stroke="rgba(0,255,238,0.4)" stroke-width="1.5"/><path d="M3 16l5-5 4 4 3-3 4 4" stroke="rgba(0,255,238,0.4)" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <div style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.25);text-align:center;line-height:2;">TAP BELOW TO<br>LOAD YOUR PHOTOS</div>
+        <button onclick="document.getElementById('gallery-file-input').click()" style="padding:12px 24px;border-radius:14px;background:rgba(0,255,238,0.1);border:1px solid rgba(0,255,238,0.3);color:var(--cyan);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;">BROWSE PHOTOS</button>
+      </div>
+    </div>
+    <div style="padding:12px 16px clamp(24px,5vh,44px);border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;">
+      <button onclick="document.getElementById('gallery-file-input').click()" style="flex:1;padding:13px;border-radius:14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;">+ ADD MORE</button>
+      <button onclick="sendSelectedPhotos()" id="gallery-send-btn2" style="flex:2;padding:13px;border-radius:14px;background:var(--accent);border:none;color:#fff;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;opacity:0.4;pointer-events:none;">SEND PHOTOS</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  window._gallerySelected=[];
+  window._galleryImages=[];
+}
+
+function loadGalleryImages(input){
+  const files=Array.from(input.files||[]);if(!files.length)return;
+  const grid=document.getElementById('gallery-grid');
+  const empty=document.getElementById('gallery-empty');if(empty)empty.style.display='none';
+  files.forEach(file=>{
+    if(!file.type.startsWith('image/'))return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const idx=window._galleryImages.length;
+      window._galleryImages.push({dataUrl:e.target.result,file});
+      const cell=document.createElement('div');
+      cell.style.cssText='position:relative;aspect-ratio:1;cursor:pointer;overflow:hidden;border-radius:4px;';
+      cell.dataset.idx=idx;
+      cell.innerHTML=`
+        <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.2s;">
+        <div id="gsel-${idx}" style="position:absolute;inset:0;background:rgba(170,0,255,0.0);display:flex;align-items:flex-end;justify-content:flex-end;padding:6px;transition:all 0.2s;">
+          <div id="gcheck-${idx}" style="width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;transition:all 0.2s;"></div>
+        </div>
+      `;
+      cell.onclick=()=>toggleGallerySelect(idx,cell);
+      grid.appendChild(cell);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+}
+
+function toggleGallerySelect(idx,cell){
+  const sel=window._gallerySelected;
+  const alreadyIdx=sel.indexOf(idx);
+  if(alreadyIdx>=0){
+    sel.splice(alreadyIdx,1);
+  }else{
+    if(sel.length>=4){
+      showToast('Max 4 Photos','You can send up to 4 photos at once',null,'msg');return;
+    }
+    sel.push(idx);
+  }
+  // Update all checkmarks and order numbers
+  window._galleryImages.forEach((_,i)=>{
+    const selDiv=document.getElementById(`gsel-${i}`);
+    const check=document.getElementById(`gcheck-${i}`);
+    const orderIdx=sel.indexOf(i);
+    const isSelected=orderIdx>=0;
+    if(selDiv){selDiv.style.background=isSelected?'rgba(170,0,255,0.35)':'rgba(170,0,255,0)';}
+    if(check){
+      check.style.background=isSelected?'var(--accent)':'rgba(0,0,0,0.3)';
+      check.style.borderColor=isSelected?'var(--accent)':'rgba(255,255,255,0.6)';
+      check.style.boxShadow=isSelected?'0 0 8px var(--accent)':'none';
+      check.textContent=isSelected?String(orderIdx+1):'';
+    }
+  });
+  // Update send button
+  const count=sel.length;
+  const hint=document.getElementById('gallery-hint');
+  if(hint)hint.textContent=count>0?`${count} PHOTO${count>1?'S':''} SELECTED · TAP SEND`:'TAP TO SELECT · UP TO 4 PHOTOS';
+  [document.getElementById('gallery-send-btn'),document.getElementById('gallery-send-btn2')].forEach(btn=>{
+    if(!btn)return;
+    btn.style.opacity=count>0?'1':'0.4';
+    btn.style.pointerEvents=count>0?'auto':'none';
+    btn.textContent=count>0?`SEND ${count} PHOTO${count>1?'S':''}`:(btn.id==='gallery-send-btn'?'SEND':'SEND PHOTOS');
+  });
+  haptic();
+}
+
+async function sendSelectedPhotos(){
+  const sel=window._gallerySelected||[];
+  const imgs=window._galleryImages||[];
+  if(!sel.length)return;
+  document.getElementById('gallery-modal').remove();
+  for(const idx of sel){
+    const img=imgs[idx];if(!img)continue;
+    await sendAttachment({type:'image',text:'📷 Photo'},img.dataUrl,img.file.name,img.file.size);
+    await new Promise(r=>setTimeout(r,150));// small delay between multiple sends
+  }
+  window._gallerySelected=[];
+  window._galleryImages=[];
+}
 function attachFile(){document.getElementById('file-input-any').click();closeAttachMenu();}
 function attachAudio(){document.getElementById('file-input-audio').click();closeAttachMenu();}
 function attachVideo(){document.getElementById('file-input-video').click();closeAttachMenu();}
@@ -3237,10 +3348,12 @@ if(m.type==='voice'&&m.voiceData){
       }
     (()=>{
         let _pt=null,_moved=false;
-        b.addEventListener('pointerdown',()=>{_moved=false;_pt=setTimeout(()=>{_pt=null;if(!_moved){haptic('medium');openReactionPicker(m._id,m.text,b);}},480);},{passive:true});
-        b.addEventListener('pointermove',()=>{_moved=true;if(_pt){clearTimeout(_pt);_pt=null;}},{passive:true});
-        b.addEventListener('pointerup',()=>{if(_pt){clearTimeout(_pt);_pt=null;}},{passive:true});
-        b.addEventListener('pointercancel',()=>{if(_pt){clearTimeout(_pt);_pt=null;}},{passive:true});
+       let _ptDown=null,_ptMoved=false,_ptStartX=0,_ptStartY=0;
+        b.addEventListener('touchstart',e=>{_ptMoved=false;_ptStartX=e.touches[0].clientX;_ptStartY=e.touches[0].clientY;_ptDown=setTimeout(()=>{_ptDown=null;if(!_ptMoved){haptic('medium');openReactionPicker(m._id,m.text,b);}},500);},{passive:true});
+        b.addEventListener('touchmove',e=>{const dx=Math.abs(e.touches[0].clientX-_ptStartX),dy=Math.abs(e.touches[0].clientY-_ptStartY);if(dx>8||dy>8){_ptMoved=true;if(_ptDown){clearTimeout(_ptDown);_ptDown=null;}}},{passive:true});
+        b.addEventListener('touchend',()=>{if(_ptDown){clearTimeout(_ptDown);_ptDown=null;}},{passive:true});
+        b.addEventListener('touchcancel',()=>{if(_ptDown){clearTimeout(_ptDown);_ptDown=null;}},{passive:true});
+        b.addEventListener('click',e=>{if(Date.now()-_lastReactionOpen<600)return;});
       })();
       const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
       wrap.appendChild(b);wrap.appendChild(t);
@@ -3261,9 +3374,24 @@ if(m.type==='voice'&&m.voiceData){
         const isDM=!chat.isGroup;
         const rr=document.createElement('div');rr.className='msg-checks';
         const checkSVG=`<svg viewBox="0 0 12 8" fill="none"><path d="M1 4l3 3 7-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        if(!isDM){
-          // Groups: just show single grey check, no read tracking
-          rr.innerHTML=`<span class="chk chk-grey">${checkSVG}</span>`;
+ if(!isDM){
+          // Groups: show read by names
+          const readBy=m.readBy?Object.keys(m.readBy).filter(d=>d!==DID):[];
+          const chat2=chats.find(c=>c.id===currentRoomId)||{};
+          const totalOthers=((chat2.members||[]).length)-1;
+          if(readBy.length>0){
+            rr.classList.add('checks-read');
+            rr.innerHTML=`<span class="chk" style="color:#0088ff">${checkSVG}</span><span class="chk" style="color:#0088ff">${checkSVG}</span>`;
+            rr.title=`Read by ${readBy.length} of ${totalOthers}`;
+            // Show reader names below
+            const readers=document.createElement('div');
+            readers.style.cssText='font-size:9px;color:rgba(0,136,255,0.7);font-family:Orbitron,monospace;letter-spacing:1px;text-align:right;margin-top:2px;';
+            const names=readBy.map(did=>{const member=(chat2.members||[]).find(mem=>mem.did===did);return member?(member.name||member.phone).split(' ')[0]:'?';}).slice(0,3).join(', ');
+            readers.textContent=`SEEN: ${names}${readBy.length>3?` +${readBy.length-3}`:''}`;
+            wrap.appendChild(readers);
+          }else{
+            rr.innerHTML=`<span class="chk chk-grey">${checkSVG}</span>`;
+          }
         } else {
           const isRead=m.readBy&&m.readBy[chat.theirDid];
           const isDelivered=m.delivered||isRead;
@@ -4055,11 +4183,13 @@ function showBottomNav(autoHide=false){
   nav.classList.add('vis');
   nav.classList.remove('hidden-nav');
   document.body.classList.add('nav-open');
+  document.body.classList.remove('nav-hidden');
   if(_navAutoHideTimer)clearTimeout(_navAutoHideTimer);
   if(autoHide){
     _standaloneNavVisible=true;
     _navAutoHideTimer=setTimeout(()=>{
       nav.classList.add('hidden-nav');
+      document.body.classList.add('nav-hidden');
       _standaloneNavVisible=false;
     },6000);
   }
@@ -4069,6 +4199,7 @@ function hideBottomNav(){
   nav.classList.remove('vis');
   nav.classList.remove('hidden-nav');
   document.body.classList.remove('nav-open');
+  document.body.classList.add('nav-hidden');
   _standaloneNavVisible=false;
   if(_navAutoHideTimer)clearTimeout(_navAutoHideTimer);
 }
@@ -4104,6 +4235,7 @@ window.openConv=async function(roomId){
   nav.classList.add('vis');
   nav.classList.add('hidden-nav');
   document.body.classList.add('nav-open');
+  document.body.classList.add('nav-hidden');
   addToRecents('conv_'+roomId);
 };
 const _originalCloseConv=window.closeConv;
