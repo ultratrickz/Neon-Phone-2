@@ -89,7 +89,7 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .sbar{display:flex;align-items:center;justify-content:space-between;padding:clamp(10px,2vh,16px) clamp(16px,3vw,32px);height:clamp(44px,6vh,60px);flex-shrink:0;position:relative;z-index:11;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:auto;}
 .stime{font-family:'Orbitron',monospace;font-size:clamp(12px,1.4vw,15px);color:#fff;letter-spacing:1px;-webkit-transform:translateZ(0);transform:translateZ(0);min-width:80px;}
 .sicons{display:flex;gap:8px;align-items:center;-webkit-transform:translateZ(0);transform:translateZ(0);flex-shrink:0;}
-.agrid{flex:1;display:flex;flex-wrap:wrap;padding:clamp(16px,3vh,32px) clamp(16px,3vw,40px);gap:clamp(14px,2.5vw,28px);overflow-y:auto;align-content:flex-start;position:relative;z-index:10;}
+.agrid{flex:1;display:flex;flex-wrap:wrap;padding:clamp(16px,3vh,32px) clamp(16px,3vw,40px) calc(clamp(80px,12vh,120px) + 56px);gap:clamp(14px,2.5vw,28px);overflow-y:auto;align-content:flex-start;position:relative;z-index:10;}
 .aico{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:clamp(68px,9vw,96px);position:relative;}
 .ai{width:100%;aspect-ratio:1;border-radius:22%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.12);transition:transform 0.15s,box-shadow 0.15s;position:relative;}
 .aico:active .ai{transform:scale(0.88);box-shadow:0 0 30px var(--accent);}
@@ -506,7 +506,7 @@ body.nav-open:not(.nav-hidden) #cs.open .comp{padding-bottom:0 !important;}
     </div>
     <div class="err" id="err"></div>
 <button class="sbtn" onclick="haptic();finalize()">FINALIZE →</button>
-    <div style="text-align:center;margin-top:4px;"><span style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,255,238,0.5);cursor:pointer;" onclick="haptic();openSoundLoginScreen()">🎵 ALREADY HAVE AN ACCOUNT? LOG IN WITH SOUND</span></div>
+    <div style="position:absolute;bottom:8vh;left:50%;transform:translateX(-50%);z-index:1;"><span style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,255,238,0.6);cursor:pointer;display:block !important;visibility:visible !important;" onclick="haptic();openSoundLoginScreen()">🎵 LOG IN WITH SOUND</span></div>
   </div>
 </div>
 
