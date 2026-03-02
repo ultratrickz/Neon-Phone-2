@@ -4383,7 +4383,7 @@ async function startSoundLogin(){
 
     // Fetch all users and check signatures
     try{
-      const usersSnap=await GET(CHILD(REF(DB),'users'));
+      const usersSnap=await window.GET(window.CHILD(window.REF(window.DB),'users'));
       if(!usersSnap.exists()){
         _soundLoginActive=false;
         if(errEl)errEl.textContent='No accounts found.';
@@ -4452,7 +4452,7 @@ function showSoundLoginConfirm(uid,user,score){
 async function confirmSoundLogin(uid){
   // Load the full user record and log them in
   try{
-    const snap=await GET(CHILD(REF(DB),`users/${uid}`));
+    const snap=await window.GET(window.CHILD(window.REF(window.DB),`users/${uid}`));
     if(!snap.exists()){showToast('Error','Account not found',null,'msg');return;}
     const user=snap.val();
     // Override DID to this user's UID
