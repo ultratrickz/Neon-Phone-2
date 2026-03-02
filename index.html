@@ -1114,10 +1114,16 @@ if(IS_APK){
 // Safari: prevent double-tap zoom
 if(IS_SAFARI){
   // Block double-tap zoom
-  let lastTouch=0;
+let lastTouch=0;
   document.addEventListener('touchend',e=>{
     const now=Date.now();
-    if(now-lastTouch<350){e.preventDefault();}
+    if(now-lastTouch<350){
+      if(e.target.classList.contains('nb')||e.target.closest('.nb')||e.target.closest('.numpad')||e.target.closest('.glass')){
+        lastTouch=now;
+        return;
+      }
+      e.preventDefault();
+    }
     lastTouch=now;
   },{passive:false});
   // Block pinch zoom
