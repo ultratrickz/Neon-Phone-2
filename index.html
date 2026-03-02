@@ -2921,7 +2921,10 @@ else if(type==='neon'){emojis=['⚡','💜','🔮','✨','💫','🌈'];}
 // FILE / PHOTO ATTACHMENT
 // ═══════════════════════════════════════════════════
 function openAttachMenu(){
-  document.getElementById('attach-menu').classList.add('vis');
+  const am=document.getElementById('attach-menu');
+  am.style.removeProperty('display');
+  am.style.removeProperty('transform');
+  am.classList.add('vis');
 }
 function closeAttachMenu(){document.getElementById('attach-menu').classList.remove('vis');}
 function attachPhoto(){document.getElementById('file-input-photo').click();closeAttachMenu();}
@@ -3736,8 +3739,32 @@ function openGroupMembers(){
   document.getElementById('cdd').classList.remove('open');
   const chat=chats.find(c=>c.id===currentChatId)||{};
   const list=document.getElementById('group-members-list');list.innerHTML='';
-  (chat.members||[]).forEach(m=>{const row=document.createElement('div');row.style.cssText='padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px;font-size:14px;';row.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:${avColor(m.name||'')};display:flex;align-items:center;justify-content:center;font-family:Orbitron,monospace;font-size:12px;font-weight:700;color:#fff;">${(m.name||'?')[0].toUpperCase()}</div><div><div style="color:#fff;font-weight:600;">${m.name||m.phone}</div><div style="font-size:11px;color:rgba(255,255,255,0.4);font-family:Orbitron,monospace;">${m.phone}</div></div>`;list.appendChild(row);});
-  document.getElementById('add-member-phone').value='';document.getElementById('add-member-err').textContent='';
+  // Group name editor
+  const nameRow=document.createElement('div');
+  nameRow.style.cssText='margin-bottom:14px;';
+  nameRow.innerHTML=`<div class="fl" style="margin-bottom:6px;">Group Name</div><div style="display:flex;gap:8px;"><input type="text" class="ni" id="group-rename-inp" value="${chat.name||''}" maxlength="40" style="flex:1;font-size:14px;"><button class="mb p" style="flex:0.4;padding:10px 6px;font-size:10px;" onclick="haptic();saveGroupName()">SAVE</button></div><div class="err" id="group-rename-err" style="margin-top:4px;"></div>`;
+  list.appendChild(nameRow);
+  // Divider
+  const div=document.createElement('div');div.style.cssText='height:1px;background:rgba(255,255,255,0.07);margin-bottom:12px;';list.appendChild(div);
+  // Members label
+  const lbl=document.createElement('div');lbl.style.cssText='font-family:Orbitron,monospace;font-size:9px;letter-spacing:3px;color:rgba(170,0,255,0.7);margin-bottom:10px;';lbl.textContent=`MEMBERS (${(chat.members||[]).length})`;list.appendChild(lbl);
+  // Member rows
+  (chat.members||[]).forEach(m=>{
+    const row=document.createElement('div');
+    row.style.cssText='padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px;font-size:14px;';
+    const isMe=m.did===DID;
+    row.innerHTML=`
+      <div style="width:32px;height:32px;border-radius:50%;background:${avColor(m.name||'')};display:flex;align-items:center;justify-content:center;font-family:Orbitron,monospace;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">${(m.name||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="color:#fff;font-weight:600;">${m.name||m.phone}${isMe?' <span style="font-size:9px;color:var(--cyan);font-family:Orbitron,monospace;letter-spacing:1px;">YOU</span>':''}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);font-family:Orbitron,monospace;">${m.phone}</div>
+      </div>
+      ${!isMe?`<button onclick="haptic();removeMemberFromGroup('${m.phone}')" style="padding:5px 10px;border-radius:8px;background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.25);color:#ff4466;font-family:Orbitron,monospace;font-size:9px;letter-spacing:1px;cursor:pointer;">REMOVE</button>`:''}
+    `;
+    list.appendChild(row);
+  });
+  document.getElementById('add-member-phone').value='';
+  document.getElementById('add-member-err').textContent='';
   document.getElementById('group-members-modal').classList.add('open');
 }
 async function addMemberToGroup(){
@@ -3749,11 +3776,60 @@ async function addMemberToGroup(){
   let did=null;try{const snap=await GET(CHILD(REF(DB),`phone_index/${encodePhone(phone)}`));if(snap.exists())did=snap.val();}catch(e){}
   let name=phone;if(did){try{const s=await GET(CHILD(REF(DB),`users/${did}`));if(s.exists()){const u=s.val();name=(u.firstName||'')+(u.lastName?' '+u.lastName:'')||phone;}}catch(e){}}
   const newMember={phone,did,name};const updatedMembers=[...(chat.members||[]),newMember];
-  try{for(const m of updatedMembers){if(!m.did)continue;await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/members`),updatedMembers);}if(did)await SET(REF(DB,`users/${did}/chats/${currentChatId}`),{...chat,members:updatedMembers});}
+  try{
+    for(const m of updatedMembers){
+      if(!m.did)continue;
+      await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/members`),updatedMembers);
+    }
+    if(did){
+      await SET(REF(DB,`users/${did}/chats/${currentChatId}`),{...chat,members:updatedMembers,id:currentChatId});
+    }
+  }
   catch(e){errEl.textContent='Error adding member.';return;}
   chat.members=updatedMembers;errEl.textContent='';document.getElementById('add-member-phone').value='';openGroupMembers();
   PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`${(window.USER.firstName||'')} added ${name}`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
 }
+async function saveGroupName(){
+  const newName=document.getElementById('group-rename-inp')?.value.trim();
+  const errEl=document.getElementById('group-rename-err');
+  if(!newName){if(errEl)errEl.textContent='NAME CANNOT BE EMPTY';return;}
+  const chat=chats.find(c=>c.id===currentChatId)||{};
+  try{
+    const members=chat.members||[];
+    for(const m of members){
+      if(!m.did)continue;
+      await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/name`),newName);
+    }
+    chat.name=newName;
+    document.getElementById('cname').textContent=newName;
+    if(errEl)errEl.textContent='';
+    showToast('Group Renamed',newName,null,'msg');
+    PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`Group renamed to "${newName}"`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
+  }catch(e){if(errEl)errEl.textContent='Failed to rename';}
+}
+
+async function removeMemberFromGroup(phone){
+  const chat=chats.find(c=>c.id===currentChatId)||{};
+  const member=(chat.members||[]).find(m=>m.phone===phone);
+  if(!member)return;
+  if(!confirm(`Remove ${member.name||phone} from the group?`))return;
+  const updatedMembers=(chat.members||[]).filter(m=>m.phone!==phone);
+  try{
+    for(const m of updatedMembers){
+      if(!m.did)continue;
+      await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/members`),updatedMembers);
+    }
+    // Remove the chat entry for the removed member
+    if(member.did){
+      await SET(REF(DB,`users/${member.did}/chats/${currentChatId}`),null);
+    }
+    chat.members=updatedMembers;
+    PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`${member.name||phone} was removed from the group`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
+    openGroupMembers();
+    showToast('Member Removed',`${member.name||phone} removed`,null,'msg');
+  }catch(e){showToast('Error','Failed to remove member',null,'msg');}
+}
+
 function toggleDD(){const d=document.getElementById('cdd');d.classList.toggle('open');if(d.classList.contains('open')){const close=()=>{d.classList.remove('open');document.removeEventListener('click',close);};setTimeout(()=>document.addEventListener('click',close),10);}}
 function openContactPage(){
   document.getElementById('cdd').classList.remove('open');
