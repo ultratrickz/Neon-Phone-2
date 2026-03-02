@@ -3768,34 +3768,67 @@ function openGroupMembers(){
   document.getElementById('group-members-modal').classList.add('open');
 }
 async function addMemberToGroup(){
-  const rawPhone=document.getElementById('add-member-phone').value.trim(),errEl=document.getElementById('add-member-err');
+  const rawPhone=document.getElementById('add-member-phone').value.trim();
+  const errEl=document.getElementById('add-member-err');
   if(rawPhone.length!==9){errEl.textContent='ENTER EXACTLY 9 DIGITS';return;}
   const phone='+0'+rawPhone;
   const roomId=currentChatId||currentRoomId;
-  const chat=chats.find(c=>c.id===roomId)||{};
   if(!roomId){errEl.textContent='NO GROUP SELECTED';return;}
-if((chat.members||[]).find(m=>m.phone===phone)){errEl.textContent='ALREADY A MEMBER';return;}
+  const chat=chats.find(c=>c.id===roomId)||{};
+  if((chat.members||[]).find(m=>m.phone===phone)){errEl.textContent='ALREADY A MEMBER';return;}
+  if(phone===myPhone()){errEl.textContent="CAN'T ADD YOURSELF";return;}
   errEl.textContent='Looking up...';
-  let did=null;
-  try{const snap=await GET(CHILD(REF(DB),`phone_index/${encodePhone(phone)}`));if(snap.exists())did=snap.val();}catch(e){}
-  let name=phone;
-  if(did){try{const s=await GET(CHILD(REF(DB),`users/${did}`));if(s.exists()){const u=s.val();name=(u.firstName||'')+(u.lastName?' '+u.lastName:'')||phone;}}catch(e){}}
-  const newMember={phone,did,name};
-  const updatedMembers=[...(chat.members||[]),newMember];
   try{
+    // Look up their DID
+    let did=null;
+    const snap=await GET(CHILD(REF(DB),`phone_index/${encodePhone(phone)}`));
+    if(snap.exists())did=snap.val();
+    // Get their name
+    let name=phone;
+    if(did){
+      const s=await GET(CHILD(REF(DB),`users/${did}`));
+      if(s.exists()){const u=s.val();name=(u.firstName||'')+(u.lastName?' '+u.lastName:'')||phone;}
+    }
+    const newMember={phone,did:did||null,name};
+    const updatedMembers=[...(chat.members||[]),newMember];
+    // Update members list for all existing members
     for(const m of updatedMembers){
       if(!m.did)continue;
       await SET(REF(DB,`users/${m.did}/chats/${roomId}/members`),updatedMembers);
     }
+    // Create the chat entry for the new member if they have an account
     if(did){
-      await SET(REF(DB,`users/${did}/chats/${roomId}`),{...chat,members:updatedMembers,id:roomId});
+      const existingSnap=await GET(CHILD(REF(DB),`users/${did}/chats/${roomId}`));
+      const existingData=existingSnap.exists()?existingSnap.val():{};
+      await SET(REF(DB,`users/${did}/chats/${roomId}`),{
+        ...existingData,
+        name:chat.name||'Group',
+        isGroup:true,
+        groupId:roomId,
+        members:updatedMembers,
+        createdAt:chat.createdAt||Date.now(),
+        lastTimestamp:Date.now(),
+        unread:(existingData.unread||0)+1,
+        lastMessage:`You were added to ${chat.name||'a group'}`,
+        createdBy:chat.createdBy||DID
+      });
     }
+    // Update local state
     chat.members=updatedMembers;
     errEl.textContent='';
     document.getElementById('add-member-phone').value='';
+    await PUSH(REF(DB,`rooms/${roomId}/messages`),{
+      type:'system',
+      text:`${window.USER.firstName||'Someone'} added ${name}`,
+      timestamp:Date.now(),
+      senderDid:DID
+    });
     openGroupMembers();
-    PUSH(REF(DB,`rooms/${roomId}/messages`),{type:'system',text:`${(window.USER.firstName||'')} added ${name}`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
-  }catch(e){errEl.textContent='Error adding member. Try again.';}
+    showToast('Member Added',`${name} added to the group`,null,'msg');
+  }catch(e){
+    console.error('Add member error:',e);
+    errEl.textContent='Error adding member. Try again.';
+  }
 }
 async function saveGroupName(){
   const newName=document.getElementById('group-rename-inp')?.value.trim();
@@ -3822,6 +3855,20 @@ async function removeMemberFromGroup(phone){
   const chat=chats.find(c=>c.id===roomId)||{};
   const member=(chat.members||[]).find(m=>m.phone===phone);
   if(!member)return;
+  const confirmed=await new Promise(resolve=>{
+    const modal=document.createElement('div');modal.className='mov open';
+    modal.innerHTML=`<div class="mc">
+      <div class="mtitle">REMOVE MEMBER</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:4px;">Remove <span style="color:#fff;font-weight:600;">${member.name||phone}</span> from this group?</div>
+      <div class="mbtns" style="margin-top:20px;">
+        <button class="mb s" onclick="haptic();this.closest('.mov').remove();window._removeResolve(false)">CANCEL</button>
+        <button class="mb p" style="background:linear-gradient(135deg,#ff2244,#aa0022);" onclick="haptic();this.closest('.mov').remove();window._removeResolve(true)">REMOVE</button>
+      </div>
+    </div>`;
+    window._removeResolve=resolve;
+    document.body.appendChild(modal);
+  });
+  if(!confirmed)return;
   if(!confirm(`Remove ${member.name||phone} from the group?`))return;
   const updatedMembers=(chat.members||[]).filter(m=>m.phone!==phone);
   try{
