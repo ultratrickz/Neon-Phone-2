@@ -1105,8 +1105,9 @@ if(IS_APK){
     const disc=document.getElementById('disconnect-screen');
     if(disc)disc.style.display='none';
   });
-  window.addEventListener('offline',()=>{
-    showDisconnectScreen();
+ window.addEventListener('offline',()=>{
+    // Don't show disconnect screen if a standalone app is running
+    if(!_standaloneRunnerOpen)showDisconnectScreen();
   });
 }
 
@@ -1780,7 +1781,7 @@ function nsLaunchFromHome(appId){
         _nsApps.push(app);
       }catch(e){showToast('Error','Failed to load app',null,'msg');return;}
     }
-    if(!app.htmlContent){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
+    if(!app.htmlContent&&!app.netlifyUrl){showToast('No Content','Developer has not uploaded app content',null,'msg');return;}
     // Create or reuse standalone runner
 let runner=document.getElementById('ns-standalone-runner');
     if(!runner){
@@ -1799,8 +1800,29 @@ let runner=document.getElementById('ns-standalone-runner');
   iframe.src=app.netlifyUrl;
 }else if(IS_APK){
   iframe.removeAttribute('src');
-  iframe.srcdoc=app.htmlContent;
+  iframe.setAttribute('srcdoc',app.htmlContent);
+  // Fallback: if srcdoc fails, use blob
+  setTimeout(()=>{
+    try{
+      if(!iframe.contentDocument||iframe.contentDocument.body===null){
+        const blob=new Blob([app.htmlContent],{type:'text/html'});
+        const url=URL.createObjectURL(blob);
+        iframe.removeAttribute('srcdoc');
+        iframe.src=url;
+      }
+    }catch(e){}
+  },800);
 }else{
+```
+
+Also find the iframe sandbox attribute:
+```
+iframe.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads allow-pointer-lock');
+```
+
+**Replace with:**
+```
+iframe.setAttribute('sandbox','allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads allow-pointer-lock allow-top-navigation-by-user-activation');
   const blob=new Blob([app.htmlContent],{type:'text/html'});
   const url=URL.createObjectURL(blob);
   iframe.src=url;
