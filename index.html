@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Neon OS 3.2</title>
+<title>Neon Phone 2</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
@@ -334,7 +334,40 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 
 /* Misc */
 .chat-type-badge{position:absolute;bottom:-2px;right:-2px;background:var(--bg);width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;}
+/* Voice message */
+.voice-msg-wrap{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:20px;min-width:180px;max-width:260px;cursor:pointer;position:relative;}
+.voice-msg-wrap.o{background:var(--accent);border-bottom-right-radius:5px;}
+.voice-msg-wrap.i{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:5px;}
+.voice-play-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
+.voice-play-btn:active{transform:scale(0.9);}
+.voice-waveform{flex:1;display:flex;align-items:center;gap:2px;height:28px;}
+.voice-bar{width:3px;border-radius:2px;background:rgba(255,255,255,0.5);transition:background 0.2s;}
+.voice-bar.active{background:#fff;}
+.voice-duration{font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,0.7);letter-spacing:1px;flex-shrink:0;}
+.voice-recording-indicator{display:none;align-items:center;gap:10px;padding:8px 14px;background:rgba(255,34,68,0.12);border:1px solid rgba(255,34,68,0.3);border-radius:16px;margin:0 clamp(12px,2vw,20px) 6px;}
+.voice-recording-indicator.vis{display:flex;}
+.voice-rec-dot{width:8px;height:8px;border-radius:50%;background:#ff2244;animation:recpulse 1s ease-in-out infinite;}
+@keyframes recpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.voice-rec-time{font-family:'Orbitron',monospace;font-size:11px;color:#ff4466;letter-spacing:2px;}
+.voice-rec-bars{display:flex;align-items:center;gap:2px;height:20px;}
+.voice-rec-bar{width:3px;border-radius:2px;background:#ff4466;animation:recbar 0.6s ease-in-out infinite;}
+.voice-rec-bar:nth-child(2){animation-delay:0.1s;}
+.voice-rec-bar:nth-child(3){animation-delay:0.2s;}
+.voice-rec-bar:nth-child(4){animation-delay:0.3s;}
+.voice-rec-bar:nth-child(5){animation-delay:0.15s;}
+@keyframes recbar{0%,100%{height:4px}50%{height:16px}}
+.snd-voice{background:rgba(255,34,68,0.15);border:1px solid rgba(255,34,68,0.4);}
 
+/* Link preview */
+.link-preview{display:flex;flex-direction:column;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;margin-top:6px;cursor:pointer;max-width:min(72%,320px);transition:all 0.2s;}
+.link-preview:active{opacity:0.8;}
+.link-preview-img{width:100%;height:120px;object-fit:cover;background:rgba(255,255,255,0.05);}
+.link-preview-body{padding:10px 12px;}
+.link-preview-domain{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:var(--cyan);margin-bottom:4px;opacity:0.8;}
+.link-preview-title{font-size:13px;color:#fff;font-weight:600;line-height:1.4;margin-bottom:3px;}
+.link-preview-desc{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.link-preview-loading{padding:12px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-align:center;}
+  
 /* Read receipts */
 .msg-checks{display:flex;gap:2px;align-items:center;justify-content:flex-end;margin-top:2px;}
 .chk{width:12px;height:8px;display:inline-block;}
@@ -343,7 +376,6 @@ input,textarea{-webkit-user-select:text;user-select:text;}
 .chk-blue svg path{stroke:#0088ff;}
 .checks-read .chk svg path{stroke:#0088ff;transition:stroke 1.2s ease;}
 
-/* Night mode */
 /* Night mode */
 body.night{filter:sepia(0.25) brightness(0.82);}
 
@@ -450,9 +482,9 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
   <canvas id="boot-cv"></canvas>
   <div id="boot-inner">
     <div class="rings"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="bcore"></div></div>
-    <div id="bt">NEON OS</div>
+    <div id="bt">NEON PHONE 2</div>
     <div id="bs"></div>
-<div id="bver" style="display:none;">VERSION 3.2</div>
+<div id="bver" style="display:none;">NOS 3.2</div>
     <div id="bw"><div id="bb"></div></div>
     <div id="bst"></div>
     <div id="safari-badge">SAFARI EDITION · OPTIMIZED</div>
@@ -920,7 +952,8 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
   <div class="conv-body-wrap" id="conv-body-wrap">
     <div class="ma" id="msg-area" style="position:relative;z-index:2;"></div>
     <div class="comp" style="position:relative;z-index:2;">
-      <div class="cr">
+     <!-- TEXT MODE -->
+      <div class="cr" id="text-composer-row">
         <button class="attach-btn" onclick="haptic();openAttachMenu()" title="Attach photo or file" style="display:flex;align-items:center;justify-content:center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -934,8 +967,53 @@ body.nav-open #cs.open .conv-body-wrap{padding-bottom:0;}
         <button class="fx-btn" onclick="haptic();openSelfDestruct()" title="Self-destruct timer" style="color:rgba(255,68,102,0.8);display:flex;align-items:center;justify-content:center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 3h6M12 3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
-        <button class="snd" id="sndbtn" onclick="haptic();sendMsg()" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="snd" id="sndbtn" onclick="haptic();sendMsg()" title="Hold for voice" oncontextmenu="return false;" style="display:flex;align-items:center;justify-content:center;position:relative;">
+          <svg id="sndbtn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" style="display:block;flex-shrink:0;"><path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <!-- Mic hint tooltip on long press -->
+          <div id="mic-switch-hint" style="display:none;position:absolute;bottom:48px;right:0;background:rgba(14,8,28,0.97);border:1px solid rgba(170,0,255,0.4);border-radius:12px;padding:8px 12px;white-space:nowrap;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:#fff;z-index:300;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.6);">🎙 SWITCH TO VOICE</div>
+        </button>
       </div>
+      <!-- VOICE MODE -->
+      <div id="voice-composer-row" style="display:none;flex-direction:column;gap:10px;">
+        <!-- Pre-record state -->
+        <div id="voice-prerecord" style="display:flex;align-items:center;gap:10px;">
+          <button onclick="haptic();switchToTextMode()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(170,0,255,0.2);border-radius:20px;padding:10px 16px;display:flex;align-items:center;gap:8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:0.4;"><rect x="9" y="2" width="6" height="13" rx="3" stroke="rgba(170,0,255,0.9)" stroke-width="2"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6" stroke="rgba(170,0,255,0.9)" stroke-width="2" stroke-linecap="round"/></svg>
+            <span style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.3);">TAP MIC TO RECORD</span>
+          </div>
+          <button id="voice-record-btn" onclick="haptic();startVoiceRecord()" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#aa00ff,#ff00aa);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(170,0,255,0.5);transition:all 0.2s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="13" rx="3" fill="white"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <!-- Recording state -->
+        <div id="voice-recording-state" style="display:none;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#ff2244;flex-shrink:0;animation:recpulse 0.8s ease-in-out infinite;"></div>
+            <span id="voice-rec-clock" style="font-family:'Orbitron',monospace;font-size:13px;letter-spacing:3px;color:#ff4466;">0:00</span>
+            <div id="voice-live-bars" style="flex:1;display:flex;align-items:center;gap:2px;height:28px;"></div>
+            <button onclick="haptic();cancelVoiceRecord()" style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.35);background:none;border:none;cursor:pointer;padding:4px 8px;">CANCEL</button>
+          </div>
+          <button onclick="haptic();stopVoiceRecord()" style="width:100%;padding:13px;border-radius:14px;background:rgba(255,34,68,0.15);border:1px solid rgba(255,34,68,0.4);color:#ff4466;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;transition:all 0.15s;">■ STOP RECORDING</button>
+        </div>
+<!-- Preview state -->
+        <div id="voice-preview-state" style="display:none;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="haptic();discardVoicePreview()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,68,102,0.15);border:1px solid rgba(255,68,102,0.35);color:#ff4466;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#ff4466" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </button>
+            <button id="voice-preview-play" onclick="haptic();toggleVoicePreview()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#aa00ff,#0088ff);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(170,0,255,0.5);">
+              <svg id="vpreview-icon" width="14" height="16" viewBox="0 0 14 16" fill="none"><path d="M1 1l12 7L1 15V1z" fill="white"/></svg>
+            </button>
+            <div id="voice-preview-waveform" style="flex:1;display:flex;align-items:center;gap:2px;height:28px;cursor:pointer;" onclick="haptic();seekVoicePreview(event)"></div>
+            <div id="voice-preview-dur" style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:1px;flex-shrink:0;min-width:32px;text-align:right;">0:00</div>
+            <button onclick="haptic();sendVoiceMsg()" style="width:42px;height:42px;border-radius:50%;background:var(--accent);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(170,0,255,0.5);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
     </div>
   </div>
   <div class="mov" id="nick-modal">
@@ -1024,6 +1102,7 @@ const IS_MOBILE = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobil
 const IS_MEDIAN = typeof window.median !== 'undefined' || navigator.userAgent.includes('Median') || navigator.userAgent.includes('gonative') || (typeof Android !== 'undefined') || window.location.href.startsWith('file://');
 const IS_APK = IS_MEDIAN || (IS_MOBILE && !IS_SAFARI && !navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Firefox'));
 const EDITION = IS_APK ? 'APK EDITION' : IS_SAFARI ? 'SAFARI EDITION' : IS_MOBILE ? 'MOBILE EDITION' : 'COMPUTER EDITION';
+const OS_NAME = 'NOS';
 const BROWSER = IS_APK ? 'Median WebView' : IS_SAFARI ? 'Safari' : (navigator.userAgent.includes('Chrome') ? 'Chrome' : (navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Browser'));
 
 // APK/Median WebView fixes
@@ -2366,7 +2445,7 @@ function fillProfile(){
   const statusEl=document.getElementById('profile-status');if(statusEl)statusEl.textContent=u.status||'No status set';
   const ds=document.getElementById('did-sub');if(ds)ds.textContent=DID.slice(0,18)+'...';
   const mp=document.getElementById('myph-sub');if(mp)mp.textContent=u.phoneNumber||'';
-  const es=document.getElementById('edition-sub');if(es)es.textContent=`Version 3.2 · ${EDITION} · Tap for update notes`;
+  const es=document.getElementById('edition-sub');if(es)es.textContent=`NOS 3.2 · ${EDITION} · Tap for update notes`;
   const bs=document.getElementById('browser-sub');if(bs)bs.textContent=`${BROWSER}${IS_SAFARI?' · Safari Optimized ✓':''}`;
   // Storage calculation
   calcStorage();
@@ -3049,6 +3128,16 @@ function renderMsgs(msgs,highlight=''){
   msgs.forEach(m=>{
     const isMe=m.senderDid===DID;
     const wrap=document.createElement('div');wrap.className=`bw ${isMe?'o':'i'}`;
+if(m.type==='voice'&&m.voiceData){
+      if(isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||'?';wrap.appendChild(sn);}
+      const vb=renderVoiceBubble(m,isMe);
+      // Transfer children from the returned wrap
+      vb.querySelectorAll(':scope > *').forEach(child=>wrap.appendChild(child.cloneNode(true)));
+      // Re-attach voice data reference
+      const bubble=wrap.querySelector('.voice-msg-bubble');if(bubble){bubble._voiceData=m.voiceData;bubble._voiceDuration=m.voiceDuration||0;}
+      area.appendChild(wrap);
+      return;
+    }
     if(m.type==='image'&&m.imageData){
       if(isGroup&&!isMe){const sn=document.createElement('div');sn.className='msg-sender-name';sn.textContent=m.senderName||'?';wrap.appendChild(sn);}
       if(m.replyToText){const q=document.createElement('div');q.className='quoted-msg';q.textContent='↩ '+m.replyToText.slice(0,60);wrap.appendChild(q);}
@@ -3089,6 +3178,13 @@ function renderMsgs(msgs,highlight=''){
         b.innerHTML=m.text.slice(0,idx)+`<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">`+m.text.slice(idx,idx+highlight.length)+'</mark>'+m.text.slice(idx+highlight.length);
       }else{const _senderLang=(m.senderDid&&m.senderDid!==DID&&_currentLang==='es')?'en':(_currentLang!=='en'&&m.senderDid===DID?'en':'en');const _displayText=(_currentLang!=='en'&&m.senderDid!==DID)?translateText(m.text,'en',_currentLang):(_currentLang!=='en'&&m.senderDid===DID?m.text:m.text);b.textContent=_displayText;}
       b.dataset.msgId=m._id;
+      // Link preview
+      const _msgUrl=extractUrl(m.text||'');
+      if(_msgUrl&&!m.unsent){
+        const _lpWrap=document.createElement('div');_lpWrap.style.cssText=`display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};`;
+        const _lp=renderLinkPreview(_msgUrl,isMe);
+        if(_lp)setTimeout(()=>{try{if(b.parentNode){const _lpContainer=document.createElement('div');_lpContainer.style.cssText=`max-width:min(72%,320px);align-self:${isMe?'flex-end':'flex-start'};`;_lpContainer.appendChild(_lp);b.parentNode.insertBefore(_lpContainer,b.nextSibling&&b.nextSibling.classList?.contains('bt')?b.nextSibling:null);};}catch(e){}},10);
+      }
     (()=>{
         let _pt=null,_moved=false;
         b.addEventListener('pointerdown',()=>{_moved=false;_pt=setTimeout(()=>{_pt=null;if(!_moved){haptic('medium');openReactionPicker(m._id,m.text,b);}},480);},{passive:true});
@@ -3273,6 +3369,263 @@ function replyToMsg(){
   },150);
 }
 function cancelReply(){_replyingTo=null;document.getElementById('reply-preview-bar').classList.remove('vis');}
+
+// ═══════════════════════════════════════════════════
+// VOICE MESSAGES
+// ═══════════════════════════════════════════════════
+let _voiceHoldTimer=null,_mediaRecorder=null,_voiceChunks=[],_voiceRecording=false,_voiceStartTime=0,_voiceTimerInt=null;
+// Inject voice recording UI styles
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`
+    #sndbtn.voice-mode{background:linear-gradient(135deg,#ff2244,#aa0022);box-shadow:0 0 20px rgba(255,34,68,0.7),0 0 40px rgba(255,34,68,0.3);transform:scale(1.25);}
+    #sndbtn.voice-mode svg{display:none;}
+    #sndbtn.voice-mode::after{content:'';display:block;width:14px;height:14px;border-radius:50%;background:#fff;animation:voicepulse 0.7s ease-in-out infinite;}
+    @keyframes voicepulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:0.6}}
+    .voice-rec-indicator{display:none;align-items:center;gap:10px;padding:8px 16px;margin:0 clamp(12px,2vw,20px) 4px;background:rgba(255,34,68,0.1);border:1px solid rgba(255,34,68,0.3);border-radius:14px;animation:fadeIn 0.2s ease;}
+    .voice-rec-indicator.vis{display:flex;}
+    .voice-rec-dot-pulse{width:10px;height:10px;border-radius:50%;background:#ff2244;flex-shrink:0;animation:recpulse 0.8s ease-in-out infinite;}
+    .voice-waveform-live{display:flex;align-items:center;gap:2px;flex:1;height:24px;}
+    .voice-wlive-bar{width:3px;border-radius:2px;background:rgba(255,68,102,0.5);min-height:4px;transition:height 0.1s ease;}
+    .voice-rec-timer{font-family:'Orbitron',monospace;font-size:11px;color:#ff4466;letter-spacing:2px;flex-shrink:0;}
+    .voice-rec-cancel{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.35);padding:4px 8px;cursor:pointer;}
+    .voice-msg-bubble{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:18px;min-width:160px;max-width:260px;cursor:pointer;user-select:none;}
+    .voice-msg-bubble.o{background:var(--accent);border-bottom-right-radius:5px;}
+    .voice-msg-bubble.i{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:5px;}
+    .vmplay{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.22);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
+    .vmplay:active{transform:scale(0.88);}
+    .vm-waveform{flex:1;display:flex;align-items:center;gap:2px;height:26px;cursor:pointer;position:relative;}
+    .vm-bar{border-radius:2px;background:rgba(255,255,255,0.35);transition:background 0.15s;}
+    .vm-bar.played{background:rgba(255,255,255,0.9);}
+    .vm-duration{font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,0.7);letter-spacing:1px;flex-shrink:0;min-width:32px;text-align:right;}
+  `;
+  document.head.appendChild(s);
+})();
+
+// Inject voice recording indicator above composer
+function ensureVoiceRecUI(){
+  if(document.getElementById('voice-rec-indicator'))return;
+  const comp=document.querySelector('.comp');if(!comp)return;
+  const ind=document.createElement('div');ind.id='voice-rec-indicator';ind.className='voice-rec-indicator';
+  ind.innerHTML=`<div class="voice-rec-dot-pulse"></div><div class="voice-waveform-live" id="voice-waveform-live">${Array(18).fill(0).map((_,i)=>`<div class="voice-wlive-bar" id="vwb${i}" style="height:4px;"></div>`).join('')}</div><div class="voice-rec-timer" id="voice-rec-timer">0:00</div><div class="voice-rec-cancel" onclick="cancelVoiceHold()">CANCEL</div>`;
+  comp.parentNode.insertBefore(ind,comp);
+}
+
+let _voiceHoldActive=false;
+function startVoiceHold(e){
+  const input=document.getElementById('ci');
+  if(input.value.trim().length>0)return;// if there's text, normal send
+  _voiceHoldTimer=setTimeout(()=>{
+    _voiceHoldActive=true;
+    beginVoiceRecord();
+  },350);
+}
+function endVoiceHold(e){
+  if(_voiceHoldTimer){clearTimeout(_voiceHoldTimer);_voiceHoldTimer=null;}
+  if(_voiceHoldActive){
+    _voiceHoldActive=false;
+    stopVoiceRecord(true);
+  }
+}
+function cancelVoiceHold(){
+  if(_voiceHoldTimer){clearTimeout(_voiceHoldTimer);_voiceHoldTimer=null;}
+  _voiceHoldActive=false;
+  stopVoiceRecord(false);
+}
+
+let _animFrameVoice=null;
+function beginVoiceRecord(){
+  if(!navigator.mediaDevices?.getUserMedia){showToast('Mic Unavailable','Microphone access required',null,'msg');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    ensureVoiceRecUI();
+    _voiceChunks=[];
+    const opts=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?{mimeType:'audio/webm;codecs=opus'}:MediaRecorder.isTypeSupported('audio/webm')?{mimeType:'audio/webm'}:{};
+    _mediaRecorder=new MediaRecorder(stream,opts);
+    _mediaRecorder.ondataavailable=e=>{if(e.data.size>0)_voiceChunks.push(e.data);};
+    _mediaRecorder.start(100);
+    _voiceRecording=true;_voiceStartTime=Date.now();
+    // UI
+    const btn=document.getElementById('sndbtn');btn.classList.add('voice-mode');
+    const ind=document.getElementById('voice-rec-indicator');if(ind)ind.classList.add('vis');
+    haptic('medium');
+    // Animate waveform with AudioContext analyser
+    try{
+      const ac2=new(window.AudioContext||window.webkitAudioContext)();
+      const src=ac2.createMediaStreamSource(stream);
+      const analyser=ac2.createAnalyser();analyser.fftSize=64;src.connect(analyser);
+      const data=new Uint8Array(analyser.frequencyBinCount);
+      const bars=document.querySelectorAll('.voice-wlive-bar');
+      const animWave=()=>{
+        if(!_voiceRecording)return;
+        analyser.getByteFrequencyData(data);
+        bars.forEach((b,i)=>{const v=Math.max(4,(data[i*2]||0)/255*22+2);b.style.height=v+'px';});
+        _animFrameVoice=requestAnimationFrame(animWave);
+      };
+      animWave();
+    }catch(e){
+      // Fallback animated bars
+      const bars=document.querySelectorAll('.voice-wlive-bar');
+      let t=0;
+      const fakeWave=()=>{if(!_voiceRecording)return;bars.forEach((b,i)=>{b.style.height=Math.max(4,8+Math.sin(t*0.1+i*0.5)*7)+'px';});t++;_animFrameVoice=requestAnimationFrame(fakeWave);};
+      fakeWave();
+    }
+    // Timer
+    _voiceTimerInt=setInterval(()=>{
+      const secs=Math.floor((Date.now()-_voiceStartTime)/1000);
+      const m=Math.floor(secs/60),s=String(secs%60).padStart(2,'0');
+      const timer=document.getElementById('voice-rec-timer');if(timer)timer.textContent=`${m}:${s}`;
+      if(secs>=120)stopVoiceRecord(true);// auto-stop at 2 min
+    },500);
+  }).catch(()=>showToast('Mic Access Denied','Allow microphone access to send voice messages',null,'msg'));
+}
+
+function stopVoiceRecord(send){
+  if(!_voiceRecording)return;
+  _voiceRecording=false;
+  cancelAnimationFrame(_animFrameVoice);
+  clearInterval(_voiceTimerInt);
+  const btn=document.getElementById('sndbtn');btn.classList.remove('voice-mode');
+  const ind=document.getElementById('voice-rec-indicator');if(ind)ind.classList.remove('vis');
+  const dur=Math.round((Date.now()-_voiceStartTime)/1000);
+  if(_mediaRecorder){
+    _mediaRecorder.stream.getTracks().forEach(t=>t.stop());
+    if(send&&dur>=1){
+      _mediaRecorder.onstop=()=>{
+        const blob=new Blob(_voiceChunks,{type:_mediaRecorder.mimeType||'audio/webm'});
+        const reader=new FileReader();
+        reader.onload=e=>{sendVoiceMsg(e.target.result,dur);};
+        reader.readAsDataURL(blob);
+      };
+      _mediaRecorder.stop();
+    }else{
+      _mediaRecorder.stop();
+    }
+    _mediaRecorder=null;
+  }
+  _voiceChunks=[];
+}
+
+async function sendVoiceMsg(dataUrl,duration){
+  if(!currentRoomId)return;
+  const now=Date.now();
+  const myName=(window.USER.firstName||'')+(window.USER.lastName?' '+window.USER.lastName:'');
+  const msg={type:'voice',text:'🎙 Voice message',senderDid:DID,senderPhone:myPhone(),senderName:myName,timestamp:now,delivered:true,voiceData:dataUrl,voiceDuration:duration};
+  try{
+    await PUSH(REF(DB,`rooms/${currentRoomId}/messages`),msg);
+    await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastMessage`),'🎙 Voice message');
+    await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastTimestamp`),now);
+    const chat=chats.find(c=>c.id===currentRoomId)||{};
+    const notifyDids=chat.isGroup?(chat.members||[]).filter(m=>m.did&&m.did!==DID).map(m=>m.did):(chat.theirDid?[chat.theirDid]:[]);
+    for(const td of notifyDids){
+      if(!td)continue;
+      let unread=1;try{const us=await GET(CHILD(REF(DB),`users/${td}/chats/${currentRoomId}/unread`));unread=(us.exists()?(us.val()||0):0)+1;}catch(e){}
+      await SET(REF(DB,`users/${td}/chats/${currentRoomId}/lastMessage`),'🎙 Voice message');
+      await SET(REF(DB,`users/${td}/chats/${currentRoomId}/lastTimestamp`),now);
+      await SET(REF(DB,`users/${td}/chats/${currentRoomId}/unread`),unread);
+    }
+    pruneMessages(currentRoomId);
+    haptic('light');
+  }catch(e){console.error('Voice send error:',e);}
+}
+
+function renderVoiceBubble(m,isMe){
+  const dur=m.voiceDuration||0;const durStr=`${Math.floor(dur/60)}:${String(dur%60).padStart(2,'0')}`;
+  const barCount=24;
+  // Generate pseudo-random waveform heights seeded by message id
+  const seed=m._id||'x';let rng=0;for(const c of seed)rng=(rng*31+c.charCodeAt(0))&0xffff;
+  const heights=Array(barCount).fill(0).map((_,i)=>{rng=(rng*1664525+1013904223)&0xffffffff;return 5+Math.abs(((rng>>16)&0xff)/255)*18;});
+  const barsHtml=heights.map((h,i)=>`<div class="vm-bar" id="vm-bar-${m._id}-${i}" style="width:3px;height:${h}px;"></div>`).join('');
+  const wrap=document.createElement('div');wrap.className=`bw ${isMe?'o':'i'}`;
+  const bubble=document.createElement('div');bubble.className=`voice-msg-bubble ${isMe?'o':'i'}`;
+  bubble.dataset.voiceId=m._id;
+  bubble.innerHTML=`
+    <button class="vmplay" id="vmplay-${m._id}" onclick="toggleVoicePlay('${m._id}')">
+      <svg width="12" height="14" viewBox="0 0 12 14" fill="none"><path d="M1 1l10 6L1 13V1z" fill="white"/></svg>
+    </button>
+    <div class="vm-waveform" id="vm-waveform-${m._id}" onclick="seekVoice(event,'${m._id}')">${barsHtml}</div>
+    <div class="vm-duration" id="vm-dur-${m._id}">${durStr}</div>
+  `;
+  // Store audio data
+  bubble._voiceData=m.voiceData;bubble._voiceDuration=dur;
+  wrap.appendChild(bubble);
+  const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
+  wrap.appendChild(t);
+  return wrap;
+}
+
+let _activeVoiceId=null,_activeVoiceAudio=null,_voicePlayInt=null;
+function toggleVoicePlay(msgId){
+  if(_activeVoiceId===msgId&&_activeVoiceAudio&&!_activeVoiceAudio.paused){
+    _activeVoiceAudio.pause();setVoicePlayState(msgId,false);return;
+  }
+  if(_activeVoiceAudio){_activeVoiceAudio.pause();if(_activeVoiceId)setVoicePlayState(_activeVoiceId,false);clearInterval(_voicePlayInt);}
+  const bubble=document.querySelector(`[data-voice-id="${msgId}"]`);if(!bubble||!bubble._voiceData)return;
+  const audio=new Audio(bubble._voiceData);_activeVoiceAudio=audio;_activeVoiceId=msgId;
+  audio.play().then(()=>{
+    setVoicePlayState(msgId,true);
+    const dur=bubble._voiceDuration||1;
+    const barCount=24;
+    _voicePlayInt=setInterval(()=>{
+      if(!audio||audio.paused){clearInterval(_voicePlayInt);setVoicePlayState(msgId,false);_activeVoiceId=null;return;}
+      const progress=audio.currentTime/audio.duration;
+      const played=Math.floor(progress*barCount);
+      for(let i=0;i<barCount;i++){const b=document.getElementById(`vm-bar-${msgId}-${i}`);if(b)b.classList.toggle('played',i<played);}
+      const rem=Math.max(0,Math.round(audio.duration-audio.currentTime));
+      const durEl=document.getElementById(`vm-dur-${msgId}`);if(durEl)durEl.textContent=`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;
+    },80);
+    audio.onended=()=>{clearInterval(_voicePlayInt);setVoicePlayState(msgId,false);_activeVoiceId=null;const barCount2=24;for(let i=0;i<barCount2;i++){const b=document.getElementById(`vm-bar-${msgId}-${i}`);if(b)b.classList.remove('played');}const dur2=bubble._voiceDuration||0;const durEl=document.getElementById(`vm-dur-${msgId}`);if(durEl)durEl.textContent=`${Math.floor(dur2/60)}:${String(dur2%60).padStart(2,'0')}`;};
+  }).catch(e=>{console.error('Voice play error:',e);});
+}
+function seekVoice(e,msgId){
+  const wf=document.getElementById(`vm-waveform-${msgId}`);if(!wf||!_activeVoiceAudio||_activeVoiceId!==msgId)return;
+  const rect=wf.getBoundingClientRect();const pct=(e.clientX-rect.left)/rect.width;
+  _activeVoiceAudio.currentTime=Math.max(0,Math.min(1,pct))*_activeVoiceAudio.duration;
+}
+function setVoicePlayState(msgId,playing){
+  const btn=document.getElementById(`vmplay-${msgId}`);if(!btn)return;
+  btn.innerHTML=playing?`<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="10" rx="1" fill="white"/><rect x="7" y="1" width="4" height="10" rx="1" fill="white"/></svg>`:`<svg width="12" height="14" viewBox="0 0 12 14" fill="none"><path d="M1 1l10 6L1 13V1z" fill="white"/></svg>`;
+}
+
+// ═══════════════════════════════════════════════════
+// LINK PREVIEWS
+// ═══════════════════════════════════════════════════
+const _linkPreviewCache={};
+const URL_REGEX=/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gi;
+
+function extractUrl(text){const m=text?.match(URL_REGEX);return m?m[0]:null;}
+
+function getLinkPreviewData(url){
+  // Extract domain, title and description from URL heuristically (no external fetch needed)
+  try{
+    const u=new URL(url);const domain=u.hostname.replace('www.','');
+    // Heuristic title from path
+    const path=u.pathname.split('/').filter(Boolean).pop()||'';
+    const title=path.replace(/[-_]/g,' ').replace(/\.(html?|php|aspx?)$/i,'').trim()||domain;
+    const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+    return{domain,title:cap(title)||cap(domain),description:`Visit ${domain}`,url};
+  }catch(e){return null;}
+}
+
+function renderLinkPreview(url,isMe){
+  const data=getLinkPreviewData(url);if(!data)return null;
+  const preview=document.createElement('div');
+  preview.className='neon-link-preview';
+  const accent=isMe?'rgba(255,255,255,0.25)':'rgba(0,255,238,0.35)';
+  const bg=isMe?'rgba(255,255,255,0.1)':'rgba(0,255,238,0.06)';
+  preview.style.cssText=`display:flex;gap:10px;align-items:center;padding:10px 12px;background:${bg};border:1px solid ${accent};border-radius:12px;margin-top:6px;cursor:pointer;max-width:min(72%,320px);transition:opacity 0.15s;text-decoration:none;`;
+  preview.onclick=()=>{try{window.open(url,'_blank');}catch(e){}};
+  // Favicon via Google
+  const faviconUrl=`https://www.google.com/s2/favicons?domain=${data.domain}&sz=32`;
+  preview.innerHTML=`
+    <img src="${faviconUrl}" width="28" height="28" style="border-radius:7px;flex-shrink:0;background:rgba(255,255,255,0.1);" onerror="this.style.display='none'">
+    <div style="flex:1;min-width:0;">
+      <div style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:${isMe?'rgba(255,255,255,0.6)':'var(--cyan)'};margin-bottom:3px;opacity:0.9;">${data.domain.toUpperCase()}</div>
+      <div style="font-size:13px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${data.title}</div>
+    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:0.4;"><path d="M7 17L17 7M7 7h10v10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+  `;
+  return preview;
+}
 let _convSearchActive=false,_allConvMsgs=[];
 function toggleConvSearch(){
   _convSearchActive=!_convSearchActive;
@@ -3710,6 +4063,328 @@ function reopenRecent(r){
     return;
   }
 }
+
+// ═══════════════════════════════════════════════════
+// VOICE MESSAGE SYSTEM
+// ═══════════════════════════════════════════════════
+(function(){
+const s=document.createElement('style');
+s.textContent=`
+  .vm-bar{border-radius:2px;background:rgba(255,255,255,0.3);transition:background 0.12s;}
+  .vm-bar.played{background:rgba(255,255,255,0.95);}
+  .voice-bubble{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:20px;min-width:180px;max-width:260px;cursor:default;}
+  .voice-bubble.o{background:var(--accent);border-bottom-right-radius:5px;}
+  .voice-bubble.i{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:5px;}
+  .vplay-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
+  .vplay-btn:active{transform:scale(0.88);}
+  .vwaveform{flex:1;display:flex;align-items:center;gap:2px;height:28px;cursor:pointer;}
+  .vdur{font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,0.65);letter-spacing:1px;flex-shrink:0;min-width:30px;text-align:right;}
+  @keyframes hintPop{0%{opacity:0;transform:scale(0.85) translateY(4px)}60%{opacity:1;transform:scale(1.03) translateY(-2px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes recpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.75)}}
+`;
+document.head.appendChild(s);
+
+// State — all on window to avoid redeclaration conflicts
+window._vm={
+  mode:false,
+  mediaRecorder:null,chunks:[],recording:false,
+  startTime:0,timerInt:null,animFrame:null,
+  previewBlob:null,previewAudio:null,previewPlaying:false,previewInt:null,
+  bubbleAudio:null,bubbleId:null,bubbleInt:null
+};
+const V=window._vm;
+
+// Long-hold send button → switch to voice
+let _holdTimer=null;
+document.addEventListener('pointerdown',e=>{
+  const btn=document.getElementById('sndbtn');if(!btn||!btn.contains(e.target))return;
+  _holdTimer=setTimeout(()=>{
+    _holdTimer=null;
+    const hint=document.getElementById('mic-switch-hint');
+    if(hint){hint.style.display='block';hint.style.animation='hintPop 0.25s ease forwards';}
+    if(window.haptic)haptic('medium');
+    setTimeout(()=>{
+      const h2=document.getElementById('mic-switch-hint');if(h2)h2.style.display='none';
+      switchToVoiceMode();
+    },700);
+  },500);
+});
+document.addEventListener('pointerup',()=>{if(_holdTimer){clearTimeout(_holdTimer);_holdTimer=null;}});
+document.addEventListener('pointercancel',()=>{if(_holdTimer){clearTimeout(_holdTimer);_holdTimer=null;}});
+
+window.switchToVoiceMode=function(){
+  V.mode=true;
+  document.getElementById('text-composer-row').style.display='none';
+  const vcr=document.getElementById('voice-composer-row');vcr.style.display='flex';vcr.style.flexDirection='column';
+  showVoiceState('prerecord');
+  if(window.haptic)haptic('light');
+};
+window.switchToTextMode=function(){
+  V.mode=false;
+  cancelVoiceRecord();
+  discardVoicePreview();
+  document.getElementById('voice-composer-row').style.display='none';
+  document.getElementById('text-composer-row').style.display='flex';
+};
+window.showVoiceState=function(state){
+  document.getElementById('voice-prerecord').style.display=state==='prerecord'?'flex':'none';
+  const recEl=document.getElementById('voice-recording-state');
+  recEl.style.display=state==='recording'?'flex':'none';
+  recEl.style.flexDirection=state==='recording'?'column':'';
+  const prevEl=document.getElementById('voice-preview-state');
+  prevEl.style.display=state==='preview'?'flex':'none';
+  prevEl.style.flexDirection=state==='preview'?'column':'';
+};
+
+window.startVoiceRecord=function(){
+  if(!navigator.mediaDevices?.getUserMedia){showToast('No Mic','Microphone access required',null,'msg');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    V.chunks=[];
+    const opts=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?{mimeType:'audio/webm;codecs=opus'}:MediaRecorder.isTypeSupported('audio/webm')?{mimeType:'audio/webm'}:{};
+    V.mediaRecorder=new MediaRecorder(stream,opts);
+    V.mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)V.chunks.push(e.data);};
+    V.mediaRecorder.start(100);
+    V.recording=true;V.startTime=Date.now();
+    showVoiceState('recording');
+    if(window.haptic)haptic('medium');
+    const liveBars=document.getElementById('voice-live-bars');
+    liveBars.innerHTML=Array(22).fill(0).map((_,i)=>`<div style="width:3px;border-radius:2px;background:rgba(255,68,102,0.5);height:4px;transition:height 0.08s ease;" id="vlb${i}"></div>`).join('');
+    try{
+      const ac=new(window.AudioContext||window.webkitAudioContext)();
+      const src=ac.createMediaStreamSource(stream);
+      const analyser=ac.createAnalyser();analyser.fftSize=64;src.connect(analyser);
+      const data=new Uint8Array(analyser.frequencyBinCount);
+      const anim=()=>{
+        if(!V.recording)return;
+        analyser.getByteFrequencyData(data);
+        for(let i=0;i<22;i++){const b=document.getElementById(`vlb${i}`);if(b){const v=Math.max(4,(data[i*2]||0)/255*20+3);b.style.height=v+'px';}}
+        V.animFrame=requestAnimationFrame(anim);
+      };anim();
+    }catch(e){
+      let t2=0;const fakeAnim=()=>{if(!V.recording)return;for(let i=0;i<22;i++){const b=document.getElementById(`vlb${i}`);if(b)b.style.height=Math.max(4,6+Math.sin(t2*0.15+i*0.6)*8)+'px';}t2++;V.animFrame=requestAnimationFrame(fakeAnim);};fakeAnim();
+    }
+    V.timerInt=setInterval(()=>{
+      const secs=Math.floor((Date.now()-V.startTime)/1000);
+      const el=document.getElementById('voice-rec-clock');if(el)el.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+      if(secs>=120)stopVoiceRecord();
+    },500);
+  }).catch(()=>showToast('Mic Denied','Allow microphone access in your browser settings',null,'msg'));
+};
+
+window.stopVoiceRecord=function(){
+  if(!V.recording||!V.mediaRecorder)return;
+  V.recording=false;cancelAnimationFrame(V.animFrame);clearInterval(V.timerInt);
+  const mr=V.mediaRecorder;
+  const dur=Math.round((Date.now()-V.startTime)/1000);
+  mr.stream.getTracks().forEach(t=>t.stop());
+  mr.onstop=()=>{
+    V.mediaRecorder=null;
+    if(dur<1){V.chunks=[];showVoiceState('prerecord');return;}
+    V.previewBlob=new Blob(V.chunks,{type:mr.mimeType||'audio/webm'});
+    V.chunks=[];
+    V.previewAudio=new Audio(URL.createObjectURL(V.previewBlob));
+    buildPreviewWaveform(dur);
+    showVoiceState('preview');
+    if(window.haptic)haptic('light');
+  };
+  try{mr.stop();}catch(e){V.mediaRecorder=null;V.chunks=[];showVoiceState('prerecord');}
+};
+
+window.cancelVoiceRecord=function(){
+  if(!V.recording)return;
+  V.recording=false;cancelAnimationFrame(V.animFrame);clearInterval(V.timerInt);
+  if(V.mediaRecorder){V.mediaRecorder.stream.getTracks().forEach(t=>t.stop());try{V.mediaRecorder.stop();}catch(e){}}
+  V.mediaRecorder=null;V.chunks=[];
+  showVoiceState('prerecord');
+};
+
+window.buildPreviewWaveform=function(dur){
+  const wf=document.getElementById('voice-preview-waveform');if(!wf)return;
+  const durEl=document.getElementById('voice-preview-dur');if(durEl)durEl.textContent=`${Math.floor(dur/60)}:${String(dur%60).padStart(2,'0')}`;
+  const barCount=36;
+  wf.innerHTML=Array(barCount).fill(0).map((_,i)=>{
+    const h=5+Math.abs(Math.sin(i*0.7+dur*0.3))*18+Math.abs(Math.cos(i*1.3))*8;
+    return `<div class="vm-bar" id="vpbar${i}" style="width:3px;height:${Math.round(h)}px;flex-shrink:0;"></div>`;
+  }).join('');
+};
+
+window.toggleVoicePreview=function(){
+  if(!V.previewAudio)return;
+  if(V.previewPlaying){
+    V.previewAudio.pause();V.previewPlaying=false;clearInterval(V.previewInt);
+    document.getElementById('vpreview-icon').innerHTML='<path d="M5 3l14 9L5 21V3z" fill="white"/>';
+  }else{
+    V.previewAudio.currentTime=0;
+    V.previewAudio.play().then(()=>{
+      V.previewPlaying=true;
+      document.getElementById('vpreview-icon').innerHTML='<rect x="6" y="4" width="4" height="16" rx="1" fill="white"/><rect x="14" y="4" width="4" height="16" rx="1" fill="white"/>';
+      const barCount=36;
+      V.previewInt=setInterval(()=>{
+        if(!V.previewAudio||V.previewAudio.paused){clearInterval(V.previewInt);V.previewPlaying=false;document.getElementById('vpreview-icon').innerHTML='<path d="M5 3l14 9L5 21V3z" fill="white"/>';return;}
+        const progress=V.previewAudio.currentTime/V.previewAudio.duration;
+        const played=Math.floor(progress*barCount);
+        for(let i=0;i<barCount;i++){const b=document.getElementById(`vpbar${i}`);if(b)b.classList.toggle('played',i<played);}
+        const rem=Math.max(0,Math.round(V.previewAudio.duration-V.previewAudio.currentTime));
+        const durEl=document.getElementById('voice-preview-dur');if(durEl)durEl.textContent=`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;
+      },80);
+      V.previewAudio.onended=()=>{
+        V.previewPlaying=false;clearInterval(V.previewInt);
+        document.getElementById('vpreview-icon').innerHTML='<path d="M5 3l14 9L5 21V3z" fill="white"/>';
+        for(let i=0;i<barCount;i++){const b=document.getElementById(`vpbar${i}`);if(b)b.classList.remove('played');}
+      };
+    }).catch(()=>{});
+  }
+};
+
+window.seekVoicePreview=function(e){
+  if(!V.previewAudio||!V.previewAudio.duration)return;
+  const wf=document.getElementById('voice-preview-waveform');if(!wf)return;
+  const rect=wf.getBoundingClientRect();const pct=(e.clientX-rect.left)/rect.width;
+  V.previewAudio.currentTime=Math.max(0,Math.min(1,pct))*V.previewAudio.duration;
+};
+
+window.discardVoicePreview=function(){
+  if(V.previewPlaying&&V.previewAudio)V.previewAudio.pause();
+  clearInterval(V.previewInt);V.previewPlaying=false;
+  V.previewBlob=null;V.previewAudio=null;
+  showVoiceState('prerecord');
+};
+
+window.sendVoiceMsg=async function(){
+  if(!V.previewBlob||!currentRoomId)return;
+  const dur=V.previewAudio?Math.round(V.previewAudio.duration)||Math.round((Date.now()-V.startTime)/1000):0;
+  if(V.previewPlaying&&V.previewAudio){V.previewAudio.pause();V.previewPlaying=false;}
+  clearInterval(V.previewInt);
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const dataUrl=e.target.result;
+    const now=Date.now();
+    const myName=(window.USER.firstName||'')+(window.USER.lastName?' '+window.USER.lastName:'');
+    const msg={type:'voice',text:'🎙 Voice message',senderDid:DID,senderPhone:myPhone(),senderName:myName,timestamp:now,delivered:true,voiceData:dataUrl,voiceDuration:dur};
+    try{
+      await PUSH(REF(DB,`rooms/${currentRoomId}/messages`),msg);
+      await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastMessage`),'🎙 Voice message');
+      await SET(REF(DB,`users/${DID}/chats/${currentRoomId}/lastTimestamp`),now);
+      const chat=chats.find(c=>c.id===currentRoomId)||{};
+      const notifyDids=chat.isGroup?(chat.members||[]).filter(m=>m.did&&m.did!==DID).map(m=>m.did):(chat.theirDid?[chat.theirDid]:[]);
+      for(const td of notifyDids){
+        if(!td)continue;
+        let unread=1;try{const us=await GET(CHILD(REF(DB),`users/${td}/chats/${currentRoomId}/unread`));unread=(us.exists()?(us.val()||0):0)+1;}catch(e){}
+        await SET(REF(DB,`users/${td}/chats/${currentRoomId}/lastMessage`),'🎙 Voice message');
+        await SET(REF(DB,`users/${td}/chats/${currentRoomId}/lastTimestamp`),now);
+        await SET(REF(DB,`users/${td}/chats/${currentRoomId}/unread`),unread);
+      }
+      pruneMessages(currentRoomId);
+    }catch(err){console.error('Voice send error:',err);}
+    V.previewBlob=null;V.previewAudio=null;
+    switchToTextMode();
+    if(window.haptic)haptic('light');
+  };
+  reader.readAsDataURL(V.previewBlob);
+};
+
+window.buildVoiceBubble=function(m,isMe){
+  const wrap=document.createElement('div');wrap.className=`bw ${isMe?'o':'i'}`;
+  const dur=m.voiceDuration||0;
+  const durStr=`${Math.floor(dur/60)}:${String(dur%60).padStart(2,'0')}`;
+  let rng=0;for(const c of(m._id||'x'))rng=(rng*31+c.charCodeAt(0))&0xffff;
+  const barCount=28;
+  const heights=Array(barCount).fill(0).map(()=>{rng=(rng*1664525+1013904223)&0xffffffff;return 4+Math.abs(((rng>>16)&0xff)/255)*20;});
+  const barsHtml=heights.map((h,i)=>`<div class="vm-bar" data-vbid="${m._id}" data-vbidx="${i}" style="width:3px;height:${Math.round(h)}px;flex-shrink:0;"></div>`).join('');
+  const bubble=document.createElement('div');
+  bubble.className=`voice-bubble ${isMe?'o':'i'}`;
+  bubble.dataset.voiceId=m._id;
+  bubble.innerHTML=`
+    <button class="vplay-btn" id="vplay-${m._id}" onclick="toggleBubblePlay('${m._id}')">
+      <svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M1 1l9 5.5L1 12V1z" fill="white"/></svg>
+    </button>
+    <div class="vwaveform" onclick="seekBubble(event,'${m._id}')">${barsHtml}</div>
+    <div class="vdur" id="vdur-${m._id}">${durStr}</div>
+  `;
+  bubble._voiceData=m.voiceData;bubble._voiceDuration=dur;
+  wrap.appendChild(bubble);
+  if(isMe){const rr=document.createElement('div');rr.className='msg-checks';const checkSVG=`<svg viewBox="0 0 12 8" fill="none"><path d="M1 4l3 3 7-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;rr.innerHTML=`<span class="chk chk-grey">${checkSVG}</span><span class="chk chk-grey">${checkSVG}</span>`;wrap.appendChild(rr);}
+  const t=document.createElement('div');t.className='bt';t.textContent=fmtT(m.timestamp);
+  wrap.appendChild(t);
+  return wrap;
+};
+
+window.toggleBubblePlay=function(msgId){
+  const V=window._vm;
+  if(V.bubbleId&&V.bubbleId!==msgId){
+    if(V.bubbleAudio)V.bubbleAudio.pause();
+    clearInterval(V.bubbleInt);
+    setBubblePlayState(V.bubbleId,false,true);
+    V.bubbleId=null;V.bubbleAudio=null;
+  }
+  if(V.bubbleId===msgId&&V.bubbleAudio&&!V.bubbleAudio.paused){
+    V.bubbleAudio.pause();clearInterval(V.bubbleInt);setBubblePlayState(msgId,false,false);
+    V.bubbleId=null;return;
+  }
+  const bubble=document.querySelector(`[data-voice-id="${msgId}"]`);
+  if(!bubble||!bubble._voiceData)return;
+  const audio=new Audio(bubble._voiceData);V.bubbleAudio=audio;V.bubbleId=msgId;
+  audio.play().then(()=>{
+    setBubblePlayState(msgId,true,false);
+    const barCount=28;
+    V.bubbleInt=setInterval(()=>{
+      if(!audio||audio.paused){clearInterval(V.bubbleInt);setBubblePlayState(msgId,false,false);V.bubbleId=null;return;}
+      const progress=audio.currentTime/audio.duration;
+      const played=Math.floor(progress*barCount);
+      document.querySelectorAll(`[data-vbid="${msgId}"]`).forEach((b,i)=>b.classList.toggle('played',i<played));
+      const rem=Math.max(0,Math.round(audio.duration-audio.currentTime));
+      const durEl=document.getElementById(`vdur-${msgId}`);if(durEl)durEl.textContent=`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;
+    },80);
+    audio.onended=()=>{
+      clearInterval(V.bubbleInt);setBubblePlayState(msgId,false,false);V.bubbleId=null;
+      document.querySelectorAll(`[data-vbid="${msgId}"]`).forEach(b=>b.classList.remove('played'));
+      const dur2=bubble._voiceDuration||0;const durEl=document.getElementById(`vdur-${msgId}`);
+      if(durEl)durEl.textContent=`${Math.floor(dur2/60)}:${String(dur2%60).padStart(2,'0')}`;
+    };
+  }).catch(()=>{});
+};
+
+window.seekBubble=function(e,msgId){
+  const V=window._vm;
+  if(V.bubbleId!==msgId||!V.bubbleAudio||!V.bubbleAudio.duration)return;
+  const wf=e.currentTarget;const rect=wf.getBoundingClientRect();const pct=(e.clientX-rect.left)/rect.width;
+  V.bubbleAudio.currentTime=Math.max(0,Math.min(1,pct))*V.bubbleAudio.duration;
+};
+
+window.setBubblePlayState=function(msgId,playing,reset){
+  const btn=document.getElementById(`vplay-${msgId}`);if(!btn)return;
+  btn.innerHTML=playing
+    ?`<svg width="11" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4" height="11" rx="1" fill="white"/><rect x="8" y="1" width="4" height="11" rx="1" fill="white"/></svg>`
+    :`<svg width="11" height="13" viewBox="0 0 11 13" fill="none"><path d="M1 1l9 5.5L1 12V1z" fill="white"/></svg>`;
+  if(reset)document.querySelectorAll(`[data-vbid="${msgId}"]`).forEach(b=>b.classList.remove('played'));
+};
+
+// ═══════════════════════════════════════════════════
+// LINK PREVIEWS
+// ═══════════════════════════════════════════════════
+const URL_REGEX=/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gi;
+window.extractUrl=function(text){const m=(text||'').match(URL_REGEX);return m?m[0]:null;};
+window.buildLinkPreview=function(url,isMe){
+  let domain='',title='';
+  try{const u=new URL(url);domain=u.hostname.replace('www.','');const seg=u.pathname.split('/').filter(Boolean).pop()||'';title=seg.replace(/[-_]/g,' ').replace(/\.(html?|php)$/i,'').trim()||domain;}catch(e){domain=url.split('/')[2]||url;title=domain;}
+  const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+  const preview=document.createElement('a');
+  preview.href=url;preview.target='_blank';preview.rel='noopener noreferrer';
+  const accent=isMe?'rgba(255,255,255,0.2)':'rgba(0,255,238,0.3)';
+  const bg=isMe?'rgba(255,255,255,0.1)':'rgba(0,255,238,0.06)';
+  preview.style.cssText=`display:flex;align-items:center;gap:10px;padding:9px 12px;background:${bg};border:1px solid ${accent};border-radius:12px;margin-top:6px;text-decoration:none;max-width:100%;transition:opacity 0.15s;`;
+  preview.innerHTML=`
+    <img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" width="24" height="24" style="border-radius:6px;flex-shrink:0;background:rgba(255,255,255,0.08);" onerror="this.style.display='none'">
+    <div style="flex:1;min-width:0;">
+      <div style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:${isMe?'rgba(255,255,255,0.55)':'var(--cyan)'};margin-bottom:2px;">${domain.toUpperCase()}</div>
+      <div style="font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cap(title)}</div>
+    </div>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:0.35;"><path d="M7 17L17 7M7 7h10v10" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+  `;
+  return preview;
+};
+
+})(); // end IIFE
 
 // ═══════════════════════════════════════════════════
 // RESIZE═══════════════════════════════════════════════════
