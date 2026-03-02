@@ -3770,61 +3770,70 @@ function openGroupMembers(){
 async function addMemberToGroup(){
   const rawPhone=document.getElementById('add-member-phone').value.trim(),errEl=document.getElementById('add-member-err');
   if(rawPhone.length!==9){errEl.textContent='ENTER EXACTLY 9 DIGITS';return;}
-  const phone='+0'+rawPhone;const chat=chats.find(c=>c.id===currentChatId)||{};
-  if((chat.members||[]).find(m=>m.phone===phone)){errEl.textContent='ALREADY A MEMBER';return;}
+  const phone='+0'+rawPhone;
+  const roomId=currentChatId||currentRoomId;
+  const chat=chats.find(c=>c.id===roomId)||{};
+  if(!roomId){errEl.textContent='NO GROUP SELECTED';return;}
+if((chat.members||[]).find(m=>m.phone===phone)){errEl.textContent='ALREADY A MEMBER';return;}
   errEl.textContent='Looking up...';
-  let did=null;try{const snap=await GET(CHILD(REF(DB),`phone_index/${encodePhone(phone)}`));if(snap.exists())did=snap.val();}catch(e){}
-  let name=phone;if(did){try{const s=await GET(CHILD(REF(DB),`users/${did}`));if(s.exists()){const u=s.val();name=(u.firstName||'')+(u.lastName?' '+u.lastName:'')||phone;}}catch(e){}}
-  const newMember={phone,did,name};const updatedMembers=[...(chat.members||[]),newMember];
+  let did=null;
+  try{const snap=await GET(CHILD(REF(DB),`phone_index/${encodePhone(phone)}`));if(snap.exists())did=snap.val();}catch(e){}
+  let name=phone;
+  if(did){try{const s=await GET(CHILD(REF(DB),`users/${did}`));if(s.exists()){const u=s.val();name=(u.firstName||'')+(u.lastName?' '+u.lastName:'')||phone;}}catch(e){}}
+  const newMember={phone,did,name};
+  const updatedMembers=[...(chat.members||[]),newMember];
   try{
     for(const m of updatedMembers){
       if(!m.did)continue;
-      await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/members`),updatedMembers);
+      await SET(REF(DB,`users/${m.did}/chats/${roomId}/members`),updatedMembers);
     }
     if(did){
-      await SET(REF(DB,`users/${did}/chats/${currentChatId}`),{...chat,members:updatedMembers,id:currentChatId});
+      await SET(REF(DB,`users/${did}/chats/${roomId}`),{...chat,members:updatedMembers,id:roomId});
     }
-  }
-  catch(e){errEl.textContent='Error adding member.';return;}
-  chat.members=updatedMembers;errEl.textContent='';document.getElementById('add-member-phone').value='';openGroupMembers();
-  PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`${(window.USER.firstName||'')} added ${name}`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
+    chat.members=updatedMembers;
+    errEl.textContent='';
+    document.getElementById('add-member-phone').value='';
+    openGroupMembers();
+    PUSH(REF(DB,`rooms/${roomId}/messages`),{type:'system',text:`${(window.USER.firstName||'')} added ${name}`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
+  }catch(e){errEl.textContent='Error adding member. Try again.';}
 }
 async function saveGroupName(){
   const newName=document.getElementById('group-rename-inp')?.value.trim();
   const errEl=document.getElementById('group-rename-err');
   if(!newName){if(errEl)errEl.textContent='NAME CANNOT BE EMPTY';return;}
-  const chat=chats.find(c=>c.id===currentChatId)||{};
+  const roomId=currentChatId||currentRoomId;
+  const chat=chats.find(c=>c.id===roomId)||{};
   try{
     const members=chat.members||[];
     for(const m of members){
       if(!m.did)continue;
-      await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/name`),newName);
+      await SET(REF(DB,`users/${m.did}/chats/${roomId}/name`),newName);
     }
     chat.name=newName;
     document.getElementById('cname').textContent=newName;
     if(errEl)errEl.textContent='';
     showToast('Group Renamed',newName,null,'msg');
-    PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`Group renamed to "${newName}"`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
+    PUSH(REF(DB,`rooms/${roomId}/messages`),{type:'system',text:`Group renamed to "${newName}"`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
   }catch(e){if(errEl)errEl.textContent='Failed to rename';}
 }
 
 async function removeMemberFromGroup(phone){
-  const chat=chats.find(c=>c.id===currentChatId)||{};
+  const roomId=currentChatId||currentRoomId;
+  const chat=chats.find(c=>c.id===roomId)||{};
   const member=(chat.members||[]).find(m=>m.phone===phone);
   if(!member)return;
   if(!confirm(`Remove ${member.name||phone} from the group?`))return;
   const updatedMembers=(chat.members||[]).filter(m=>m.phone!==phone);
   try{
-    for(const m of updatedMembers){
+for(const m of updatedMembers){
       if(!m.did)continue;
-      await SET(REF(DB,`users/${m.did}/chats/${currentChatId}/members`),updatedMembers);
+      await SET(REF(DB,`users/${m.did}/chats/${roomId}/members`),updatedMembers);
     }
-    // Remove the chat entry for the removed member
     if(member.did){
-      await SET(REF(DB,`users/${member.did}/chats/${currentChatId}`),null);
+      await SET(REF(DB,`users/${member.did}/chats/${roomId}`),null);
     }
     chat.members=updatedMembers;
-    PUSH(REF(DB,`rooms/${currentChatId}/messages`),{type:'system',text:`${member.name||phone} was removed from the group`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
+    PUSH(REF(DB,`rooms/${roomId}/messages`),{type:'system',text:`${member.name||phone} was removed from the group`,timestamp:Date.now(),senderDid:DID}).catch(()=>{});
     openGroupMembers();
     showToast('Member Removed',`${member.name||phone} removed`,null,'msg');
   }catch(e){showToast('Error','Failed to remove member',null,'msg');}
